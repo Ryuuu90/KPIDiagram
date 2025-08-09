@@ -18,6 +18,8 @@ import numeral from "numeral";
 import { motion } from 'framer-motion';
 import './KPIDiagram.css'
 
+const URL = process.env.REACT_APP_BACKEND_URL;
+
 const HoverNode = ({ data }) => (
 
   <div className="tooltip-box ">
@@ -181,7 +183,7 @@ const KPIDiagram = () => {
   const fetchNode = async (nodeId) => {
     try {
       // if(node)
-      const res = await axios.get(`http://localhost:8000/api/node2/${nodeId}`);
+      const res = await axios.get(`${URL}/api/node2/${nodeId}`);
       return res.data.node;
     } catch (error) {
       console.error('Error fetching node:', error);
