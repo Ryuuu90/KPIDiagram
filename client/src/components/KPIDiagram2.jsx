@@ -11,7 +11,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
-import numeral from "numeral";
+import numeral, { validate } from "numeral";
 
 // CustomNode component
 // import { motion, AnimatePresence } from 'framer-motion';
@@ -31,7 +31,7 @@ const HoverNode = ({ data }) => (
 );
 
 
-const CollapsibleField = ({ label, value, isLast, singleInLastRow }) => {
+const CollapsibleField = ({ label, value, isFirst}) => {
   const isReactNode = React.isValidElement(value);
 
   const isObject = value && typeof value === "object" && !isReactNode;
@@ -39,7 +39,7 @@ const CollapsibleField = ({ label, value, isLast, singleInLastRow }) => {
     return
   if (value === undefined || value === null) return;
   return (
-    <div className={`mb-2 ${!isLast && !singleInLastRow ? "border-r" : ""} border-gray-300`}>
+    <div className={`mb-2 ${isFirst ? "border-r pr-2 mr-3" : ""} border-gray-300`}>
       <div
         className="flex items-center justify-between cursor-pointer text-xs font-bold text-blue-600"
       >
@@ -52,8 +52,11 @@ const CollapsibleField = ({ label, value, isLast, singleInLastRow }) => {
         </div>
       )}
 
-      {!isReactNode && !isObject && (
+      {!isReactNode && !isObject && label !== "Solde Value" && (
         <div className="text-xs text-gray-800 break-words mt-1">{String(value)}</div>
+      )}
+       {!isReactNode && !isObject && label === "Solde Value" && (
+        <div className="text-xs font-extrabold text-black break-words mt-1">{String(value)}</div>
       )}
 
     </div>
@@ -67,12 +70,9 @@ const CustomNode = memo(({ data , setSource}) => {
   // const infoRef = useRef(null);
 
   const fields = [
-    { label: 'Item', value: data.eleType },
-    ...(data.eleType === "Rasio" ? [{ label: 'Typeologie', value: data.typology }] : []),
-    ...(data.eleType === "Rasio" ? [{ label: 'Famille du Rasio', value: data.category }] : []),
-    { label: 'Solde Value', value: numeral(data.SoldeValue).format("0,0.[000,000]") },
-    { label: 'Rapports contenant item', value: data.Reports },
-    { label: 'Méthode de calcul', value: data.method },
+    // { label: 'Item', value: data.eleType },
+    // ...(data.eleType === "Rasio" ? [{ label: 'Typeologie', value: data.typology }] : []),
+    // ...(data.eleType === "Rasio" ? [{ label: 'Famille du Rasio', value: data.category }] : []),
     {
       label: 'Designation',
       value: (
@@ -81,7 +81,10 @@ const CustomNode = memo(({ data , setSource}) => {
           {` : ${data.signification}`}
         </>
       )
-    }
+    },
+    { label: 'Méthode de calcul', value: data.method },
+    { label: 'Rapports contenant item', value: data.Reports },
+    { label: 'Solde Value', value: numeral(data.SoldeValue).format("0,0.[000,000]") },
   ];
 
   
@@ -93,7 +96,7 @@ return (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.98 }}
     transition={{ duration: 0.2 }}
-    className={`relative ${data.Type === "Source" ? "w-[250px]" : "w-[900px] grid grid-cols-3 gap-2"} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
+    className={`relative ${data.Type === "Source" ? "w-[250px]" : "w-[400px] grid grid-cols-2 "} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
     {data.Type === "Source" && (<select onChange={(e) => setSource(e.target.value)}>
       {['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'].map(key => 
@@ -116,11 +119,11 @@ return (
 
       {!data.Type && (fields.map((field, idx) => {
           const isLast = idx === fields.length - 1;
-          const singleInLastRow = fields.length % 3 === 1 && isLast;
+          const singleInLastRow = fields.length % 2 === 1 && isLast;
 
           return (
-            <div key={idx} className={singleInLastRow ? "col-span-3" : ""}>
-              <CollapsibleField label={field.label} value={field.value} isLast={(idx + 1) % 3 === 0} singleInLastRow={singleInLastRow}/>
+            <div key={idx} className={idx === 0 && fields[1].value.length < 2 * fields[0].value.props.children[1].length / 3 ? "row-span-3" : ""}>
+              <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0}/>
             </div>
           );
         }))}
