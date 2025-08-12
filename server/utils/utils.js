@@ -7,34 +7,39 @@ function isValidFormula(str) {
     // Allowed chars: digits, spaces, + - * / ( ) .
     return /^[0-9+\-*/().\s]+$/.test(str);
   }
-exports.ArborescenceCalcul = async () =>{
+exports.ArborescenceCalcul = async (basesRef) =>{
     try{
-        const workbook = xlsx.readFile(path.join(__dirname, '../public', 'Arborescence2.xlsx'));
-        let sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-        sheet = sheet.filter(row=> row['NumEC'])
-        const elemBase = sheet.map(row => row['NumEC']);
+        // console.log(basesRef);
+        // Object.entries(basesRef).forEach(([key, value] )=> console.log(key));
+        // const workbook = xlsx.readFile(path.join(__dirname, '../public', 'Arborescence2.xlsx'));
+        // let sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        // sheet = sheet.filter(row=> row['NumEC'])
+        // const elemBase = sheet.map(row => row['NumEC']);
+        // console.log(elemBase);
         let arb = await Arborescence.find();
         let length = arb.length;
         atb = arb.map(elem => elem = elem.toObject());
         // console.log(arb);
         arb = arb.map(elem => {
             elem = elem.toObject();
-            const found = sheet.find(row => row['NumEC'] === elem.parentId)
-            let SoldeValue
+            const found =  Object.entries(basesRef).find(([key, value] ) => key === elem.parentId)
+            let newSold;
             if(found && elem.category !== "Elément calculé")
             {
                 // console.log(found['SoldeValue']);
-                if(typeof(found['SoldeValue']) !== 'number')
-                    SoldeValue = 0;
-                else
-                    SoldeValue = found['SoldeValue'];
+                // if(typeof(found['SoldeValue']) !== 'number')
+                //     SoldeValue = 0;
+                // else
+                //     SoldeValue = found['SoldeValue'];
+                newSold = found[1];
             }
             else
-                SoldeValue =  undefined;
+                newSold =  null;
             
             return{
                 ...elem,
-                SoldeValue,
+                // SoldeValue,
+                newSold,
             }
         })
         let update = true
@@ -49,8 +54,12 @@ exports.ArborescenceCalcul = async () =>{
                 let evaluatedFormula = formula.replace(/EC\d+|R\d{2}/g, match => {
                     const found = arb.find(elem => elem.parentId.trim() === match.trim());
                     // console.log()
-                    if (found && found.SoldeValue !== undefined) {
-                    return found.SoldeValue;
+                    if (found && found.newSold !== null) {
+                        return found.newSold;
+                    }
+                    if(found && found.newSold === null && found.SoldeValue !== undefined)
+                    {
+                        return found.SoldeValue;
                     }
                     return match;  // return original ECxxx if no value found
                 });
@@ -66,7 +75,7 @@ exports.ArborescenceCalcul = async () =>{
                 if(isValidFormula(safeFormula))
                 {
                     // console.log(evaluatedFormula);
-                    arb[i].SoldeValue = eval(safeFormula).toFixed(0);
+                    arb[i].newSold = eval(safeFormula).toFixed(0);
                 }
                 else
                 {

@@ -19,6 +19,7 @@ const arborescence2 = new mongoose.Schema({
     SoldeValue : Number,
     method : String,
     Reports : String,
+    newSold : Number
 })
 
 const Arborescence2  = mongoose.model("Arborescence2", arborescence2);

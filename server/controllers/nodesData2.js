@@ -3,6 +3,7 @@ const {ArborescenceCalcul} = require("../utils/utils");
 
 exports.getNodeById2 = async (req, res) => {
   const { id } = req.params;
+  const {modulType, basesRef} = req.body;
 
   try {
     // Get parent node
@@ -68,7 +69,8 @@ exports.getNodeById2 = async (req, res) => {
         };
       })
     );
-    // ArborescenceCalcul()
+    if(modulType === "simulation" &&  Object.keys(basesRef).length > 0)
+      ArborescenceCalcul(basesRef)
 
         
           // await Promise.all(

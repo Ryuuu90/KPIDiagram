@@ -4,6 +4,8 @@ const {saveToDatabase2} = require('../controllers/saveToDatabase2');
 const {getNodeById} = require('../controllers/nodesData')
 const {getNodeById2} = require('../controllers/nodesData2')
 
+const {resetNewSold} = require('../controllers/resetNewSold');
+
 const express = require('express');
 const router = express.Router();
 
@@ -12,7 +14,9 @@ router.get('/data2', saveToDatabase2);
 
 // router.post('/getData', nodesData);
 router.get('/node/:id', getNodeById);
-router.get('/node2/:id', getNodeById2);
+router.post('/node2/:id', getNodeById2);
+
+router.get('/reset', resetNewSold);
 
 
 

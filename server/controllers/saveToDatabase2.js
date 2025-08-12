@@ -25,6 +25,7 @@ exports.saveToDatabase2  = async (req, res) =>{
             const recommandations = row["Recommandations"] ? row["Recommandations"] : "none";
             const example = row["Exemple"] ? row["Exemple"] : "none";
             const Reports = row["Rapports"];
+            const newSold = null;
 
             let childrenIds = [];
             if(eleType === 'EC')
@@ -63,6 +64,7 @@ exports.saveToDatabase2  = async (req, res) =>{
                     example,
                     method,
                     Reports,
+                    newSold,
                 }
             }
 

@@ -12,6 +12,7 @@ import 'reactflow/dist/style.css';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
 import numeral, { validate } from "numeral";
+import { Pencil } from "lucide-react"; 
 
 // CustomNode component
 // import { motion, AnimatePresence } from 'framer-motion';
@@ -31,7 +32,7 @@ const HoverNode = ({ data }) => (
 );
 
 
-const CollapsibleField = ({ label, value, isFirst}) => {
+const CollapsibleField = ({ label, value, isFirst, modulType, category, newSold}) => {
   const isReactNode = React.isValidElement(value);
 
   const isObject = value && typeof value === "object" && !isReactNode;
@@ -39,7 +40,7 @@ const CollapsibleField = ({ label, value, isFirst}) => {
     return
   if (value === undefined || value === null) return;
   return (
-    <div className={`mb-2 ${isFirst ? "border-r pr-2 mr-3" : ""} border-gray-300`}>
+    <div className={`mb-2 ${isFirst ? "border-r pr-2 mr-3" : label === "Valeur du solde" && modulType === "simulation" && (category === "Elément de base")? "border-r mr-24 " :label === "Valeur du solde" && modulType === "simulation" && newSold && category !== "Elément de base" ? "border-r mr-[8.3rem] " : ""} border-gray-300`}>
       <div
         className="flex items-center justify-between cursor-pointer text-xs font-bold text-blue-600"
       >
@@ -51,11 +52,10 @@ const CollapsibleField = ({ label, value, isFirst}) => {
           {value}
         </div>
       )}
-
-      {!isReactNode && !isObject && label !== "Solde Value" && (
+      {!isReactNode && !isObject && label !== "Valeur du solde" && (
         <div className="text-xs text-gray-800 break-words mt-1">{String(value)}</div>
       )}
-       {!isReactNode && !isObject && label === "Solde Value" && (
+       {!isReactNode && !isObject && label === "Valeur du solde" && (
         <div className="text-xs font-extrabold text-black break-words mt-1">{String(value)}</div>
       )}
 
@@ -65,8 +65,24 @@ const CollapsibleField = ({ label, value, isFirst}) => {
 
 
 // --- Custom node ---
-const CustomNode = memo(({ data , setSource}) => {
+const CustomNode = memo(({ data , setSource, basesRef, modulType}) => {
   const [Clicked, setClicked] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+  const inputRef = useRef(null);
+
+  const handleSave = () => {
+    console.log(inputRef.current.value)
+    if (inputRef.current) {
+      const val = inputRef.current.value;
+      if(val.length > 12)
+        return;
+      // if(!basesRef.current[data.parentId])
+      basesRef.current[data.parentId] = val;
+      setEditing(false)
+      setValue(val); // update state or do something
+    }
+  };
   // const infoRef = useRef(null);
 
   const fields = [
@@ -84,7 +100,7 @@ const CustomNode = memo(({ data , setSource}) => {
     },
     { label: 'Méthode de calcul', value: data.method },
     { label: 'Rapports contenant item', value: data.Reports },
-    { label: 'Solde Value', value: numeral(data.SoldeValue).format("0,0.[000,000]") },
+    { label: 'Valeur du solde', value: String(data.SoldeValue).replace(/\B(?=(\d{3})+(?!\d))/g, "."),}
   ];
 
   
@@ -96,7 +112,7 @@ return (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.98 }}
     transition={{ duration: 0.2 }}
-    className={`relative ${data.Type === "Source" ? "w-[250px]" : "w-[400px] grid grid-cols-2 "} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
+    className={`relative ${data.Type === "Source" ? "w-[250px]" : modulType === "simulation" && (data.category === "Elément de base")? "w-[450px] grid grid-cols-2 " : data.newSold && data.category !== "Elément de base" ? "w-[520px] grid grid-cols-2 "  :"w-[400px] grid grid-cols-2 "} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
     {data.Type === "Source" && (<select onChange={(e) => setSource(e.target.value)}>
       {['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'].map(key => 
@@ -123,10 +139,48 @@ return (
 
           return (
             <div key={idx} className={idx === 0 && fields[1].value.length < 2 * fields[0].value.props.children[1].length / 3 ? "row-span-3" : ""}>
-              <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0}/>
+              <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0} modulType={modulType} category={data.category} newSold={data.newSold}/>
             </div>
           );
         }))}
+      {/* {console.log(data.eleType)} */}
+      {modulType === "simulation" && (
+        <>
+        {(data.newSold  || data.category === "Elément de base") && (<div
+        className={`absolute ${data.newSold && data.category !== "Elément de base" ? "right-12 bottom-11" : "right-3 bottom-11"}  flex items-center justify-between cursor-pointer text-xs font-bold text-blue-600`}
+      >
+        <span> Nouveau solde:</span>
+      </div>)}
+          <div className={`absolute ${data.newSold && data.category !== "Elément de base" ? "bottom-[1.45rem] right-[3.3rem]" : "bottom-[1.45rem] right-5"}  flex items-center space-x-1`}>
+            {/* {data.category === "Elément de base" && data.newSold && (setEditing(false))} */}
+            {editing && data.category === "Elément de base" ? (
+              <input
+                type="number"
+                defaultValue=""
+                ref={inputRef}
+                onBlur={handleSave}
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                className="w-20 text-xs text-gray-800 border border-gray-300 rounded px-1"
+                autoFocus
+              />
+            ) : (
+              <>
+                <span className="text-xs font-bold"  style={{
+                  fontSize:
+                    value.length > 12 ? '0.35rem':
+                    value.length > 9 ? '0.45rem':
+                    value.length > 6 ? '0.65rem' :
+                    value.length > 4 ? '0.75rem line-height: 1rem' :
+                    '0.75rem line-height: 1rem'
+                }}>{data.category === "Elément de base" && data.newSold === null ? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : data.newSold !== null && data.newSold !== undefined ? String(data.newSold).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "" }</span>
+                {data.category === "Elément de base" && (<button onClick={() => setEditing(true)}>
+                  <Pencil size={14} className="text-gray-500 hover:text-gray-700" />
+                </button>)}
+              </>
+            )}
+          </div>
+          </>)}
+      
       <div className="text-base text-gray-700">{data.label}</div>
       {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)}
       {data.hasChildren && (
@@ -155,18 +209,30 @@ const KPIDiagram = () => {
   const edgesRef = useRef([]);
   const expandedNodesRef = useRef(new Set()); // Track expanded nodes
   const reactFlowWrapper = useRef(null);
-  const reactFlowInstance = useRef(null); 
+  const reactFlowInstance = useRef(null);
+  const basesRef = useRef({});
+  const [modulType , setModelType] = useState("simulation")
+  const [restart, setRestart] = useState(false);
+  // const [resetNewSold, setResetNewSold] = useState(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const nodeTypes = useMemo(
     () => ({
-      customNode: (props) => <CustomNode {...props} setSource={setSource} />
+      customNode: (props) => <CustomNode {...props} setSource={setSource} basesRef={basesRef} modulType={modulType}/>
     }),
     [setSource]
   );
-
+  const handleReset = async () => {
+    try {
+      await axios.get(`${URL}/api/reset/`);
+      basesRef.current = {};  // Clear simulation values
+      loadRoot(true);
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
 
   // useEffect( ()=>{
     
@@ -183,10 +249,10 @@ const KPIDiagram = () => {
   //     saveToDb();
    
   // }, [])
-  const fetchNode = async (nodeId) => {
+  const fetchNode = async (nodeId, modulType, basesRef) => {
     try {
       // if(node)
-      const res = await axios.get(`${URL}/api/node2/${nodeId}`);
+      const res = await axios.post(`${URL}/api/node2/${nodeId}`, {modulType : modulType, basesRef : basesRef.current});
       return res.data.node;
     } catch (error) {
       console.error('Error fetching node:', error);
@@ -262,7 +328,7 @@ const KPIDiagram = () => {
 
   
   const handleDrill = useCallback(
-    async (nodeId, isRoot = false) => {
+    async (nodeId, isRoot = false, modulType, basesRef) => {
       const isExpanded = expandedNodesRef.current.has(nodeId);
   
       if (isExpanded) {
@@ -272,7 +338,7 @@ const KPIDiagram = () => {
         return;
       }
   
-      const node = await fetchNode(nodeId);
+      const node = await fetchNode(nodeId, modulType, basesRef);
       if (!node || !node.childrenData) return;
   
       // const reportName = node.reportName;
@@ -359,7 +425,7 @@ const KPIDiagram = () => {
             ...childLabel,
             sign : childLabel.childSign,
             expanded: false,
-            onDrill: () => handleDrill(childId),
+            onDrill: () => handleDrill(childId,false, modulType, basesRef),
           },
         });
       });
@@ -406,34 +472,45 @@ const KPIDiagram = () => {
       }
     }, 100);
   };
+  const loadRoot = async (restart = false) => {
+    newNodesRef.current = [];
+    edgesRef.current = [];
+    expandedNodesRef.current.clear();
+    setEdges([]);
+    setNodes([]);
+    // setLevel(0);
+    // console.log("Restarting diagram...");
+    const root = await fetchNode(Source, modulType, basesRef);
+    if (!root) return;
+    
+    const rootId = root.parentId || 'Rind';
+    // console.log("Adding root node:", rootId);
+    newNodesRef.current.push({
+      id: rootId,
+      type: 'customNode',
+      position: { x: 500, y: 50 },
+      data: {
+        label: root.nameFr || 'Root Node',
+        id: rootId,
+        hasChildren: true,
+        Type : root.eleType,
+        childrenNum : Object.entries(root.childrenData).length,
+        expanded: false,
+        onDrill: () => handleDrill(rootId, true, modulType, basesRef),
+      },
+    });
+    console.log(restart);
+    setNodes(newNodesRef.current);
+    if (reactFlowInstance.current && restart) {
+      reactFlowInstance.current.setViewport({x: -reactFlowWrapper.current.clientWidth / 2 + 190 , y: reactFlowWrapper.current.clientHeight / 2 - 182 , zoom : 2});
+      // reactFlowInstance.current.fitView({padding : 0.4})
+    }
+    
+  };
 
   useEffect(() => {
-    const loadRoot = async () => {
-      setEdges([]);
-      newNodesRef.current = [];
-      const root = await fetchNode(Source);
-      if (!root) return;
-
-      const rootId = root.parentId || 'Rind';
-      newNodesRef.current.push({
-        id: rootId,
-        type: 'customNode',
-        position: { x: 500, y: 50 },
-        data: {
-          label: root.nameFr || 'Root Node',
-          id: rootId,
-          hasChildren: true,
-          Type : root.eleType,
-          childrenNum : Object.entries(root.childrenData).length,
-          expanded: false,
-          onDrill: () => handleDrill(rootId, true),
-        },
-      });
-
-      setNodes(newNodesRef.current);
-    };
-    loadRoot();
-  }, [Source]);
+      loadRoot();
+  }, [Source, modulType]);
 
   return (
     <div style={{ width: '100vw', height: '100vh' }} ref={reactFlowWrapper}>
@@ -450,6 +527,9 @@ const KPIDiagram = () => {
       >
         <Background />
         <Controls />
+      <button className='absolute left-5 top-5 bg-blue-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={()=>{loadRoot(true)} }>simulate</button>
+      <button className='absolute left-36 top-5 bg-red-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={handleReset}>reset</button>
+
       </ReactFlow>
     </div>
   );
