@@ -19,6 +19,8 @@ import { Pencil } from "lucide-react";
 import { motion } from 'framer-motion';
 import './KPIDiagram.css'
 
+const URL = process.env.REACT_APP_BACKEND_URL;
+
 const HoverNode = ({ data }) => (
 
   <div className="tooltip-box ">
@@ -296,7 +298,7 @@ const KPIDiagram = () => {
 
   const handleReset = async () => {
     try {
-      await axios.get(`http://localhost:8000/api/reset/`);
+      await axios.get(`${URL}/api/reset/`);
       basesRef.current = {};  // Clear simulation values
       loadRoot(true);
     } catch (error) {
@@ -322,7 +324,7 @@ const KPIDiagram = () => {
   const fetchNode = async (nodeId, modulType, basesRef) => {
     try {
       // if(node)
-      const res = await axios.post(`http://localhost:8000/api/node2/${nodeId}`, {modulType : modulType, basesRef : basesRef.current});
+      const res = await axios.post(`${URL}/api/node2/${nodeId}`, {modulType : modulType, basesRef : basesRef.current});
       return res.data.node;
     } catch (error) {
       console.error('Error fetching node:', error);
