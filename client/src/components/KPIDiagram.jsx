@@ -285,6 +285,8 @@ const KPIDiagram = () => {
             childrenNum: childLabel.childrenNum,
             expanded: false,
             onDrill: () => handleDrill(childId),
+            Source,          // <-- dynamic value
+            setSource,       // <-- dynamic function
           },
         });
       });
@@ -350,6 +352,8 @@ const KPIDiagram = () => {
           childrenNum : Object.entries(root.childrenData).length,
           expanded: false,
           onDrill: () => handleDrill(rootId),
+          Source,          // <-- dynamic value
+          setSource,       // <-- dynamic function
         },
       });
 

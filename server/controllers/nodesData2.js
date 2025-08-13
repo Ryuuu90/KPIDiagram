@@ -68,9 +68,11 @@ exports.getNodeById2 = async (req, res) => {
           childrenNum, // true if found
         };
       })
+      
     );
+    
     if(modulType === "simulation" &&  Object.keys(basesRef).length > 0)
-      ArborescenceCalcul(basesRef)
+      await ArborescenceCalcul(basesRef)
 
         
           // await Promise.all(

@@ -19,8 +19,6 @@ import { Pencil } from "lucide-react";
 import { motion } from 'framer-motion';
 import './KPIDiagram.css'
 
-const URL = process.env.REACT_APP_BACKEND_URL;
-
 const HoverNode = ({ data }) => (
 
   <div className="tooltip-box ">
@@ -40,7 +38,7 @@ const CollapsibleField = ({ label, value, isFirst, modulType, category, newSold}
     return
   if (value === undefined || value === null) return;
   return (
-    <div className={`mb-2 ${isFirst ? "border-r pr-2 mr-3" : label === "Valeur du solde" && modulType === "simulation" && (category === "Elément de base")? "border-r mr-24 " :label === "Valeur du solde" && modulType === "simulation" && newSold && category !== "Elément de base" ? "border-r mr-[8.3rem] " : ""} border-gray-300`}>
+    <div className={`mb-2 ${isFirst ? "border-r pr-2 mr-3" : ""} border-gray-300`}>
       <div
         className="flex items-center justify-between cursor-pointer text-xs font-bold text-blue-600"
       >
@@ -52,25 +50,23 @@ const CollapsibleField = ({ label, value, isFirst, modulType, category, newSold}
           {value}
         </div>
       )}
-      {!isReactNode && !isObject && label !== "Valeur du solde" && (
+      {!isReactNode && !isObject && label !== "Valeur du solde" && label !== "Nouveau solde" && label !== "Écart du solde" && (
         <div className="text-xs text-gray-800 break-words mt-1">{String(value)}</div>
       )}
-       {!isReactNode && !isObject && label === "Valeur du solde" && (
-        <div className="text-xs font-extrabold text-black break-words mt-1">{String(value)}</div>
+       {!isReactNode && !isObject && (label === "Valeur du solde" || label === "Nouveau solde" || label === "Écart du solde" )&& (
+        <div className="text-xs font-extrabold text-black break-words mt-1">{String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</div>
       )}
 
     </div>
   );
 };
 
-
-// --- Custom node ---
-const CustomNode = memo(({ data , setSource, basesRef, modulType}) => {
+const SimulationCard = memo(({ data, basesRef, modulType}) => {
   const [Clicked, setClicked] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState("");
+  const [editingSold, setEditingSold] = useState(false)
+  const [value, setValue] = useState("-");
   const inputRef = useRef(null);
-
   const handleSave = () => {
     console.log(inputRef.current.value)
     if (inputRef.current) {
@@ -80,9 +76,112 @@ const CustomNode = memo(({ data , setSource, basesRef, modulType}) => {
       // if(!basesRef.current[data.parentId])
       basesRef.current[data.parentId] = val;
       setEditing(false)
+      setEditingSold(true)
       setValue(val); // update state or do something
     }
   };
+  // const infoRef = useRef(null);
+
+  const fields = [
+    // { label: 'Item', value: data.eleType },
+    {
+      label: 'Designation',
+      value: data.nameFr
+    },
+    // ...(data.eleType === "Rasio" ? [{ label: 'Typeologie', value: data.typology }] : []),
+    // ...(data.eleType === "Rasio" ? [{ label: 'Famille du Rasio', value: data.category }] : []),
+    { label: 'Valeur du solde', value: data.SoldeValue,},
+    {label : 'Nouveau solde', value: data.newSold !== null ? data.newSold : '-'}
+    // {label : "ancienne valeur d'un ratio", value: data.newSold ? String(data.newSold).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '-'}
+
+  ];
+
+  
+return (
+  <motion.div
+    // onMouseEnter={() => setClicked(true)}
+    onMouseLeave={() => setClicked(false)}
+    initial={{ opacity: 0, scale: 0.98 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.98 }}
+    transition={{ duration: 0.2 }}
+    className={`relative ${data.Type === "Source" ? "w-[250px] grid grid-cols-1" : "w-[300px] grid grid-cols-2" }  bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
+  >
+    {data.Type === "Source" && (<select value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
+
+      {/* <option key={"value"} value={""}>{""}</option> */}
+      {['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'].map(key => 
+            <option key={key} value={key}>{key}</option>)}
+
+    </select>)}
+    <Handle type="target" position={Position.Left} className="opacity-0" />
+
+    {data.Type !== "Source" && (<div className={`absolute ${data.eleType === "Rasio" ? " bg-orange-300" : " bg-blue-300"} -top-[0.9rem]  right-1/2 w-full text-xl font-bold rounded text-center transform  -translate-y-1/2 translate-x-1/2`}> {data.parentId}</div>)}
+    {data.interpretation && data.recommandations && data.example &&(<button className='absolute  right-2 top-2 bg-yellow-100 text-yellow-700 w-10 rounded h-6 text-center' onClick={()=> setClicked(true)}>info</button>)}
+    {Clicked && (
+      <div className="absolute bottom-full right-[30px] translate-x-1/2 translate-y-4 mb-3 z-[9999]">
+        <HoverNode data={data} />
+        <div className="tooltip-arrow" />
+      </div>
+    )}
+
+      {!data.Type && (fields.map((field, idx) => {
+        console.log(field)
+        if(field.label !== "Nouveau solde")
+          return(<div key={idx}>
+              <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0} modulType={modulType} category={data.category} newSold={data.newSold}/>
+        </div>)
+        }))}
+        {!data.Type && (<CollapsibleField label={"Écart du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' ? Number(((fields[2].value / fields[1].value) - 1).toFixed(3)).toString(): "-"} isFirst={true} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
+          {/* <div className={`absolute ${data.newSold && data.category !== "Elément de base" ? "bottom-[1.45rem] right-[3.3rem]" : "bottom-[1.45rem] right-5"}  flex items-center space-x-1`}> */}
+            {/* {data.category === "Elément de base" && data.newSold && (setEditing(false))} */}
+            {editing && data.category === "Elément de base" ? (
+             <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
+             <span>Nouveau solde:</span>
+             <input
+               type="number"
+               defaultValue=""
+               ref={inputRef}
+               onBlur={handleSave}
+               onKeyDown={(e) => e.key === "Enter" && handleSave()}
+               className="w-20 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1"
+               autoFocus
+             />
+           </div>
+            ) : (
+              <>
+
+             <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
+                {data.Type !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : fields[2].value} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
+                {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
+                  <Pencil size={14} className="absolute bottom-6 right-14 text-gray-500 hover:text-gray-700" />
+                </button>)}
+                </div>
+              </>
+            )}
+          {/* </div> */}
+      
+      <div className="text-base text-gray-700">{data.label}</div>
+      {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)}
+      {data.hasChildren && (
+        <button
+          onClick={data.onDrill}
+          className="absolute bottom-2 right-2 text-sm bg-indigo-100 text-indigo-700 rounded px-2 py-0.5"
+        >
+          {data.expanded ? "−" : `${data.childrenNum} +`}
+        </button>
+      )}
+
+      <Handle type="source" position={Position.Right} className="opacity-0" />
+    </motion.div>
+  );
+});
+
+// --- Custom node ---
+const CustomNode = memo(({ data, basesRef, modulType}) => {
+  const [Clicked, setClicked] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
   // const infoRef = useRef(null);
 
   const fields = [
@@ -114,12 +213,12 @@ return (
     transition={{ duration: 0.2 }}
     className={`relative ${data.Type === "Source" ? "w-[250px]" : modulType === "simulation" && (data.category === "Elément de base")? "w-[450px] grid grid-cols-2 " : data.newSold && data.category !== "Elément de base" ? "w-[520px] grid grid-cols-2 "  :"w-[400px] grid grid-cols-2 "} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
-    {data.Type === "Source" && (<select onChange={(e) => setSource(e.target.value)}>
+    {data.Type === "Source" && (<select value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
+
+      {/* <option key={"value"} value={""}>{""}</option> */}
       {['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'].map(key => 
-          // <div key={key}>
             <option key={key} value={key}>{key}</option>)}
 
-            {/* </div>)} */}
     </select>)}
     <Handle type="target" position={Position.Left} className="opacity-0" />
 
@@ -135,7 +234,6 @@ return (
 
       {!data.Type && (fields.map((field, idx) => {
           const isLast = idx === fields.length - 1;
-          const singleInLastRow = fields.length % 2 === 1 && isLast;
 
           return (
             <div key={idx} className={idx === 0 && fields[1].value.length < 2 * fields[0].value.props.children[1].length / 3 ? "row-span-3" : ""}>
@@ -143,44 +241,7 @@ return (
             </div>
           );
         }))}
-      {/* {console.log(data.eleType)} */}
-      {modulType === "simulation" && (
-        <>
-        {(data.newSold  || data.category === "Elément de base") && (<div
-        className={`absolute ${data.newSold && data.category !== "Elément de base" ? "right-12 bottom-11" : "right-3 bottom-11"}  flex items-center justify-between cursor-pointer text-xs font-bold text-blue-600`}
-      >
-        <span> Nouveau solde:</span>
-      </div>)}
-          <div className={`absolute ${data.newSold && data.category !== "Elément de base" ? "bottom-[1.45rem] right-[3.3rem]" : "bottom-[1.45rem] right-5"}  flex items-center space-x-1`}>
-            {/* {data.category === "Elément de base" && data.newSold && (setEditing(false))} */}
-            {editing && data.category === "Elément de base" ? (
-              <input
-                type="number"
-                defaultValue=""
-                ref={inputRef}
-                onBlur={handleSave}
-                onKeyDown={(e) => e.key === "Enter" && handleSave()}
-                className="w-20 text-xs text-gray-800 border border-gray-300 rounded px-1"
-                autoFocus
-              />
-            ) : (
-              <>
-                <span className="text-xs font-bold"  style={{
-                  fontSize:
-                    value.length > 12 ? '0.35rem':
-                    value.length > 9 ? '0.45rem':
-                    value.length > 6 ? '0.65rem' :
-                    value.length > 4 ? '0.75rem line-height: 1rem' :
-                    '0.75rem line-height: 1rem'
-                }}>{data.category === "Elément de base" && data.newSold === null ? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : data.newSold !== null && data.newSold !== undefined ? String(data.newSold).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "" }</span>
-                {data.category === "Elément de base" && (<button onClick={() => setEditing(true)}>
-                  <Pencil size={14} className="text-gray-500 hover:text-gray-700" />
-                </button>)}
-              </>
-            )}
-          </div>
-          </>)}
-      
+     
       <div className="text-base text-gray-700">{data.label}</div>
       {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)}
       {data.hasChildren && (
@@ -212,21 +273,30 @@ const KPIDiagram = () => {
   const reactFlowInstance = useRef(null);
   const basesRef = useRef({});
   const [modulType , setModelType] = useState("simulation")
-  const [restart, setRestart] = useState(false);
+  // const [restart, setRestart] = useState(false);
   // const [resetNewSold, setResetNewSold] = useState(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  const nodeTypes = useMemo(
-    () => ({
-      customNode: (props) => <CustomNode {...props} setSource={setSource} basesRef={basesRef} modulType={modulType}/>
-    }),
-    [setSource]
-  );
+  
+  const nodeTypes = useMemo(() => ({
+    customNode: (props) => (
+
+      <SimulationCard
+        {...props}
+        // setSource={setSource}
+        // Source={Source}
+        basesRef={basesRef}
+        modulType={modulType}
+      />
+    )
+  }), [basesRef, modulType]);
+  
+
   const handleReset = async () => {
     try {
-      await axios.get(`${URL}/api/reset/`);
+      await axios.get(`http://localhost:8000/api/reset/`);
       basesRef.current = {};  // Clear simulation values
       loadRoot(true);
     } catch (error) {
@@ -252,7 +322,7 @@ const KPIDiagram = () => {
   const fetchNode = async (nodeId, modulType, basesRef) => {
     try {
       // if(node)
-      const res = await axios.post(`${URL}/api/node2/${nodeId}`, {modulType : modulType, basesRef : basesRef.current});
+      const res = await axios.post(`http://localhost:8000/api/node2/${nodeId}`, {modulType : modulType, basesRef : basesRef.current});
       return res.data.node;
     } catch (error) {
       console.error('Error fetching node:', error);
@@ -348,7 +418,7 @@ const KPIDiagram = () => {
   
       const parentNode = newNodesRef.current.find((n) => n.id === nodeId);
       const baseX = isRoot ? parentNode?.position?.x + 400 : parentNode?.position?.x + 1000;
-      const verticalSpacing = 300;
+      const verticalSpacing =modulType !== "simulation" ? 300 : 200;
 
       let startY = 0;
       function hashString(str) {
@@ -426,6 +496,8 @@ const KPIDiagram = () => {
             sign : childLabel.childSign,
             expanded: false,
             onDrill: () => handleDrill(childId,false, modulType, basesRef),
+            Source,          
+            setSource, 
           },
         });
       });
@@ -472,6 +544,41 @@ const KPIDiagram = () => {
       }
     }, 100);
   };
+  const simulate =  async () =>{
+    // console.log(newNodesRef.current);
+    const updatedNodes = [];
+    for(let node of newNodesRef.current)
+    {
+      // console.log(node);
+      const newNode = await fetchNode(node.id, modulType, basesRef);
+      updatedNodes.push({
+        ...node,
+        position: node.position, // keep original
+        data: {...node.data ,...newNode} // merge only data
+      });
+      // console.log(node);
+      // newNodesRef.current.push({
+      //   id: rootId,
+      //   type: 'customNode',
+      //   position: { x: 500, y: 50 },
+      //   data: {
+      //     label: root.nameFr || 'Root Node',
+      //     id: rootId,
+      //     hasChildren: true,
+      //     Type : root.eleType,
+      //     childrenNum : Object.entries(root.childrenData).length,
+      //     expanded: false,
+      //     onDrill: () => handleDrill(rootId, true, modulType, basesRef),
+      //     Source,          
+      //     setSource, 
+  
+      //   },
+      // });
+
+    }
+    setNodes(updatedNodes);
+
+  }
   const loadRoot = async (restart = false) => {
     newNodesRef.current = [];
     edgesRef.current = [];
@@ -497,9 +604,11 @@ const KPIDiagram = () => {
         childrenNum : Object.entries(root.childrenData).length,
         expanded: false,
         onDrill: () => handleDrill(rootId, true, modulType, basesRef),
+        Source,          
+        setSource, 
+
       },
     });
-    console.log(restart);
     setNodes(newNodesRef.current);
     if (reactFlowInstance.current && restart) {
       reactFlowInstance.current.setViewport({x: -reactFlowWrapper.current.clientWidth / 2 + 190 , y: reactFlowWrapper.current.clientHeight / 2 - 182 , zoom : 2});
@@ -509,6 +618,7 @@ const KPIDiagram = () => {
   };
 
   useEffect(() => {
+    // console.log(Source);
       loadRoot();
   }, [Source, modulType]);
 
@@ -527,8 +637,8 @@ const KPIDiagram = () => {
       >
         <Background />
         <Controls />
-      <button className='absolute left-5 top-5 bg-blue-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={()=>{loadRoot(true)} }>simulate</button>
-      <button className='absolute left-36 top-5 bg-red-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={handleReset}>reset</button>
+        {modulType === "simulation" && (<><button className='absolute left-5 top-5 bg-blue-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={()=>{simulate()} }>simulate</button>
+        <button className='absolute left-36 top-5 bg-red-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={handleReset}>reset</button></>)}
 
       </ReactFlow>
     </div>
