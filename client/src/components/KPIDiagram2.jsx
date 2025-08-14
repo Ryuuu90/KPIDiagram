@@ -19,8 +19,6 @@ import { Pencil } from "lucide-react";
 import { motion } from 'framer-motion';
 import './KPIDiagram.css'
 
-const URL = process.env.REACT_APP_BACKEND_URL;
-
 const HoverNode = ({ data }) => (
 
   <div className="tooltip-box ">
@@ -69,6 +67,7 @@ const SimulationCard = memo(({ data, basesRef, modulType}) => {
   const [editingSold, setEditingSold] = useState(false)
   const [value, setValue] = useState("-");
   const inputRef = useRef(null);
+  // const SourceArrays = {"rasio" : ['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'] , "élément comptable" : ['ECBA', 'ECBP', 'ECPC', 'ESG']};
   const handleSave = () => {
     console.log(inputRef.current.value)
     if (inputRef.current) {
@@ -128,7 +127,6 @@ return (
     )}
 
       {!data.Type && (fields.map((field, idx) => {
-        console.log(field)
         if(field.label !== "Nouveau solde")
           return(<div key={idx}>
               <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0} modulType={modulType} category={data.category} newSold={data.newSold}/>
@@ -185,6 +183,8 @@ const CustomNode = memo(({ data, basesRef, modulType}) => {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   // const infoRef = useRef(null);
+  const SourceArrays = {"ratio" : ['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'] , "élément comptable" : ['ECBA', 'ECBP', 'ECPC', 'ESG']};
+
 
   const fields = [
     // { label: 'Item', value: data.eleType },
@@ -218,7 +218,7 @@ return (
     {data.Type === "Source" && (<select value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
 
       {/* <option key={"value"} value={""}>{""}</option> */}
-      {['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'].map(key => 
+      {SourceArrays[modulType].map(key => 
             <option key={key} value={key}>{key}</option>)}
 
     </select>)}
@@ -238,14 +238,14 @@ return (
           const isLast = idx === fields.length - 1;
 
           return (
-            <div key={idx} className={idx === 0 && fields[1].value.length < 2 * fields[0].value.props.children[1].length / 3 ? "row-span-3" : ""}>
+            <div key={idx} className={idx === 0 && fields[1]?.value?.length < 2 * fields[0]?.value?.props?.children[1]?.length / 3 ? "row-span-3" : ""}>
               <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0} modulType={modulType} category={data.category} newSold={data.newSold}/>
             </div>
           );
         }))}
      
       <div className="text-base text-gray-700">{data.label}</div>
-      {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)}
+      {/* {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
       {data.hasChildren && (
         <button
           onClick={data.onDrill}
@@ -274,6 +274,9 @@ const KPIDiagram = () => {
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef(null);
   const basesRef = useRef({});
+  const chilLimit = useRef('');
+  const [loading, setLoading] = useState(false);
+
   const [modulType , setModelType] = useState("simulation")
   // const [restart, setRestart] = useState(false);
   // const [resetNewSold, setResetNewSold] = useState(false);
@@ -283,22 +286,30 @@ const KPIDiagram = () => {
 
   
   const nodeTypes = useMemo(() => ({
-    customNode: (props) => (
-
-      <SimulationCard
-        {...props}
-        // setSource={setSource}
-        // Source={Source}
-        basesRef={basesRef}
-        modulType={modulType}
-      />
-    )
+    customNode: (props) => {
+      if(modulType === "simulation")
+        return (<SimulationCard
+          {...props}
+          // setSource={setSource}
+          // Source={Source}
+          basesRef={basesRef}
+          modulType={modulType}
+        />)
+      else
+        return (<CustomNode
+          {...props}
+          // setSource={setSource}
+          // Source={Source}
+          basesRef={basesRef}
+          modulType={modulType}
+        />)
+    }
   }), [basesRef, modulType]);
   
 
   const handleReset = async () => {
     try {
-      await axios.get(`${URL}/api/reset/`);
+      await axios.get(`http://localhost:8000/api/reset/`);
       basesRef.current = {};  // Clear simulation values
       loadRoot(true);
     } catch (error) {
@@ -324,7 +335,7 @@ const KPIDiagram = () => {
   const fetchNode = async (nodeId, modulType, basesRef) => {
     try {
       // if(node)
-      const res = await axios.post(`${URL}/api/node2/${nodeId}`, {modulType : modulType, basesRef : basesRef.current});
+      const res = await axios.post(`http://localhost:8000/api/node2/${nodeId}`, {modulType : modulType, basesRef : basesRef.current});
       return res.data.node;
     } catch (error) {
       console.error('Error fetching node:', error);
@@ -411,10 +422,12 @@ const KPIDiagram = () => {
       }
   
       const node = await fetchNode(nodeId, modulType, basesRef);
-      if (!node || !node.childrenData) return;
-  
+      if (!node || !node.childrenData || chilLimit.current.includes(node.parentId)) return;
+
+      // console.log();
+      
       // const reportName = node.reportName;
-      const nextLevel = level + 1;
+      // const nextLevel = level + 1;
       const entries = Object.entries(node.childrenData);
       const totalChildren = entries.length;
   
@@ -519,7 +532,6 @@ const KPIDiagram = () => {
   
       setNodes(uniqueNodes);
       setEdges(uniqueEdges);
-      setLevel(nextLevel);
   
       const subtreeNodeIds = [nodeId, ...entries.map(([childId]) => childId)];
       const subtreeNodes = newNodesRef.current.filter(n => subtreeNodeIds.includes(n.id));
@@ -548,6 +560,7 @@ const KPIDiagram = () => {
   };
   const simulate =  async () =>{
     // console.log(newNodesRef.current);
+    setLoading(true);
     const updatedNodes = [];
     for(let node of newNodesRef.current)
     {
@@ -579,6 +592,8 @@ const KPIDiagram = () => {
 
     }
     setNodes(updatedNodes);
+    setLoading(false);
+
 
   }
   const loadRoot = async (restart = false) => {
@@ -591,7 +606,9 @@ const KPIDiagram = () => {
     // console.log("Restarting diagram...");
     const root = await fetchNode(Source, modulType, basesRef);
     if (!root) return;
-    
+    if(root.childrenLimit)
+      chilLimit.current = root.childrenLimit;
+    // console.log(chilLimit.current);
     const rootId = root.parentId || 'Rind';
     // console.log("Adding root node:", rootId);
     newNodesRef.current.push({
@@ -639,8 +656,28 @@ const KPIDiagram = () => {
       >
         <Background />
         <Controls />
-        {modulType === "simulation" && (<><button className='absolute left-5 top-5 bg-blue-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={()=>{simulate()} }>simulate</button>
-        <button className='absolute left-36 top-5 bg-red-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={handleReset}>reset</button></>)}
+        <div className="absolute w-[40rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500">
+          {["Élément comptable", "Ratio", "Simulation"].map((label, index) => (
+            <button
+              key={index}
+              className="text-white px-5 py-2 rounded-md transition-all duration-200 hover:bg-slate-500 hover:scale-105 active:scale-95"
+              onClick={()=>{setModelType(label.toLowerCase()); if(label === "Élément comptable") setSource('ECBA'); if (reactFlowInstance.current) {
+                reactFlowInstance.current.setViewport({x: -reactFlowWrapper.current.clientWidth / 2 + 190 , y: reactFlowWrapper.current.clientHeight / 2 - 182 , zoom : 2});
+                // reactFlowInstance.current.fitView({padding : 0.4})
+              }}}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {modulType === "simulation" && (<><button className='absolute left-5 top-20 bg-blue-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={()=>{simulate()} }>simulate</button>
+        <button className='absolute left-36 top-20 bg-red-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={handleReset}>reset</button></>)}
+        {loading && (
+          <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center z-50">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-white"></div>
+            <p className="text-white mt-4 text-lg font-medium">Chargement des éléments...</p>
+          </div>
+        )}
 
       </ReactFlow>
     </div>
