@@ -664,7 +664,7 @@ const KPIDiagram = () => {
             <button
               key={index}
               className="text-white px-5 py-2 rounded-md transition-all duration-200 hover:bg-slate-500 hover:scale-105 active:scale-95"
-              onClick={()=>{setModelType(label.toLowerCase()); if(label === "Élément comptable") setSource('ECBA'); if (reactFlowInstance.current) {
+              onClick={()=>{setModelType(label.toLowerCase()); if(label === "Élément comptable") setSource('ECBA'); else setSource('Rind'); if (reactFlowInstance.current) {
                 reactFlowInstance.current.setViewport({x: -reactFlowWrapper.current.clientWidth / 2 + 190 , y: reactFlowWrapper.current.clientHeight / 2 - 182 , zoom : 2});
                 // reactFlowInstance.current.fitView({padding : 0.4})
               }}}
