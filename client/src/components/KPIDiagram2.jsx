@@ -119,29 +119,29 @@ return (
         }))}
         {!data.Type && (<CollapsibleField label={"Écart du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' ? Number(((fields[2].value / fields[1].value) - 1).toFixed(3)).toString(): "-"} isFirst={true} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
             
-            {editing && data.category === "Elément de base" ? (
-             <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
-             <span>Nouveau solde:</span>
-             <input
-               type="number"
-               defaultValue=""
-               ref={inputRef}
-               onBlur={handleSave}
-               onKeyDown={(e) => e.key === "Enter" && handleSave()}
-               className="w-20 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1"
-               autoFocus
-             />
-           </div>
-            ) : (
-              <>
-             <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
-                {data.Type !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : fields[2].value} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
-                {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
-                  <Pencil size={14} className="absolute bottom-6 right-14 text-gray-500 hover:text-gray-700" />
-                </button>)}
-                </div>
-              </>
-            )}
+          {editing && data.category === "Elément de base" ? (
+              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
+              <span>Nouveau solde:</span>
+              <input
+                type="number"
+                defaultValue=""
+                ref={inputRef}
+                onBlur={handleSave}
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                className="w-24 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1"
+                autoFocus
+              />
+            </div>
+              ) : (
+                <>
+              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
+                  {data.Type !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : fields[2].value} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
+                  {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
+                    <Pencil size={14} className="absolute bottom-11 right-10 text-gray-500 hover:text-gray-700" />
+                  </button>)}
+                  </div>
+                </>
+              )}
       
       <div className="text-base text-gray-700">{data.label}</div>
       {/* {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
