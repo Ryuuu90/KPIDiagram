@@ -1,21 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState , memo} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
   useNodesState,
-  useReactFlow, 
+  useReactFlow,
   useEdgesState,
   Handle,
   Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { Pencil } from "lucide-react";
 import axios from 'axios';
-import ReactDOM from 'react-dom';
-import numeral, { validate } from "numeral";
-import { Pencil } from "lucide-react"; 
-
-// CustomNode component
-// import { motion, AnimatePresence } from 'framer-motion';
 import { motion } from 'framer-motion';
 import './KPIDiagram.css'
 
@@ -23,7 +18,6 @@ const URL = process.env.REACT_APP_BACKEND_URL;
 
 
 const HoverNode = ({ data }) => (
-
   <div className="tooltip-box ">
    {/* <div className="font-semibold text-amber-400 mb-1">nodeID: {data.id}</div> */}
     <div className="text-white mb-3 "><span className="font-semibold text-amber-300">Interprétation</span> : {data.interpretation}</div>
@@ -31,7 +25,6 @@ const HoverNode = ({ data }) => (
     <div className="text-white"><span className="font-semibold text-amber-300">Exemple</span> : {data.example}</div>
   </div>
 );
-
 
 const CollapsibleField = ({ label, value, isFirst, modulType, category, newSold}) => {
   const isReactNode = React.isValidElement(value);
@@ -70,40 +63,32 @@ const SimulationCard = memo(({ data, basesRef, modulType}) => {
   const [editingSold, setEditingSold] = useState(false)
   const [value, setValue] = useState("-");
   const inputRef = useRef(null);
-  // const SourceArrays = {"rasio" : ['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'] , "élément comptable" : ['ECBA', 'ECBP', 'ECPC', 'ESG']};
+  
   const handleSave = () => {
     console.log(inputRef.current.value)
     if (inputRef.current) {
       const val = inputRef.current.value;
       if(val.length > 12)
         return;
-      // if(!basesRef.current[data.parentId])
       basesRef.current[data.parentId] = val;
       setEditing(false)
       setEditingSold(true)
-      setValue(val); // update state or do something
+      setValue(val);
     }
   };
-  // const infoRef = useRef(null);
 
   const fields = [
-    // { label: 'Item', value: data.eleType },
     {
       label: 'Designation',
       value: data.nameFr
     },
-    // ...(data.eleType === "Rasio" ? [{ label: 'Typeologie', value: data.typology }] : []),
-    // ...(data.eleType === "Rasio" ? [{ label: 'Famille du Rasio', value: data.category }] : []),
     { label: 'Valeur du solde', value: data.SoldeValue,},
     {label : 'Nouveau solde', value: data.newSold !== null ? data.newSold : '-'}
-    // {label : "ancienne valeur d'un ratio", value: data.newSold ? String(data.newSold).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '-'}
-
   ];
 
   
 return (
   <motion.div
-    // onMouseEnter={() => setClicked(true)}
     onMouseLeave={() => setClicked(false)}
     initial={{ opacity: 0, scale: 0.98 }}
     animate={{ opacity: 1, scale: 1 }}
@@ -111,12 +96,9 @@ return (
     transition={{ duration: 0.2 }}
     className={`relative ${data.Type === "Source" ? "w-[250px] grid grid-cols-1" : "w-[300px] grid grid-cols-2" }  bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
-    {data.Type === "Source" && (<select value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
-
-      {/* <option key={"value"} value={""}>{""}</option> */}
+    {data.Type === "Source" && (<select className='w-14' value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
       {['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'].map(key => 
             <option key={key} value={key}>{key}</option>)}
-
     </select>)}
     <Handle type="target" position={Position.Left} className="opacity-0" />
 
@@ -136,8 +118,7 @@ return (
         </div>)
         }))}
         {!data.Type && (<CollapsibleField label={"Écart du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' ? Number(((fields[2].value / fields[1].value) - 1).toFixed(3)).toString(): "-"} isFirst={true} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
-          {/* <div className={`absolute ${data.newSold && data.category !== "Elément de base" ? "bottom-[1.45rem] right-[3.3rem]" : "bottom-[1.45rem] right-5"}  flex items-center space-x-1`}> */}
-            {/* {data.category === "Elément de base" && data.newSold && (setEditing(false))} */}
+            
             {editing && data.category === "Elément de base" ? (
              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
              <span>Nouveau solde:</span>
@@ -153,7 +134,6 @@ return (
            </div>
             ) : (
               <>
-
              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
                 {data.Type !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : fields[2].value} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
                 {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
@@ -162,10 +142,9 @@ return (
                 </div>
               </>
             )}
-          {/* </div> */}
       
       <div className="text-base text-gray-700">{data.label}</div>
-      {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)}
+      {/* {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
       {data.hasChildren && (
         <button
           onClick={data.onDrill}
@@ -180,19 +159,13 @@ return (
   );
 });
 
-// --- Custom node ---
 const CustomNode = memo(({ data, basesRef, modulType}) => {
   const [Clicked, setClicked] = useState(false);
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
-  // const infoRef = useRef(null);
   const SourceArrays = {"ratio" : ['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'] , "élément comptable" : ['ECBA', 'ECBP', 'ECPC', 'ESG']};
 
-
   const fields = [
-    // { label: 'Item', value: data.eleType },
-    // ...(data.eleType === "Rasio" ? [{ label: 'Typeologie', value: data.typology }] : []),
-    // ...(data.eleType === "Rasio" ? [{ label: 'Famille du Rasio', value: data.category }] : []),
     {
       label: 'Designation',
       value: (
@@ -210,7 +183,6 @@ const CustomNode = memo(({ data, basesRef, modulType}) => {
   
 return (
   <motion.div
-    // onMouseEnter={() => setClicked(true)}
     onMouseLeave={() => setClicked(false)}
     initial={{ opacity: 0, scale: 0.98 }}
     animate={{ opacity: 1, scale: 1 }}
@@ -219,15 +191,11 @@ return (
     className={`relative ${data.Type === "Source" ? "w-[250px]" : modulType === "simulation" && (data.category === "Elément de base")? "w-[450px] grid grid-cols-2 " : data.newSold && data.category !== "Elément de base" ? "w-[520px] grid grid-cols-2 "  :"w-[400px] grid grid-cols-2 "} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
     {data.Type === "Source" && (<select value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
-
-      {/* <option key={"value"} value={""}>{""}</option> */}
       {SourceArrays[modulType].map(key => 
             <option key={key} value={key}>{key}</option>)}
-
     </select>)}
     <Handle type="target" position={Position.Left} className="opacity-0" />
 
-    {/* Tooltip */}
     <div className={`absolute ${data.eleType === "Rasio" ? " bg-orange-300" : " bg-blue-300"} -top-[0.9rem]  right-1/2 w-20 text-xl font-bold rounded text-center transform  -translate-y-1/2 translate-x-1/2`}> {data.parentId}</div>
     {data.interpretation && data.recommandations && data.example &&(<button className='absolute  right-2 top-2 bg-yellow-100 text-yellow-700 w-10 rounded h-6 text-center' onClick={()=> setClicked(true)}>info</button>)}
     {Clicked && (
@@ -248,7 +216,6 @@ return (
         }))}
      
       <div className="text-base text-gray-700">{data.label}</div>
-      {/* {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
       {data.hasChildren && (
         <button
           onClick={data.onDrill}
@@ -264,8 +231,8 @@ return (
 });
 
 const defaultEdgeOptions = {
-  // animated: true,
   type: 'smoothstep',
+  style: { strokeWidth: 2 }
 };
 
 const KPIDiagram = () => {
@@ -273,375 +240,375 @@ const KPIDiagram = () => {
   const [level, setLevel] = useState(0);
   const newNodesRef = useRef([]);
   const edgesRef = useRef([]);
-  const expandedNodesRef = useRef(new Set()); // Track expanded nodes
+  const expandedNodesRef = useRef(new Set());
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef(null);
   const basesRef = useRef({});
   const chilLimit = useRef('');
   const [loading, setLoading] = useState(false);
-
-  const [modulType , setModelType] = useState("simulation")
-  // const [restart, setRestart] = useState(false);
-  // const [resetNewSold, setResetNewSold] = useState(false);
+  const [modulType, setModelType] = useState("simulation");
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  
   const nodeTypes = useMemo(() => ({
     customNode: (props) => {
-      if(modulType === "simulation")
-        return (<SimulationCard
-          {...props}
-          // setSource={setSource}
-          // Source={Source}
-          basesRef={basesRef}
-          modulType={modulType}
-        />)
-      else
-        return (<CustomNode
-          {...props}
-          // setSource={setSource}
-          // Source={Source}
-          basesRef={basesRef}
-          modulType={modulType}
-        />)
+      if (modulType === "simulation") {
+        return <SimulationCard {...props} basesRef={basesRef} modulType={modulType} />;
+      } else {
+        return <CustomNode {...props} basesRef={basesRef} modulType={modulType} />;
+      }
     }
   }), [basesRef, modulType]);
-  
 
-  const handleReset = async () => {
-    try {
-      await axios.get(`${URL}/api/reset/`);
-      basesRef.current = {};  // Clear simulation values
-      loadRoot(true);
-    } catch (error) {
-      console.error(error.message);
-    }
-  };
+  // Enhanced tree layout positioning algorithm
+  const calculateTreeLayout = useCallback(() => {
+    const nodeMap = new Map(newNodesRef.current.map(node => [node.id, node]));
+    const visitedNodes = new Set();
+    const horizontalSpacing = modulType !== "simulation" ? 500 : 500;
+    const verticalSpacing = modulType !== "simulation" ? 350 : 250;
 
-  // useEffect( ()=>{
+    const positionSubtree = (nodeId, x, y, level = 0) => {
+      if (visitedNodes.has(nodeId)) return { width: 0, height: 0 };
+      
+      const node = nodeMap.get(nodeId);
+      if (!node) return { width: 0, height: 0 };
+
+      visitedNodes.add(nodeId);
+      
+      // Get children of this node
+      const children = edgesRef.current
+        .filter(edge => edge.source === nodeId)
+        .map(edge => edge.target)
+        .filter(childId => nodeMap.has(childId));
+
+      if (children.length === 0) {
+        // Leaf node
+        node.position = { x, y };
+        return { width: horizontalSpacing, height: verticalSpacing };
+      }
+
+      // Calculate positions for children
+      let totalChildHeight = 0;
+      const childHeights = [];
+      
+      // First pass: calculate how much space each child subtree needs
+      for (const childId of children) {
+        const childHeight = positionSubtree(childId, x + horizontalSpacing, y + totalChildHeight, level + 1);
+        childHeights.push(childHeight.height);
+        totalChildHeight += childHeight.height;
+      }
+
+      // Position the parent node in the center of its children
+      const parentY = y + (totalChildHeight - verticalSpacing) / 2;
+      node.position = { x, y: parentY };
+
+      return { width: horizontalSpacing, height: Math.max(totalChildHeight, verticalSpacing) };
+    };
+
+    // Find root nodes (nodes with no incoming edges)
+    const rootNodes = newNodesRef.current.filter(node => 
+      !edgesRef.current.some(edge => edge.target === node.id)
+    );
+
+    let currentY = 0;
+    rootNodes.forEach(rootNode => {
+      const subtreeSize = positionSubtree(rootNode.id, 50, currentY, 0);
+      currentY += subtreeSize.height + 100; // Add spacing between root trees
+    });
+  }, [modulType]);
+
+  // Enhanced camera positioning function
+  const focusOnNodeAndChildren = useCallback((parentNodeId) => {
+    if (!reactFlowInstance.current) return;
+
+    const parentNode = newNodesRef.current.find(n => n.id === parentNodeId);
+    if (!parentNode) return;
+
+    // Get all children nodes
+    const childrenIds = edgesRef.current
+      .filter(edge => edge.source === parentNodeId)
+      .map(edge => edge.target);
     
-  //     const saveToDb = async ()=>{
-  //       try{
-  //         const result = await axios.get(`http://localhost:8000/api/data2/`);
-  //         console.log(result);
-  //       }
-  //       catch (error)
-  //       {
-  //         console.log(error);
-  //       }
-  //     } 
-  //     saveToDb();
-   
-  // }, [])
+    const childrenNodes = newNodesRef.current.filter(n => childrenIds.includes(n.id));
+    const allNodes = [parentNode, ...childrenNodes];
+
+    if (allNodes.length === 0) return;
+
+    // Calculate bounding box of parent and all children
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    
+    allNodes.forEach(node => {
+      const nodeWidth = modulType === "simulation" ? 300 : 400;
+      const nodeHeight = modulType === "simulation" ? 200 : 250;
+      
+      minX = Math.min(minX, node.position.x);
+      maxX = Math.max(maxX, node.position.x + nodeWidth);
+      minY = Math.min(minY, node.position.y);
+      maxY = Math.max(maxY, node.position.y + nodeHeight);
+    });
+
+    // Add padding around the bounding box
+    const padding = 100;
+    minX -= padding;
+    maxX += padding;
+    minY -= padding;
+    maxY += padding;
+
+    // Calculate the center and dimensions
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const width = maxX - minX;
+    const height = maxY - minY;
+
+    // Get viewport dimensions
+    const viewportWidth = reactFlowWrapper.current.clientWidth;
+    const viewportHeight = reactFlowWrapper.current.clientHeight;
+
+    // Calculate zoom to fit all nodes with some padding
+    const zoomX = viewportWidth / width;
+    const zoomY = viewportHeight / height;
+    const zoom = Math.min(zoomX, zoomY, 1.5); // Cap at 1.5x zoom
+
+    // Calculate viewport position to center the nodes
+    const x = viewportWidth / 2 - centerX * zoom;
+    const y = viewportHeight / 2 - centerY * zoom;
+
+    // Animate to the new viewport
+    reactFlowInstance.current.setViewport(
+      { x, y, zoom },
+      { duration: 800 }
+    );
+  }, [modulType]);
+
   const fetchNode = async (nodeId, modulType, basesRef) => {
     try {
-      // if(node)
-      const res = await axios.post(`${URL}/api/node2/${nodeId}`, {modulType : modulType, basesRef : basesRef.current});
+      const res = await axios.post(`${URL}/api/node2/${nodeId}`, {
+        modulType: modulType, 
+        basesRef: basesRef.current
+      });
       return res.data.node;
     } catch (error) {
       console.error('Error fetching node:', error);
       return null;
     }
   };
-  const removeDescendants = (parentId) => {
+
+  const removeDescendants = useCallback((parentId) => {
     const toRemove = new Set();
-    
     const stack = [parentId];
     
     while (stack.length > 0) {
       const current = stack.pop();
-    
       const children = edgesRef.current
-      .filter(e => e.source === current)
-      .map(e => e.target);
+        .filter(e => e.source === current)
+        .map(e => e.target);
       
       for (const childId of children) {
-        let otherParents = edgesRef.current.filter(
+        // Check if this child has other parents that are not being removed
+        const otherParents = edgesRef.current.filter(
           e => e.target === childId && e.source !== current
         );
-        otherParents = otherParents.filter(par =>{
+        
+        // Filter out parents that are descendants of the current removal
+        const validParents = otherParents.filter(par => {
           let source = par.source;
-          while(true)
-          {
+          while (source) {
             const parentEdge = edgesRef.current.find(e => e.target === source);
-            if(!parentEdge)
-              return true;
+            if (!parentEdge) return true;
+            if (source === current || toRemove.has(source)) return false;
             source = parentEdge.source;
-            if(source === current)
-                return false;
           }
-        })
-        if (otherParents.length === 0) {
+          return true;
+        });
+        
+        if (validParents.length === 0) {
           stack.push(childId);
           toRemove.add(childId);
         }
-        
       }
     }
+    
+    // Remove nodes and edges
     newNodesRef.current = newNodesRef.current.filter(n => !toRemove.has(n.id));
     edgesRef.current = edgesRef.current.filter(
       e => !toRemove.has(e.source) && !toRemove.has(e.target)
     );
-  
-    expandedNodesRef.current.delete(parentId);
 
+    // Update parent node state
+    expandedNodesRef.current.delete(parentId);
     newNodesRef.current = newNodesRef.current.map(n =>
       n.id === parentId ? { ...n, data: { ...n.data, expanded: false } } : n
     );
-  };
 
-  const computeBounds = (nodes) => {
-    if (nodes.length === 0) return null;
-    let minX = nodes[0].position.x;
-    let minY = nodes[0].position.y;
-    let maxX = nodes[0].position.x;
-    let maxY = nodes[0].position.y;
+    // Recalculate layout
+    calculateTreeLayout();
+  }, [calculateTreeLayout]);
 
-    nodes.forEach(({ position, style }) => {
-      const width = (style?.width ?? 180); 
-      const height = (style?.height ?? 1000); 
-
-      minX = Math.min(minX, position.x);
-      minY = Math.min(minY, position.y);
-      maxX = Math.max(maxX, position.x + width);
-      maxY = Math.max(maxY, position.y + height);
-    });
-
-    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-  };
-
-  
   const handleDrill = useCallback(
     async (nodeId, isRoot = false, modulType, basesRef) => {
       const isExpanded = expandedNodesRef.current.has(nodeId);
-  
+      
       if (isExpanded) {
         removeDescendants(nodeId);
-        setNodes(newNodesRef.current);
-        setEdges(edgesRef.current);
+        setNodes([...newNodesRef.current]);
+        setEdges([...edgesRef.current]);
+        
+        // Focus on the collapsed parent node
+        setTimeout(() => {
+          focusOnNodeAndChildren(nodeId);
+        }, 100);
+        
         return;
       }
-  
+
       const node = await fetchNode(nodeId, modulType, basesRef);
       if (!node || !node.childrenData || chilLimit.current.includes(node.parentId)) return;
-
-      // console.log();
       
-      // const reportName = node.reportName;
-      // const nextLevel = level + 1;
       const entries = Object.entries(node.childrenData);
-      const totalChildren = entries.length;
-  
-      const parentNode = newNodesRef.current.find((n) => n.id === nodeId);
-      const baseX = isRoot ? parentNode?.position?.x + 400 : parentNode?.position?.x + 1000;
-      const verticalSpacing =modulType !== "simulation" ? 300 : 200;
-
-      let startY = 0;
-      function hashString(str) {
-        let hash = 5381;
-        for (let i = 0; i < str.length; i++) {
-          hash = ((hash << 5) + hash) + str.charCodeAt(i); // hash * 33 + c
-          hash = hash & 0xffffffff; // force to 32-bit integer
-        }
-        return hash >>> 0; // force unsigned
-      }
       
-      function generateColorFromId(id, index) {
-        const saltedId = index + '-' + id; // add index to create more spread
-        const hash = hashString(saltedId);
-        const scrambled = (hash * 2654435761) >>> 0;
-        const rawHue = scrambled % 360;
-        
-        const step = 30;
-        const hue = Math.round(rawHue / step) * step;
-        
+      function generateColorFromId(id) {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+          hash = ((hash << 5) - hash) + id.charCodeAt(i);
+          hash = hash & hash;
+        }
+        const hue = Math.abs(hash) % 360;
         return `hsl(${hue}, 70%, 60%)`;
       }
       
-      
-      
-      
-      function groupBounds(yStart) {
-        const firstChildY = yStart;
-        const lastChildY = yStart + (totalChildren - 1) * verticalSpacing;
-        const nodeHeight = 200;
-        return { top: firstChildY, bottom: lastChildY + nodeHeight };
-      }
-
-      const existingNodes = newNodesRef.current;
-      function isOverlapping(yStart, yEnd) {
-        return existingNodes.some(({ position, style }) => {
-          const nodeHeight = style?.height ?? 80;
-          const nodeYStart = position.y;
-          const nodeYEnd = nodeYStart + nodeHeight;
-          return !(yEnd < nodeYStart || yStart > nodeYEnd);
-        });
-      }
-  
-      let yOffset = 0;
-      while (isOverlapping(groupBounds(startY + yOffset).top, groupBounds(startY + yOffset).bottom)) {
-        yOffset += verticalSpacing;
-      }
-      startY += yOffset;
-  
+      // Add children nodes and edges
       entries.forEach(([childId, childLabel], index) => {
-        const childY = startY + index * verticalSpacing;
-  
         edgesRef.current.push({
           id: `e-${nodeId}-${childId}`,
           source: nodeId,
-          sourceHandle: 'a',
           target: childId,
-          targetHandle: 'a',
           style: {
             stroke: generateColorFromId(nodeId),
             strokeWidth: 2,
           },
+          animated: false
         });
-        // console.log(root)
         
         newNodesRef.current.push({
           id: childId,
           type: 'customNode',
-          position: { x: baseX, y: childY },
+          position: { x: 0, y: 0 }, // Will be calculated by layout
           data: {
-            // label: childLabel.label,
             id: childId,
-            // reportName: reportName,
             ...childLabel,
-            sign : childLabel.childSign,
+            sign: childLabel.childSign,
             expanded: false,
-            onDrill: () => handleDrill(childId,false, modulType, basesRef),
+            onDrill: () => handleDrill(childId, false, modulType, basesRef),
             Source,          
             setSource, 
           },
         });
       });
-  
+
       expandedNodesRef.current.add(nodeId);
       newNodesRef.current = newNodesRef.current.map(n =>
         n.id === nodeId
-          ? {
-              ...n,
-              data: { ...n.data, expanded: true },
-            }
+          ? { ...n, data: { ...n.data, expanded: true } }
           : n
       );
 
+      // Calculate new layout
+      calculateTreeLayout();
+
       const uniqueNodes = Array.from(new Map(newNodesRef.current.map((n) => [n.id, n])).values());
       const uniqueEdges = Array.from(new Map(edgesRef.current.map((e) => [e.id, e])).values());
-  
+
       setNodes(uniqueNodes);
       setEdges(uniqueEdges);
-  
-      const subtreeNodeIds = [nodeId, ...entries.map(([childId]) => childId)];
-      const subtreeNodes = newNodesRef.current.filter(n => subtreeNodeIds.includes(n.id));
-      const bounds = computeBounds(subtreeNodes);
-  
-      if (bounds && reactFlowInstance.current) {
-        reactFlowInstance.current.fitBounds(bounds, {
-          padding: 0.4,
-          maxZoom: 1.5,
-        });
-      }
+
+      // Focus camera on the expanded parent and its children
+      setTimeout(() => {
+        focusOnNodeAndChildren(nodeId);
+      }, 100);
     },
-    [level, reactFlowInstance]
+    [level, calculateTreeLayout, removeDescendants, Source, focusOnNodeAndChildren]
   );
-  
+
   const onInit = useCallback((rfi) => {
     reactFlowInstance.current = rfi;
   }, []);
 
-  const fitViewWithDelay = () => {
-    setTimeout(() => {
-      if (reactFlowInstance.current) {
-        reactFlowInstance.current.fitView({ padding: 0.2 });
-      }
-    }, 100);
-  };
-  const simulate =  async () =>{
-    // console.log(newNodesRef.current);
+  const simulate = async () => {
     setLoading(true);
     const updatedNodes = [];
-    for(let node of newNodesRef.current)
-    {
-      // console.log(node);
+    for (let node of newNodesRef.current) {
       const newNode = await fetchNode(node.id, modulType, basesRef);
       updatedNodes.push({
         ...node,
-        position: node.position, // keep original
-        data: {...node.data ,...newNode} // merge only data
+        position: node.position,
+        data: { ...node.data, ...newNode }
       });
-      // console.log(node);
-      // newNodesRef.current.push({
-      //   id: rootId,
-      //   type: 'customNode',
-      //   position: { x: 500, y: 50 },
-      //   data: {
-      //     label: root.nameFr || 'Root Node',
-      //     id: rootId,
-      //     hasChildren: true,
-      //     Type : root.eleType,
-      //     childrenNum : Object.entries(root.childrenData).length,
-      //     expanded: false,
-      //     onDrill: () => handleDrill(rootId, true, modulType, basesRef),
-      //     Source,          
-      //     setSource, 
-  
-      //   },
-      // });
-
     }
     setNodes(updatedNodes);
     setLoading(false);
+  };
 
+  const handleReset = async () => {
+    try {
+      await axios.get(`${URL}/api/reset/`);
+      basesRef.current = {};
+      loadRoot(true);
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
 
-  }
   const loadRoot = async (restart = false) => {
     newNodesRef.current = [];
     edgesRef.current = [];
     expandedNodesRef.current.clear();
     setEdges([]);
     setNodes([]);
-    // setLevel(0);
-    // console.log("Restarting diagram...");
+    
     const root = await fetchNode(Source, modulType, basesRef);
     if (!root) return;
-    if(root.childrenLimit)
+    
+    if (root.childrenLimit) {
       chilLimit.current = root.childrenLimit;
-    // console.log(chilLimit.current);
-    const rootId = root.parentId || 'Rind';
-    // console.log("Adding root node:", rootId);
+    }
+    
+    const rootId = root.parentId || Source;
+    console.log(root);
+
     newNodesRef.current.push({
       id: rootId,
       type: 'customNode',
-      position: { x: 500, y: 50 },
+      position: { x: 50, y: 200 },
       data: {
         label: root.nameFr || 'Root Node',
         id: rootId,
         hasChildren: true,
-        Type : root.eleType,
-        childrenNum : Object.entries(root.childrenData).length,
+        Type: root.eleType,
+        childrenNum: Object.entries(root.childrenData || {}).length,
         expanded: false,
         onDrill: () => handleDrill(rootId, true, modulType, basesRef),
         Source,          
-        setSource, 
-
+        setSource,
       },
     });
-    setNodes(newNodesRef.current);
-    if (reactFlowInstance.current && restart) {
-      reactFlowInstance.current.setViewport({x: -reactFlowWrapper.current.clientWidth / 2 + 190 , y: reactFlowWrapper.current.clientHeight / 2 - 182 , zoom : 2});
-      // reactFlowInstance.current.fitView({padding : 0.4})
-    }
     
+    setNodes(newNodesRef.current);
+    
+    if (reactFlowInstance.current) {
+      setTimeout(() => {
+        reactFlowInstance.current.fitView({ 
+          padding: 0.4,
+          includeHiddenNodes: false,
+          maxZoom: 2,
+          duration: restart ? 500 : 0
+        });
+      }, 100);
+    }
   };
 
   useEffect(() => {
-    // console.log(Source);
-      loadRoot();
+    loadRoot();
   }, [Source, modulType]);
 
   return (
@@ -659,29 +626,62 @@ const KPIDiagram = () => {
       >
         <Background />
         <Controls />
-        <div className="absolute w-[40rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500">
+        
+        {/* Mode Selection Bar */}
+        <div className="absolute w-[40rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500 top-4">
           {["Élément comptable", "Ratio", "Simulation"].map((label, index) => (
             <button
               key={index}
-              className="text-white px-5 py-2 rounded-md transition-all duration-200 hover:bg-slate-500 hover:scale-105 active:scale-95"
-              onClick={()=>{setModelType(label.toLowerCase()); if(label === "Élément comptable") setSource('ECBA'); else setSource('Rind'); if (reactFlowInstance.current) {
-                reactFlowInstance.current.setViewport({x: -reactFlowWrapper.current.clientWidth / 2 + 190 , y: reactFlowWrapper.current.clientHeight / 2 - 182 , zoom : 2});
-                // reactFlowInstance.current.fitView({padding : 0.4})
-              }}}
+              className={`text-white px-5 py-2 rounded-md transition-all duration-200 hover:bg-slate-500 hover:scale-105 active:scale-95 ${
+                modulType === label.toLowerCase() ? 'bg-slate-500' : ''
+              }`}
+              onClick={() => {
+                setModelType(label.toLowerCase()); 
+                if (label === "Élément comptable") {
+                  setSource('ECBA'); 
+                } else {
+                  setSource('Rind'); 
+                }
+                if (reactFlowInstance.current) {
+                  reactFlowInstance.current.setViewport({
+                    x: -reactFlowWrapper.current.clientWidth / 2 + 190,
+                    y: reactFlowWrapper.current.clientHeight / 2 - 182,
+                    zoom: 2
+                  });
+                }
+              }}
             >
               {label}
             </button>
           ))}
         </div>
-        {modulType === "simulation" && (<><button className='absolute left-5 top-20 bg-blue-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={()=>{simulate()} }>simulate</button>
-        <button className='absolute left-36 top-20 bg-red-300 w-24 h-8 text-slate-50 rounded-md z-50' onClick={handleReset}>reset</button></>)}
+
+        {/* Simulation Controls */}
+        {modulType === "simulation" && (
+          <div className="absolute left-5 top-20 flex gap-2 z-50">
+            <button 
+              className='bg-blue-500 hover:bg-blue-600 w-24 h-8 text-white rounded-md transition-colors duration-200' 
+              onClick={simulate}
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Simulate'}
+            </button>
+            <button 
+              className='bg-red-500 hover:bg-red-600 w-24 h-8 text-white rounded-md transition-colors duration-200' 
+              onClick={handleReset}
+            >
+              Reset
+            </button>
+          </div>
+        )}
+
+        {/* Loading Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center z-50">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-white"></div>
             <p className="text-white mt-4 text-lg font-medium">Chargement des éléments...</p>
           </div>
         )}
-
       </ReactFlow>
     </div>
   );
