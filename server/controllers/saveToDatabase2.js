@@ -42,7 +42,7 @@ exports.saveToDatabase2  = async (req, res) =>{
                     }
                 }
             }
-            else if(eleType === 'Rasio')
+            else if(eleType === 'Ratio')
                 childrenIds = [...new Set(formula.match(/EC\d+|R\d{2}/g) || [])];
             else
                 childrenIds = formula.split(/[.]/);

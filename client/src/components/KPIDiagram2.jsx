@@ -13,16 +13,20 @@ import { Pencil } from "lucide-react";
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import './KPIDiagram.css'
+import Elements from './Elements';
+import finansiaLogo from '../public/finansia-logo.jpeg';
+
+
 
 const URL = process.env.REACT_APP_BACKEND_URL;
 
-
+// Mock axios for demo purposes
 const HoverNode = ({ data }) => (
-  <div className="tooltip-box ">
+  <div className={`tooltip-box ${data.eleType === 'EC' ? "bg-blue-600" : "bg-orange-600"}` }>
    {/* <div className="font-semibold text-amber-400 mb-1">nodeID: {data.id}</div> */}
-    <div className="text-white mb-3 "><span className="font-semibold text-amber-300">Interprétation</span> : {data.interpretation}</div>
-    <div className="text-white mb-3"><span className="font-semibold text-amber-300">Recommandations</span> : {data.recommandations}</div>
-    <div className="text-white"><span className="font-semibold text-amber-300">Exemple</span> : {data.example}</div>
+    <div className="text-white mb-3 "><span className={`font-semibold ${data.eleType === 'EC' ? " text-amber-400" : " text-amber-200"}`}>Interprétation</span> : {data.interpretation}</div>
+    <div className="text-white mb-3"><span className={`font-semibold ${data.eleType === 'EC' ? " text-amber-400" : " text-amber-200"}`}>Recommandations</span> : {data.recommandations}</div>
+    <div className="text-white"><span className={`font-semibold ${data.eleType === 'EC' ? " text-amber-400" : " text-amber-200"}`}>Exemple</span> : {data.example}</div>
   </div>
 );
 
@@ -60,6 +64,8 @@ const CollapsibleField = ({ label, value, isFirst, modulType, category, newSold}
 const SimulationCard = memo(({ data, basesRef, modulType}) => {
   const [Clicked, setClicked] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [query, setQuery] = useState("");
+
   const [editingSold, setEditingSold] = useState(false)
   const [value, setValue] = useState("-");
   const inputRef = useRef(null);
@@ -86,7 +92,33 @@ const SimulationCard = memo(({ data, basesRef, modulType}) => {
     {label : 'Nouveau solde', value: data.newSold !== null ? data.newSold : '-'}
   ];
 
-  
+
+const getFiltredItemms = () =>
+{
+
+  if(!query)
+    return [];
+  return Elements.filter(elem => elem.nameFr.toLowerCase().includes(query.toLowerCase()));
+}
+
+const filteredData = getFiltredItemms();
+// console.log(filteredData);
+
+const handleInputFocus = (e) =>{
+
+  if(e.code === 'Enter')
+  {
+    const source = Elements.find(elem => elem.nameFr.toLowerCase() === query.toLowerCase());
+    if(!source)
+      return;
+    else
+    {
+      console.log(source.id);
+      data.setSource(source.id);
+    }
+  }
+}
+
 return (
   <motion.div
     onMouseLeave={() => setClicked(false)}
@@ -94,16 +126,43 @@ return (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.98 }}
     transition={{ duration: 0.2 }}
-    className={`relative ${data.Type === "Source" ? "w-[250px] grid grid-cols-1" : "w-[300px] grid grid-cols-2" }  bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
+    className={`relative ${data.eleType === "Source" ? "w-[250px] grid grid-cols-1" : "w-[300px] grid grid-cols-2" }  bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
-    {data.Type === "Source" && (<select className='w-14' value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
+    {data.isRoot && (
+        <div className={` ${data.eleType === 'Source' ? "relative" : "absolute w-[18.7rem] -top-[3.67rem]"} z-10`}>
+          <input 
+            type='text' 
+            className='w-full border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent' 
+            value={query}
+            onChange={(e) => {setQuery(e.target.value)}}
+            placeholder="Search elements"
+            onKeyDown={handleInputFocus}
+          />
+          {filteredData.length > 0 && (
+            <ul 
+              className='search-dropdown'
+            >
+              {filteredData.map((val, i) => (
+                <li 
+                  key={val.nameFr + i}
+                  className='px-3 py-2 border-b border-gray-200 last:border-b-0 hover:bg-gray-100 cursor-pointer transition-colors duration-150 text-gray-800'
+                onClick={()=> data.setSource(val.id)}>
+                  {val.nameFr}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+    {/* {data.Type === "Source" && (<select className='w-14' value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
       {['Rind', 'Rges', 'Rliq', 'Rend', 'Rsol', 'Rren'].map(key => 
             <option key={key} value={key}>{key}</option>)}
-    </select>)}
+    </select>)} */}
     <Handle type="target" position={Position.Left} className="opacity-0" />
 
-    {data.Type !== "Source" && (<div className={`absolute ${data.eleType === "Rasio" ? " bg-orange-300" : " bg-blue-300"} -top-[0.9rem]  right-1/2 w-full text-xl font-bold rounded text-center transform  -translate-y-1/2 translate-x-1/2`}> {data.parentId}</div>)}
-    {data.interpretation && data.recommandations && data.example &&(<button className='absolute  right-2 top-2 bg-yellow-100 text-yellow-700 w-10 rounded h-6 text-center' onClick={()=> setClicked(true)}>info</button>)}
+    {data.eleType !== "Source" && (<div className={`absolute ${data.eleType === "Ratio" ? " bg-orange-300" : " bg-blue-300"} -top-[0.9rem]  right-1/2 w-full text-xl font-bold rounded text-center transform  -translate-y-1/2 translate-x-1/2`}> {data.parentId}</div>)}
+    {data.eleType !== "Source" && data.interpretation && data.recommandations && data.example &&(<button className='absolute  right-2 top-2 bg-yellow-100 text-yellow-700 w-10 rounded h-6 text-center' onClick={()=> setClicked(true)}>info</button>)}
     {Clicked && (
       <div className="absolute bottom-full right-[30px] translate-x-1/2 translate-y-4 mb-3 z-[9999]">
         <HoverNode data={data} />
@@ -111,40 +170,40 @@ return (
       </div>
     )}
 
-      {!data.Type && (fields.map((field, idx) => {
+      {data.eleType !== "Source"  && (fields.map((field, idx) => {
         if(field.label !== "Nouveau solde")
           return(<div key={idx}>
               <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0} modulType={modulType} category={data.category} newSold={data.newSold}/>
         </div>)
         }))}
-        {!data.Type && (<CollapsibleField label={"Écart du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' ? Number(((fields[2].value / fields[1].value) - 1).toFixed(3)).toString(): "-"} isFirst={true} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
+        {data.eleType !== "Source" && (<CollapsibleField label={"Var du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' && fields[1].value !== 0? Number((((fields[2].value / fields[1].value) - 1).toFixed(3)) * 100).toString() + '%': "-"} isFirst={true} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
             
-          {editing && data.category === "Elément de base" ? (
-              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
-              <span>Nouveau solde:</span>
-              <input
-                type="number"
-                defaultValue=""
-                ref={inputRef}
-                onBlur={handleSave}
-                onKeyDown={(e) => e.key === "Enter" && handleSave()}
-                className="w-24 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1"
-                autoFocus
-              />
-            </div>
-              ) : (
-                <>
-              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
-                  {data.Type !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : fields[2].value} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
-                  {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
-                    <Pencil size={14} className="absolute bottom-11 right-10 text-gray-500 hover:text-gray-700" />
-                  </button>)}
-                  </div>
-                </>
-              )}
+            {editing && data.category === "Elément de base" ? (
+             <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
+             <span>Nouveau solde:</span>
+             <input
+               type="number"
+               defaultValue=""
+               ref={inputRef}
+               onBlur={handleSave}
+               onKeyDown={(e) => e.key === "Enter" && handleSave()}
+               className="w-24 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1"
+               autoFocus
+             />
+           </div>
+            ) : (
+              <>
+             <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
+                {data.eleType !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : fields[2].value} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
+                {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
+                  <Pencil size={14} className="absolute bottom-11 right-10 text-gray-500 hover:text-gray-700" />
+                </button>)}
+                </div>
+              </>
+            )}
       
-      <div className="text-base text-gray-700">{data.label}</div>
-      {/* {data.eleType !== "Rasio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
+      {data.eleType === "Source"  && (<div className="text-base text-gray-700">{data.label}</div>)}
+      {/* {data.eleType !== "Ratio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
       {data.hasChildren && (
         <button
           onClick={data.onDrill}
@@ -188,16 +247,16 @@ return (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.98 }}
     transition={{ duration: 0.2 }}
-    className={`relative ${data.Type === "Source" ? "w-[250px]" : modulType === "simulation" && (data.category === "Elément de base")? "w-[450px] grid grid-cols-2 " : data.newSold && data.category !== "Elément de base" ? "w-[520px] grid grid-cols-2 "  :"w-[400px] grid grid-cols-2 "} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
+    className={`relative ${data.eleType === "Source" ? "w-[250px]" : "w-[520px] grid grid-cols-2 "} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
-    {data.Type === "Source" && (<select value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
+    {data.eleType === "Source" && (<select value={data.Source} onChange={(e) => {data.setSource(e.target.value)}}>
       {SourceArrays[modulType].map(key => 
             <option key={key} value={key}>{key}</option>)}
     </select>)}
     <Handle type="target" position={Position.Left} className="opacity-0" />
 
-    <div className={`absolute ${data.eleType === "Rasio" ? " bg-orange-300" : " bg-blue-300"} -top-[0.9rem]  right-1/2 w-20 text-xl font-bold rounded text-center transform  -translate-y-1/2 translate-x-1/2`}> {data.parentId}</div>
-    {data.interpretation && data.recommandations && data.example &&(<button className='absolute  right-2 top-2 bg-yellow-100 text-yellow-700 w-10 rounded h-6 text-center' onClick={()=> setClicked(true)}>info</button>)}
+    <div className={`absolute ${data.eleType === "Ratio" ? " bg-orange-300" : " bg-blue-300"} -top-[0.9rem]  right-1/2 w-20 text-xl font-bold rounded text-center transform  -translate-y-1/2 translate-x-1/2`}> {data.parentId}</div>
+    {data.eleType !== "Source" && data.interpretation  && data.recommandations && data.example &&(<button className='absolute  right-2 top-2 bg-yellow-100 text-yellow-700 w-10 rounded h-6 text-center' onClick={()=> setClicked(true)}>info</button>)}
     {Clicked && (
       <div className="absolute bottom-full right-[30px] translate-x-1/2 translate-y-4 mb-3 z-[9999]">
         <HoverNode data={data} />
@@ -205,7 +264,7 @@ return (
       </div>
     )}
 
-      {!data.Type && (fields.map((field, idx) => {
+      {data.eleType !== "Source" && (fields.map((field, idx) => {
           const isLast = idx === fields.length - 1;
 
           return (
@@ -241,6 +300,8 @@ const KPIDiagram = () => {
   const newNodesRef = useRef([]);
   const edgesRef = useRef([]);
   const expandedNodesRef = useRef(new Set());
+  // NEW: Add expanded nodes array to track and send to API
+  const expandedNodesArrayRef = useRef([]);
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef(null);
   const basesRef = useRef({});
@@ -261,11 +322,26 @@ const KPIDiagram = () => {
     }
   }), [basesRef, modulType]);
 
+  //  useEffect( ()=>{
+    
+  //     const saveToDb = async ()=>{
+  //       try{
+  //         const result = await axios.get(`http://localhost:8000/api/data2/`);
+  //         console.log(result);
+  //       }
+  //       catch (error)
+  //       {
+  //         console.log(error);
+  //       }
+  //     } 
+  //     saveToDb();
+   
+  // }, [])
   // Enhanced tree layout positioning algorithm
   const calculateTreeLayout = useCallback(() => {
     const nodeMap = new Map(newNodesRef.current.map(node => [node.id, node]));
     const visitedNodes = new Set();
-    const horizontalSpacing = modulType !== "simulation" ? 500 : 500;
+    const horizontalSpacing = modulType !== "simulation" ? 700 : 500;
     const verticalSpacing = modulType !== "simulation" ? 350 : 250;
 
     const positionSubtree = (nodeId, x, y, level = 0) => {
@@ -381,11 +457,13 @@ const KPIDiagram = () => {
     );
   }, [modulType]);
 
-  const fetchNode = async (nodeId, modulType, basesRef) => {
+  // MODIFIED: fetchNode function to include expandedNodes
+  const fetchNode = async (nodeId, modulType, basesRef, expandedNodes = []) => {
     try {
       const res = await axios.post(`${URL}/api/node2/${nodeId}`, {
         modulType: modulType, 
-        basesRef: basesRef.current
+        basesRef: basesRef.current,
+        expandedNodes: expandedNodes  // NEW: Send expanded nodes array
       });
       return res.data.node;
     } catch (error) {
@@ -394,6 +472,23 @@ const KPIDiagram = () => {
     }
   };
 
+  const fetchCalculation = async (basesRef, expandedNodes = []) => {
+    try {
+      const expandedArray = expandedNodes.map(node => node.trim())
+      const res = await axios.post(`${URL}/api/calculation`, {
+        // modulType: modulType, 
+        basesRef: basesRef.current,
+        expandedNodes: expandedArray  // NEW: Send expanded nodes array
+      });
+      return res.data;
+    } catch (error) {
+      setLoading(false)
+      console.error('Error fetching node:', error);
+      return null;
+    }
+  };
+
+  // MODIFIED: removeDescendants function to also remove from expandedNodesArrayRef
   const removeDescendants = useCallback((parentId) => {
     const toRemove = new Set();
     const stack = [parentId];
@@ -437,6 +532,11 @@ const KPIDiagram = () => {
 
     // Update parent node state
     expandedNodesRef.current.delete(parentId);
+    
+    // NEW: Remove from expandedNodesArrayRef
+    expandedNodesArrayRef.current = expandedNodesArrayRef.current.filter(nodeId => nodeId !== parentId);
+    console.log('Updated expanded nodes array:', expandedNodesArrayRef.current);
+    
     newNodesRef.current = newNodesRef.current.map(n =>
       n.id === parentId ? { ...n, data: { ...n.data, expanded: false } } : n
     );
@@ -445,6 +545,7 @@ const KPIDiagram = () => {
     calculateTreeLayout();
   }, [calculateTreeLayout]);
 
+  // MODIFIED: handleDrill function to include expandedNodes in fetchNode calls
   const handleDrill = useCallback(
     async (nodeId, isRoot = false, modulType, basesRef) => {
       const isExpanded = expandedNodesRef.current.has(nodeId);
@@ -462,7 +563,10 @@ const KPIDiagram = () => {
         return;
       }
 
-      const node = await fetchNode(nodeId, modulType, basesRef);
+      // NEW: Pass the current expanded nodes array to fetchNode
+      
+     
+      const node = await fetchNode(nodeId, modulType, basesRef, expandedNodesArrayRef.current);
       if (!node || !node.childrenData || chilLimit.current.includes(node.parentId)) return;
       
       const entries = Object.entries(node.childrenData);
@@ -507,6 +611,15 @@ const KPIDiagram = () => {
       });
 
       expandedNodesRef.current.add(nodeId);
+      // console.log(node.childrenIds);
+      
+      if (!expandedNodesArrayRef.current.includes(node.childrenIds)) {
+        expandedNodesArrayRef.current.push(...node.childrenIds);
+        console.log('Added to expanded nodes array:', nodeId);
+        console.log('Current expanded nodes array:', expandedNodesArrayRef.current);
+      }
+      // NEW: Add to expandedNodesArrayRef if not already present
+     
       newNodesRef.current = newNodesRef.current.map(n =>
         n.id === nodeId
           ? { ...n, data: { ...n.data, expanded: true } }
@@ -534,39 +647,52 @@ const KPIDiagram = () => {
     reactFlowInstance.current = rfi;
   }, []);
 
+  // MODIFIED: simulate function to include expandedNodes
   const simulate = async () => {
     setLoading(true);
     const updatedNodes = [];
-    for (let node of newNodesRef.current) {
-      const newNode = await fetchNode(node.id, modulType, basesRef);
-      updatedNodes.push({
-        ...node,
-        position: node.position,
-        data: { ...node.data, ...newNode }
-      });
-    }
-    setNodes(updatedNodes);
+    // for (let node of newNodesRef.current) {
+      const calculation = await fetchCalculation(basesRef, expandedNodesArrayRef.current);
+      console.log(calculation)
+      if(calculation.success)
+      {
+            for (let node of newNodesRef.current) {
+              const newNode = await fetchNode(node.id, modulType, basesRef);
+              updatedNodes.push({
+                ...node,
+                position: node.position,
+                data: { ...node.data, ...newNode }
+              });
+            }
+            setNodes(updatedNodes);
+
+      }
     setLoading(false);
   };
 
+  // MODIFIED: handleReset function to clear expandedNodesArrayRef
   const handleReset = async () => {
     try {
       await axios.get(`${URL}/api/reset/`);
       basesRef.current = {};
+      expandedNodesArrayRef.current = []; // NEW: Clear expanded nodes array
+      console.log('Reset - cleared expanded nodes array');
       loadRoot(true);
     } catch (error) {
       console.error(error.message);
     }
   };
 
+  // MODIFIED: loadRoot function to clear expandedNodesArrayRef and include it in fetchNode
   const loadRoot = async (restart = false) => {
     newNodesRef.current = [];
     edgesRef.current = [];
     expandedNodesRef.current.clear();
+    expandedNodesArrayRef.current = []; // NEW: Clear expanded nodes array
     setEdges([]);
     setNodes([]);
     
-    const root = await fetchNode(Source, modulType, basesRef);
+    const root = await fetchNode(Source, modulType, basesRef, expandedNodesArrayRef.current);
     if (!root) return;
     
     if (root.childrenLimit) {
@@ -584,12 +710,13 @@ const KPIDiagram = () => {
         label: root.nameFr || 'Root Node',
         id: rootId,
         hasChildren: true,
-        Type: root.eleType,
+        isRoot: true,
         childrenNum: Object.entries(root.childrenData || {}).length,
         expanded: false,
         onDrill: () => handleDrill(rootId, true, modulType, basesRef),
         Source,          
         setSource,
+        ...root,
       },
     });
     
@@ -613,11 +740,17 @@ const KPIDiagram = () => {
 
   return (
     <div style={{ width: '100vw', height: '100vh' }} ref={reactFlowWrapper}>
+      <img 
+          src={finansiaLogo}
+          // alt="FiNANZiA - decoding finance, revealing insights" 
+          className="absolute h-20 object-contain"
+        />
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        deleteKeyCode={null} 
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.4 }}
@@ -672,6 +805,15 @@ const KPIDiagram = () => {
             >
               Reset
             </button>
+          </div>
+        )}
+     
+
+        {/* NEW: Debug info for expanded nodes (optional - remove in production) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="absolute left-5 bottom-5 bg-black bg-opacity-70 text-white p-3 rounded-md text-xs z-50">
+            <div>Expanded Nodes: {expandedNodesArrayRef.current.length}</div>
+            <div>[{expandedNodesArrayRef.current.join(', ')}]</div>
           </div>
         )}
 

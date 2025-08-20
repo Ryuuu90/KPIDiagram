@@ -3,7 +3,9 @@ const {ArborescenceCalcul} = require("../utils/utils");
 
 exports.getNodeById2 = async (req, res) => {
   const { id } = req.params;
-  const {modulType, basesRef} = req.body;
+  const {modulType, basesRef, expandedNodes} = req.body;
+  // console.log(expandedNodes);
+
 
   try {
     // Get parent node
@@ -21,7 +23,7 @@ exports.getNodeById2 = async (req, res) => {
     
     // childrenData = {};
     const childrenIds = [];
-    if(parent.category === 'Elément calculé' || parent.eleType === 'Rasio' || parent.eleType === 'Source' )
+    if(parent.category === 'Elément calculé' || parent.eleType === 'Ratio' || parent.eleType === 'Source' )
     {
       parent.childrenIds.forEach((ele)=>{
         // if(childrenData[])
@@ -58,7 +60,7 @@ exports.getNodeById2 = async (req, res) => {
       childrenIds.map(async (childId) => {
         const chil = await Arborescence.findOne({ parentId: childId });
         let hasChildren = false;
-        if(chil.category === "Elément calculé" || chil.eleType === 'Rasio'  || chil.eleType === 'Source' )
+        if(chil.category === "Elément calculé" || chil.eleType === 'Ratio'  || chil.eleType === 'Source' )
             hasChildren = true;
         let childrenNum = chil.childrenIds.length;
         childrenData[childId] = {
@@ -70,9 +72,11 @@ exports.getNodeById2 = async (req, res) => {
       })
       
     );
+    // ArborescenceCalcul()
+
     
-    if(modulType === "simulation" &&  Object.keys(basesRef).length > 0)
-      await ArborescenceCalcul(basesRef)
+    // if(modulType === "simulation" &&  Object.keys(basesRef).length > 0)
+    //   await ArborescenceCalcul(basesRef, expandedNodes);
 
         
           // await Promise.all(

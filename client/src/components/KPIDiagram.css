@@ -1,5 +1,5 @@
 .tooltip-box {
-    @apply bg-gray-900 bg-opacity-95 text-white shadow-xl border border-gray-300 rounded-lg p-3 text-xs text-gray-800 w-[800px];
+    @apply bg-opacity-95 text-white shadow-xl border border-gray-300 rounded-lg p-3 text-xs text-gray-800 w-[800px];
     animation: fadeIn 0.2s ease-out;
     position: relative;
   }
@@ -23,3 +23,69 @@
     }
   }
   
+
+  /* Add these styles to your KPIDiagram.css file */
+
+/* Ensure dropdown can scroll properly */
+.search-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  font-size: small;
+  /* Ensure pointer events work */
+  pointer-events: auto;
+}
+
+.search-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.search-dropdown-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.search-dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.search-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+/* Prevent ReactFlow from interfering with dropdown interactions */
+.react-flow__node .search-dropdown,
+.react-flow__node .search-dropdown * {
+  pointer-events: auto !important;
+}
+
+/* Ensure the dropdown container has proper positioning */
+.search-container {
+  position: relative;
+  z-index: 10;
+}

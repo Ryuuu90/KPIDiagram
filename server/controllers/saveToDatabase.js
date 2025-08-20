@@ -5,8 +5,8 @@ const path = require('path')
 exports.saveToDatabase  = async (req, res) =>{
 
     try {
-        const workbook = xlsx.readFile(path.join(__dirname, '../public', 'Arborescence.xlsx'));
-        const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        const workbook = xlsx.readFile(path.join(__dirname, '../public', 'Arborescence2.xlsx'));
+        const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[3]]);
         const parentMap = {}
         for (row of sheet)
         {

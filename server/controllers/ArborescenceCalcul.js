@@ -7,34 +7,42 @@ function isValidFormula(str) {
     // Allowed chars: digits, spaces, + - * / ( ) .
     return /^[0-9+\-*/().\s]+$/.test(str);
   }
-exports.ArborescenceCalcul = async () =>{
+exports.ArborescenceCalcul = async (req, res) =>{
     try{
-        const workbook = xlsx.readFile(path.join(__dirname, '../public', 'Arborescence2.xlsx'));
-        let sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-        sheet = sheet.filter(row=> row['NumEC'])
-        const elemBase = sheet.map(row => row['NumEC']);
+        const {basesRef, expandedNodes} = req.body;
+        // console.log(basesRef);
+        // Object.entries(basesRef).forEach(([key, value] )=> console.log(key));
+        // const workbook = xlsx.readFile(path.join(__dirname, '../public', 'Arborescence2.xlsx'));
+        // let sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        // sheet = sheet.filter(row=> row['NumEC'])
+        // const elemBase = sheet.map(row => row['NumEC']);
+        // console.log(elemBase);
         let arb = await Arborescence.find();
         let length = arb.length;
         atb = arb.map(elem => elem = elem.toObject());
         // console.log(arb);
         arb = arb.map(elem => {
             elem = elem.toObject();
-            const found = sheet.find(row => row['NumEC'] === elem.parentId)
-            let SoldeValue
+            const found =  Object.entries(basesRef).find(([key, value] ) => key === elem.parentId)
+            let newSold;
             if(found && elem.category !== "Elément calculé")
             {
                 // console.log(found['SoldeValue']);
-                if(typeof(found['SoldeValue']) !== 'number')
-                    SoldeValue = 0;
-                else
-                    SoldeValue = found['SoldeValue'];
+                // if(typeof(found['SoldeValue']) !== 'number')
+                //     SoldeValue = 0;
+                // else
+                //     SoldeValue = found['SoldeValue'];
+                newSold = found[1];
+                // console.log(elem.parentId, "--->" , found, "--->" , newSold);
+
             }
             else
-                SoldeValue =  undefined;
+                newSold =  null;
             
             return{
                 ...elem,
-                SoldeValue,
+                // SoldeValue,
+                newSold,
             }
         })
         let update = true
@@ -48,9 +56,17 @@ exports.ArborescenceCalcul = async () =>{
                 const formula = arb[i].formula;
                 let evaluatedFormula = formula.replace(/EC\d+|R\d{2}/g, match => {
                     const found = arb.find(elem => elem.parentId.trim() === match.trim());
-                    // console.log()
-                    if (found && found.SoldeValue !== undefined) {
-                    return found.SoldeValue;
+                    // console.log(found)
+                    if (found && found.newSold !== null) {
+                        return found.newSold;
+                    }
+                    else if  (found && found.newSold === null && expandedNodes.includes(found.parentId) && found.category !== 'Elément de base')
+                    {
+                        return match; 
+                    }
+                    else if(found && found.newSold === null && found.SoldeValue !== undefined)
+                    {
+                        return found.SoldeValue;
                     }
                     return match;  // return original ECxxx if no value found
                 });
@@ -66,7 +82,8 @@ exports.ArborescenceCalcul = async () =>{
                 if(isValidFormula(safeFormula))
                 {
                     // console.log(evaluatedFormula);
-                    arb[i].SoldeValue = eval(safeFormula).toFixed(0);
+                    arb[i].newSold = eval(safeFormula).toFixed(0);
+                    // console.log(arb[i].parentId, "--->" , safeFormula, "--->" , arb[i].newSold);
                 }
                 else
                 {
@@ -94,10 +111,11 @@ exports.ArborescenceCalcul = async () =>{
         } else {
         console.log('No valid operations to perform.');
         }
+        res.status(200).json({success : true , message : 'calculation are done'});
 
     }
     catch(error)
     {
-        throw(error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 }
