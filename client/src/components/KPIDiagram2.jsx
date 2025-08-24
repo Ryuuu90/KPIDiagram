@@ -693,15 +693,20 @@ const KPIDiagram = () => {
       // console.log(calculation)
       if(calculation.success)
       {
-            for (let node of newNodesRef.current) {
-              const newNode = await fetchNode(node.id, modulType, basesRef);
-              updatedNodes.push({
-                ...node,
-                position: node.position,
-                data: { ...node.data, ...newNode }
-              });
-            }
-            setNodes(updatedNodes);
+        for (let i = 0; i < newNodesRef.current.length; i++) {
+          const node = newNodesRef.current[i];
+          const newNode = await fetchNode(node.id, modulType, basesRef);
+        
+          // update the node in place
+          newNodesRef.current[i] = {
+            ...node,
+            position: node.position,
+            data: { ...node.data, ...newNode }
+          };
+        }
+        
+        // then update state with the ref content
+        setNodes([...newNodesRef.current]);
 
       }
     setLoading(false);
