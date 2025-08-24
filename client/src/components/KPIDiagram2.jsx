@@ -233,7 +233,7 @@ return (
               </>
             )}
       
-      {data.eleType !== "Source" && (<CollapsibleField label={"Var du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' && fields[1].value !== 0 && fields[2].value !== null? Number((((fields[2].value / fields[1].value) - 1).toFixed(3)) * 100).toString() + '%': "-"} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
+      {data.eleType !== "Source" && (<CollapsibleField label={"Var du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' && fields[1].value !== 0 && fields[2].value !== null? Number((((fields[2].value / fields[1].value) - 1)* 100).toFixed(3)).toString() + '%': "-"} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
 
       {data.eleType === "Source"  && (<div className="text-base text-gray-700">{data.label}</div>)}
       {/* {data.eleType !== "Ratio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
@@ -693,20 +693,20 @@ const KPIDiagram = () => {
       // console.log(calculation)
       if(calculation.success)
       {
-        for (let i = 0; i < newNodesRef.current.length; i++) {
-          const node = newNodesRef.current[i];
-          const newNode = await fetchNode(node.id, modulType, basesRef);
-        
-          // update the node in place
-          newNodesRef.current[i] = {
-            ...node,
-            position: node.position,
-            data: { ...node.data, ...newNode }
-          };
-        }
-        
-        // then update state with the ref content
-        setNodes([...newNodesRef.current]);
+           for (let i = 0; i < newNodesRef.current.length; i++) {
+              const node = newNodesRef.current[i];
+              const newNode = await fetchNode(node.id, modulType, basesRef);
+
+              // update the node in place
+              newNodesRef.current[i] = {
+                ...node,
+                position: node.position,
+                data: { ...node.data, ...newNode }
+              };
+            }
+
+            // then update state with the ref content
+            setNodes([...newNodesRef.current]);
 
       }
     setLoading(false);
