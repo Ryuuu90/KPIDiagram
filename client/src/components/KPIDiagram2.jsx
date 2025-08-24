@@ -842,7 +842,7 @@ const KPIDiagram = () => {
                 setModelType(label.toLowerCase()); 
                 setSource('');
                 if (label === "Élément comptable") {
-                  setSelectTitle('Sélectionnez le rapport'); 
+                  setSelectTitle('Sélectionnez un rapport'); 
                 } else {
                   setSelectTitle('Sélectionnez une famille');  
                 }
