@@ -196,7 +196,6 @@ const KPIDiagram = () => {
         setEdges(edgesRef.current);
         return;
       }
-  
       const node = await fetchNode(nodeId);
       if (!node || !node.childrenData) return;
   
@@ -336,6 +335,7 @@ const KPIDiagram = () => {
 
   useEffect(() => {
     const loadRoot = async () => {
+      
       const root = await fetchNode('EC003');
       if (!root) return;
 

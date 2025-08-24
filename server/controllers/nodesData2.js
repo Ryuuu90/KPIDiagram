@@ -31,6 +31,7 @@ exports.getNodeById2 = async (req, res) => {
         // console.log(splited);
         let childId;
         let sign;
+        // console.log(parent.formula);
         if(splited[0] != '-' && splited[0] != '+')
           {
             childId = splited[0];

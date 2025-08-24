@@ -39,7 +39,7 @@ exports.saveToDatabase  = async (req, res) =>{
             ...entry,
             childrenIds : Array.from(entry.childrenIds)
         }))
-        console.log(records);
+        // console.log(records);
         for (rec of records)
         {
             await Arborescence.updateOne({parentId : rec.parentId}, {$set : rec}, {upsert : true});

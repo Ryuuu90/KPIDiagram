@@ -82,7 +82,7 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 if(isValidFormula(safeFormula))
                 {
                     // console.log(evaluatedFormula);
-                    arb[i].newSold = eval(safeFormula).toFixed(0);
+                    arb[i].newSold = eval(safeFormula).toFixed(2);
                     // console.log(arb[i].parentId, "--->" , safeFormula, "--->" , arb[i].newSold);
                 }
                 else

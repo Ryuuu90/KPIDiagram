@@ -66,14 +66,15 @@ exports.ArborescenceCalcul = async () =>{
                 if(isValidFormula(safeFormula))
                 {
                     // console.log(evaluatedFormula);
-                    arb[i].SoldeValue = eval(safeFormula).toFixed(0);
+                    arb[i].SoldeValue = eval(safeFormula).toFixed(2);
+                    // console.log(i, arb[i].parentId, "-->" , safeFormula, "--->" , arb[i].SoldeValue);
+
                 }
                 else
                 {
                     // console.log(i ," : ", evaluatedFormula);
                     update = true;
                 }
-                // console.log(i, arb[i].parentId, ":" , safeFormula);
             }
         }
         const operations = arb
