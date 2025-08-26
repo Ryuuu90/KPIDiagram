@@ -107,7 +107,7 @@ const SimulationCard = memo(({ data, basesRef, modulType}) => {
       const val = inputRef.current.value;
       if(val.length > 12)
         return;
-      basesRef.current[data.parentId] = val;
+      basesRef.current[data.parentId] = val.trim();
       setEditing(false)
       setEditingSold(true)
       setValue(val);

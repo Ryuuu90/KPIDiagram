@@ -30,17 +30,9 @@ exports.saveToDatabase2  = async (req, res) =>{
             let childrenIds = [];
             if(eleType === 'EC')
             {
-                const parsed = formula.split(/([+-])/);
-                for (let i = 0; i < parsed.length ; i++)
-                {
-                    if(i === 0 && !(parsed[i] === '+' || parsed[i] === '-'))
-                        childrenIds.push(parsed[i]);
-                    else if(parsed[i] === '+' || parsed[i] === '-')
-                    {
-                        childrenIds.push(`${parsed[i]} ${parsed[i + 1]}`)
-                        i++;
-                    }
-                }
+                const parsed = formula.split(/[+-]/);
+                childrenIds.push(...parsed);
+                // console.log(childrenIds);
             }
             else if(eleType === 'Ratio')
                 childrenIds = [...new Set(formula.match(/EC\d+|R\d{2}/g) || [])];
