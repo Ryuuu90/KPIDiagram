@@ -178,7 +178,7 @@ return (
                 <li 
                   key={val.nameFr + i}
                   className='px-3 py-2 border-b border-gray-200 last:border-b-0 hover:bg-gray-100 cursor-pointer transition-colors duration-150 text-gray-800'
-                onClick={()=> data.setSource(val.id)}>
+                onClick={()=> {data.setSource(val.id); data.Selected.current = true}}>
                   {val.nameFr}
                 </li>
               ))}
@@ -282,7 +282,7 @@ return (
     transition={{ duration: 0.2 }}
     className={`relative ${data.eleType === "Source" ? "w-[250px]" : "w-[520px] grid grid-cols-2 "} bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
-    {data.eleType === "Source" && (<select value={data.Source || ""}  onChange={(e) => {data.setSource(e.target.value)}}>
+    {data.eleType === "Source" && (<select value={data.Source || ""}  onChange={(e) => {data.setSource(e.target.value); data.Selected.current = true}}>
     <option value="" disabled>{data.SelectTitle}</option>
       {SourceArrays[modulType].map(key =>{
         const element = Elements.find(elem => elem.id === key)
@@ -332,13 +332,15 @@ const defaultEdgeOptions = {
 
 const KPIDiagram = () => {
   const [Source, setSource] = useState('');
-  const [SelectTitle, setSelectTitle] = useState('');
+  const SelectTitle = useRef('');
+  const Selected = useRef(false);
+  const lastPrentId = useRef({"simulation" : '', "ratio" : '', "élément comptable" : ''})
   const [level, setLevel] = useState(0);
-  const newNodesRef = useRef([]);
-  const edgesRef = useRef([]);
-  const expandedNodesRef = useRef(new Set());
+  const newNodesRef = useRef({"simulation" : [], "ratio" : [], "élément comptable" : []});
+  const edgesRef = useRef({"simulation" : [], "ratio" : [], "élément comptable" : []});
+  const expandedNodesRef = useRef({"simulation" : new Set(), "ratio" : new Set(), "élément comptable" : new Set()});
   // NEW: Add expanded nodes array to track and send to API
-  const expandedNodesArrayRef = useRef([]);
+  const expandedNodesArrayRef = useRef({"simulation" : [], "ratio" : [], "élément comptable" : []});
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef(null);
   const basesRef = useRef({});
@@ -376,7 +378,7 @@ const KPIDiagram = () => {
   // }, [])
   // Enhanced tree layout positioning algorithm
   const calculateTreeLayout = useCallback(() => {
-    const nodeMap = new Map(newNodesRef.current.map(node => [node.id, node]));
+    const nodeMap = new Map(newNodesRef.current[modulType].map(node => [node.id, node]));
     const visitedNodes = new Set();
     const horizontalSpacing = modulType !== "simulation" ? 700 : 500;
     const verticalSpacing = modulType !== "simulation" ? 350 : 250;
@@ -390,7 +392,7 @@ const KPIDiagram = () => {
       visitedNodes.add(nodeId);
       
       // Get children of this node
-      const children = edgesRef.current
+      const children = edgesRef.current[modulType]
         .filter(edge => edge.source === nodeId)
         .map(edge => edge.target)
         .filter(childId => nodeMap.has(childId));
@@ -420,8 +422,8 @@ const KPIDiagram = () => {
     };
 
     // Find root nodes (nodes with no incoming edges)
-    const rootNodes = newNodesRef.current.filter(node => 
-      !edgesRef.current.some(edge => edge.target === node.id)
+    const rootNodes = newNodesRef.current[modulType].filter(node => 
+      !edgesRef.current[modulType].some(edge => edge.target === node.id)
     );
 
     let currentY = 0;
@@ -434,16 +436,27 @@ const KPIDiagram = () => {
   // Enhanced camera positioning function
   const focusOnNodeAndChildren = useCallback((parentNodeId) => {
     if (!reactFlowInstance.current) return;
-
-    const parentNode = newNodesRef.current.find(n => n.id === parentNodeId);
+    
+    const parentNode = newNodesRef.current[modulType].find(n => n.id === parentNodeId);
     if (!parentNode) return;
+    console.log(parentNode);
+    if(parentNode.data.eleType === 'Source' && !parentNode.data.expanded)
+    {
+      reactFlowInstance.current.fitView({ 
+        padding: 0.4,
+        includeHiddenNodes: false,
+        maxZoom: 2,
+        duration: 800 
+      });
+      return;
+    }
 
     // Get all children nodes
-    const childrenIds = edgesRef.current
+    const childrenIds = edgesRef.current[modulType]
       .filter(edge => edge.source === parentNodeId)
       .map(edge => edge.target);
     
-    const childrenNodes = newNodesRef.current.filter(n => childrenIds.includes(n.id));
+    const childrenNodes = newNodesRef.current[modulType].filter(n => childrenIds.includes(n.id));
     const allNodes = [parentNode, ...childrenNodes];
 
     if (allNodes.length === 0) return;
@@ -532,13 +545,13 @@ const KPIDiagram = () => {
     
     while (stack.length > 0) {
       const current = stack.pop();
-      const children = edgesRef.current
+      const children = edgesRef.current[modulType]
         .filter(e => e.source === current)
         .map(e => e.target);
       
       for (const childId of children) {
         // Check if this child has other parents that are not being removed
-        const otherParents = edgesRef.current.filter(
+        const otherParents = edgesRef.current[modulType].filter(
           e => e.target === childId && e.source !== current
         );
         
@@ -546,7 +559,7 @@ const KPIDiagram = () => {
         const validParents = otherParents.filter(par => {
           let source = par.source;
           while (source) {
-            const parentEdge = edgesRef.current.find(e => e.target === source);
+            const parentEdge = edgesRef.current[modulType].find(e => e.target === source);
             if (!parentEdge) return true;
             if (source === current || toRemove.has(source)) return false;
             source = parentEdge.source;
@@ -562,19 +575,19 @@ const KPIDiagram = () => {
     }
     
     // Remove nodes and edges
-    newNodesRef.current = newNodesRef.current.filter(n => !toRemove.has(n.id));
-    edgesRef.current = edgesRef.current.filter(
+    newNodesRef.current[modulType] = newNodesRef.current[modulType].filter(n => !toRemove.has(n.id));
+    edgesRef.current[modulType] = edgesRef.current[modulType].filter(
       e => !toRemove.has(e.source) && !toRemove.has(e.target)
     );
 
     // Update parent node state
-    expandedNodesRef.current.delete(parentId);
+    expandedNodesRef.current[modulType].delete(parentId);
     
     // NEW: Remove from expandedNodesArrayRef
-    expandedNodesArrayRef.current = expandedNodesArrayRef.current.filter(nodeId => nodeId !== parentId);
+    expandedNodesArrayRef.current[modulType] = expandedNodesArrayRef.current[modulType].filter(nodeId => nodeId !== parentId);
     // console.log('Updated expanded nodes array:', expandedNodesArrayRef.current);
     
-    newNodesRef.current = newNodesRef.current.map(n =>
+    newNodesRef.current[modulType] = newNodesRef.current[modulType].map(n =>
       n.id === parentId ? { ...n, data: { ...n.data, expanded: false } } : n
     );
 
@@ -585,12 +598,11 @@ const KPIDiagram = () => {
   // MODIFIED: handleDrill function to include expandedNodes in fetchNode calls
   const handleDrill = useCallback(
     async (nodeId, isRoot = false, modulType, basesRef) => {
-      const isExpanded = expandedNodesRef.current.has(nodeId);
-      
+      const isExpanded = expandedNodesRef.current[modulType].has(nodeId);
       if (isExpanded) {
         removeDescendants(nodeId);
-        setNodes([...newNodesRef.current]);
-        setEdges([...edgesRef.current]);
+        setNodes([...newNodesRef.current[modulType]]);
+        setEdges([...edgesRef.current[modulType]]);
         
         // Focus on the collapsed parent node
         setTimeout(() => {
@@ -603,7 +615,7 @@ const KPIDiagram = () => {
       // NEW: Pass the current expanded nodes array to fetchNode
       
      
-      const node = await fetchNode(nodeId, modulType, basesRef, expandedNodesArrayRef.current);
+      const node = await fetchNode(nodeId, modulType, basesRef, expandedNodesArrayRef.current[modulType]);
       if (!node || !node.childrenData || chilLimit.current.includes(node.parentId)) return;
       
       const entries = Object.entries(node.childrenData);
@@ -620,7 +632,7 @@ const KPIDiagram = () => {
       
       // Add children nodes and edges
       entries.forEach(([childId, childLabel], index) => {
-        edgesRef.current.push({
+        edgesRef.current[modulType].push({
           id: `e-${nodeId}-${childId}`,
           source: nodeId,
           target: childId,
@@ -631,7 +643,7 @@ const KPIDiagram = () => {
           animated: false
         });
         
-        newNodesRef.current.push({
+        newNodesRef.current[modulType].push({
           id: childId,
           type: 'customNode',
           position: { x: 0, y: 0 }, // Will be calculated by layout
@@ -643,21 +655,22 @@ const KPIDiagram = () => {
             onDrill: () => handleDrill(childId, false, modulType, basesRef),
             Source,          
             setSource, 
+            Selected,
           },
         });
       });
 
-      expandedNodesRef.current.add(nodeId);
+      expandedNodesRef.current[modulType].add(nodeId);
       // console.log(node.childrenIds);
       
-      if (!expandedNodesArrayRef.current.includes(node.childrenIds)) {
-        expandedNodesArrayRef.current.push(...node.childrenIds);
+      if (!expandedNodesArrayRef.current[modulType].includes(node.childrenIds)) {
+        expandedNodesArrayRef.current[modulType].push(...node.childrenIds);
         // console.log('Added to expanded nodes array:', nodeId);
         // console.log('Current expanded nodes array:', expandedNodesArrayRef.current);
       }
       // NEW: Add to expandedNodesArrayRef if not already present
      
-      newNodesRef.current = newNodesRef.current.map(n =>
+      newNodesRef.current[modulType] = newNodesRef.current[modulType].map(n =>
         n.id === nodeId
           ? { ...n, data: { ...n.data, expanded: true } }
           : n
@@ -666,8 +679,8 @@ const KPIDiagram = () => {
       // Calculate new layout
       calculateTreeLayout();
 
-      const uniqueNodes = Array.from(new Map(newNodesRef.current.map((n) => [n.id, n])).values());
-      const uniqueEdges = Array.from(new Map(edgesRef.current.map((e) => [e.id, e])).values());
+      const uniqueNodes = Array.from(new Map(newNodesRef.current[modulType].map((n) => [n.id, n])).values());
+      const uniqueEdges = Array.from(new Map(edgesRef.current[modulType].map((e) => [e.id, e])).values());
 
       setNodes(uniqueNodes);
       setEdges(uniqueEdges);
@@ -675,6 +688,7 @@ const KPIDiagram = () => {
       // Focus camera on the expanded parent and its children
       setTimeout(() => {
         focusOnNodeAndChildren(nodeId);
+        lastPrentId.current[modulType] = nodeId;
       }, 100);
     },
     [level, calculateTreeLayout, removeDescendants, Source, focusOnNodeAndChildren]
@@ -689,16 +703,16 @@ const KPIDiagram = () => {
     setLoading(true);
     const updatedNodes = [];
     // for (let node of newNodesRef.current) {
-      const calculation = await fetchCalculation(basesRef, expandedNodesArrayRef.current);
-      // console.log(calculation)
+      const calculation = await fetchCalculation(basesRef, expandedNodesArrayRef.current[modulType]);
+      console.log(calculation)
       if(calculation.success)
       {
-           for (let i = 0; i < newNodesRef.current.length; i++) {
-              const node = newNodesRef.current[i];
+           for (let i = 0; i < newNodesRef.current[modulType].length; i++) {
+              const node = newNodesRef.current[modulType][i];
               const newNode = await fetchNode(node.id, modulType, basesRef);
 
               // update the node in place
-              newNodesRef.current[i] = {
+              newNodesRef.current[modulType][i] = {
                 ...node,
                 position: node.position,
                 data: { ...node.data, ...newNode }
@@ -706,7 +720,7 @@ const KPIDiagram = () => {
             }
 
             // then update state with the ref content
-            setNodes([...newNodesRef.current]);
+            setNodes([...newNodesRef.current[modulType]]);
 
       }
     setLoading(false);
@@ -717,7 +731,12 @@ const KPIDiagram = () => {
     try {
       await axios.get(`${URL}/api/reset/`);
       basesRef.current = {};
-      expandedNodesArrayRef.current = []; // NEW: Clear expanded nodes array
+      expandedNodesArrayRef.current[modulType] = []; 
+      newNodesRef.current[modulType] = [];
+      edgesRef.current[modulType] = [];// NEW: Clear expanded nodes array
+      expandedNodesRef.current[modulType].clear();
+      setEdges([]);
+      setNodes([]);
       // console.log('Reset - cleared expanded nodes array');
       loadRoot(true);
     } catch (error) {
@@ -727,42 +746,51 @@ const KPIDiagram = () => {
 
   // MODIFIED: loadRoot function to clear expandedNodesArrayRef and include it in fetchNode
   const loadRoot = async (restart = false) => {
-    newNodesRef.current = [];
-    edgesRef.current = [];
-    expandedNodesRef.current.clear();
-    expandedNodesArrayRef.current = []; // NEW: Clear expanded nodes array
-    setEdges([]);
-    setNodes([]);
+    // newNodesRef.current = [];
+    // edgesRef.current = [];
+    // expandedNodesRef.current[modulType].clear();
+    // expandedNodesArrayRef.current = []; // NEW: Clear expanded nodes array
     
     if(!Source)
     {
-      newNodesRef.current.push({
-        id: '',
-        type: 'customNode',
-        position: { x: 50, y: 200 },
-        data: {
-          id: '',
-          Source,    
-          isRoot: true,      
-          setSource,
-          SelectTitle,
-          eleType : 'Source',
-        },
-      });
-      setNodes(newNodesRef.current);
-      if (reactFlowInstance.current) {
-        setTimeout(() => {
-          reactFlowInstance.current.fitView({ 
-            padding: 0.4,
-            includeHiddenNodes: false,
-            maxZoom: 2,
-            duration: restart ? 500 : 0
-          });
-        }, 100);
+      if(!newNodesRef.current[modulType].length)
+      {
+        newNodesRef.current[modulType].push({
+          id: 'firstNode',
+          type: 'customNode',
+          position: { x: 50, y: 200 },
+          data: {
+            id: '',
+            Source,    
+            isRoot: true,      
+            setSource,
+            Selected,
+            SelectTitle : SelectTitle.current,
+            eleType : 'Source',
+          },
+        });
       }
+      if(newNodesRef.current[modulType].length <= 1)
+      {
+        if (reactFlowInstance.current) {
+          setTimeout(() => {
+            reactFlowInstance.current.fitView({ 
+              padding: 0.4,
+              includeHiddenNodes: false,
+              maxZoom: 2,
+              duration: restart ? 500 : 0
+            });
+          }, 100);
+        }
+      }
+      setNodes(newNodesRef.current[modulType]);
+      setEdges(edgesRef.current[modulType]);
+
+      
       return;
     }
-    const root = await fetchNode(Source, modulType, basesRef, expandedNodesArrayRef.current);
+    
+    const root = await fetchNode(Source, modulType, basesRef, expandedNodesArrayRef.current[modulType]);
     if (!root) return;
     
     if (root.childrenLimit) {
@@ -772,7 +800,7 @@ const KPIDiagram = () => {
     const rootId = root.parentId || Source;
     // console.log(root);
 
-    newNodesRef.current.push({
+    newNodesRef.current[modulType].push({
       id: rootId,
       type: 'customNode',
       position: { x: 50, y: 200 },
@@ -786,11 +814,13 @@ const KPIDiagram = () => {
         onDrill: () => handleDrill(rootId, true, modulType, basesRef),
         Source,          
         setSource,
+        Selected,
         ...root,
       },
     });
     
-    setNodes(newNodesRef.current);
+    setNodes([...newNodesRef.current[modulType]]);
+    setEdges([...edgesRef.current[modulType]]);
     
     if (reactFlowInstance.current) {
       setTimeout(() => {
@@ -805,10 +835,20 @@ const KPIDiagram = () => {
   };
 
   useEffect(() => {
+    if(Selected.current)
+    {
+      expandedNodesArrayRef.current[modulType] = []; 
+      newNodesRef.current[modulType] = [];
+      edgesRef.current[modulType] = [];// NEW: Clear expanded nodes array
+      expandedNodesRef.current[modulType].clear();
+      Selected.current = false;
+    }
+    focusOnNodeAndChildren(lastPrentId.current[modulType]);
     loadRoot();
   }, [Source, modulType]);
 
   return (
+    
     <div style={{ width: '100vw', height: '100vh' }} ref={reactFlowWrapper}>
       <img 
           src={finansiaLogo}
@@ -820,7 +860,7 @@ const KPIDiagram = () => {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        deleteKeyCode={null} 
+        deleteKeyCode={null}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.4 }}
@@ -839,20 +879,24 @@ const KPIDiagram = () => {
                 modulType === label.toLowerCase() ? 'bg-slate-500' : ''
               }`}
               onClick={() => {
-                setModelType(label.toLowerCase()); 
+                // setEdges([...edgesRef.current[modulType]])
+                setModelType(label.toLowerCase());
+                // console.log(edgesRef.current);
+
                 setSource('');
                 if (label === "Élément comptable") {
-                  setSelectTitle('Sélectionnez un rapport'); 
+                  SelectTitle.current = 'Sélectionnez un rapport'; 
                 } else {
-                  setSelectTitle('Sélectionnez une famille');  
+                  SelectTitle.current = 'Sélectionnez une famille';  
                 }
-                if (reactFlowInstance.current) {
-                  reactFlowInstance.current.setViewport({
-                    x: -reactFlowWrapper.current.clientWidth / 2 + 190,
-                    y: reactFlowWrapper.current.clientHeight / 2 - 182,
-                    zoom: 2
-                  });
-                }
+                // console.log(lastPrentId.current[modulType]);
+                // if (reactFlowInstance.current) {
+                //   reactFlowInstance.current.setViewport({
+                //     x: -reactFlowWrapper.current.clientWidth / 2 + 190,
+                //     y: reactFlowWrapper.current.clientHeight / 2 - 182,
+                //     zoom: 2
+                //   });
+                // }
               }}
             >
               {label}
@@ -883,8 +927,8 @@ const KPIDiagram = () => {
         {/* NEW: Debug info for expanded nodes (optional - remove in production) */}
         {process.env.REACT_APP_NODE_ENV === 'development' && (
           <div className="absolute left-5 bottom-5 bg-black bg-opacity-70 text-white p-3 rounded-md text-xs z-50">
-            <div>Expanded Nodes: {expandedNodesArrayRef.current.length}</div>
-            <div>[{expandedNodesArrayRef.current.join(', ')}]</div>
+            <div>Expanded Nodes: {expandedNodesArrayRef.current[modulType].length}</div>
+            <div>[{expandedNodesArrayRef.current[modulType].join(', ')}]</div>
           </div>
         )}
 
