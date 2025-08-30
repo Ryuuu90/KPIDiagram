@@ -6,6 +6,7 @@ const {getNodeById2} = require('../controllers/nodesData2')
 
 const {resetNewSold} = require('../controllers/resetNewSold');
 const {ArborescenceCalcul} = require('../controllers/ArborescenceCalcul');
+const {modelsReports} = require('../controllers/modelsReports');
 
 const express = require('express');
 const router = express.Router();
@@ -19,6 +20,8 @@ router.post('/node2/:id', getNodeById2);
 
 router.get('/reset', resetNewSold);
 router.post('/calculation', ArborescenceCalcul);
+
+router.post('/reports', modelsReports);
 
 
 

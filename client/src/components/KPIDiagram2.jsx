@@ -17,38 +17,308 @@ import Elements from './Elements';
 import finansiaLogo from '../public/finansia-logo.jpeg';
 import { isNumeral } from 'numeral';
 
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  flexRender,
+} from '@tanstack/react-table';
+import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 const URL = process.env.REACT_APP_BACKEND_URL;
 
 // Mock axios for demo purposes
+
 const TableExample = () => {
-  const users = [
-    { id: 1, name: "Rayan", email: "rayan@example.com" },
-    { id: 2, name: "Hamza", email: "hamza@example.com" },
-    { id: 3, name: "Sara", email: "sara@example.com" },
-  ];
+  const [allData, setAllData] = useState([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState([]);
+
+  // Mock data for demonstration (replace with your actual API call)
+  useEffect(() => {
+   
+    const getAllData = async () => {
+      try {
+        const response = await axios.post(`${URL}/api/reports`, {reportType : 'CPC'});
+        setAllData(response.data.report);
+        console.log(response.data.report);
+      } catch(error) {
+        console.error(error.message);
+      }
+    }
+    getAllData();
+  }, []);
+
+  // Column definitions
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: 'Nature',
+        header: 'Nature',
+        cell: ({ getValue }) => (
+          <span className="font-medium text-gray-800">
+            {getValue()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "Operations propres l'exercice",
+        header: "Opérations propres à l'exercice",
+        cell: ({ getValue }) => (
+          <span className="font-semibold text-green-600">
+            {new Intl.NumberFormat('fr-FR', { 
+              style: 'currency', 
+              currency: 'MAD' 
+            }).format(getValue())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'Operations concernant les exercices precedents',
+        header: 'Opérations exercices précédents',
+        cell: ({ getValue }) => (
+          <span className="font-semibold text-blue-600">
+            {new Intl.NumberFormat('fr-FR', { 
+              style: 'currency', 
+              currency: 'MAD' 
+            }).format(getValue())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "TOTAUX DE L'EXERCICE (3 = 2+1)",
+        header: "Totaux de l'exercice",
+        cell: ({ getValue }) => (
+          <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded">
+            {new Intl.NumberFormat('fr-FR', { 
+              style: 'currency', 
+              currency: 'MAD' 
+            }).format(getValue())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "Totaux de l'exercice precedent",
+        header: "Totaux exercice précédent",
+        cell: ({ getValue }) => (
+          <span className="font-semibold text-gray-600">
+            {new Intl.NumberFormat('fr-FR', { 
+              style: 'currency', 
+              currency: 'MAD' 
+            }).format(getValue())}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: allData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      globalFilter,
+      sorting,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+  });
+
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">User Table</h2>
-      <table className="table-auto border-collapse border border-gray-300 w-full text-left">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2">ID</th>
-            <th className="border border-gray-300 px-4 py-2">Name</th>
-            <th className="border border-gray-300 px-4 py-2">Email</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-50">
-              <td className="border border-gray-300 px-4 py-2">{user.id}</td>
-              <td className="border border-gray-300 px-4 py-2">{user.name}</td>
-              <td className="border border-gray-300 px-4 py-2">{user.email}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="p-6 bg-gray-50 min-h-screen mt-28">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+            <h2 className="text-2xl font-bold mb-2">Rapport Financier CPC</h2>
+            <p className="text-blue-100">Tableau des comptes de produits et charges</p>
+          </div>
+
+          {/* Controls */}
+          <div className="p-6 border-b bg-gray-50">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              {/* Search */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Rechercher dans le tableau..."
+                  value={globalFilter ?? ''}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Results count */}
+              <div className="text-sm text-gray-600">
+                {table.getFilteredRowModel().rows.length} résultat(s)
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-100">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {table.getRowModel().rows.map((row, index) => (
+                  <tr
+                    key={row.id}
+                    className={`hover:bg-blue-50 transition-colors ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    }`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-4 py-3 text-sm border-b border-gray-100">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Empty state */}
+          {table.getFilteredRowModel().rows.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <Search className="mx-auto w-12 h-12 text-gray-300 mb-4" />
+              <p className="text-lg font-medium">Aucun résultat trouvé</p>
+              <p className="text-sm">Essayez de modifier vos critères de recherche</p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          <div className="bg-white px-6 py-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Page info */}
+              <div className="text-sm text-gray-700">
+                Affichage de{' '}
+                <span className="font-medium">
+                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                </span>{' '}
+                à{' '}
+                <span className="font-medium">
+                  {Math.min(
+                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                    table.getFilteredRowModel().rows.length
+                  )}
+                </span>{' '}
+                sur{' '}
+                <span className="font-medium">
+                  {table.getFilteredRowModel().rows.length}
+                </span>{' '}
+                résultats
+              </div>
+
+              {/* Pagination controls */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => table.setPageIndex(0)}
+                  disabled={!table.getCanPreviousPage()}
+                  className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronsLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                  className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, table.getPageCount()) }, (_, i) => {
+                    const pageIndex = table.getState().pagination.pageIndex;
+                    const totalPages = table.getPageCount();
+                    
+                    let pageNumber;
+                    if (totalPages <= 5) {
+                      pageNumber = i;
+                    } else if (pageIndex < 3) {
+                      pageNumber = i;
+                    } else if (pageIndex > totalPages - 4) {
+                      pageNumber = totalPages - 5 + i;
+                    } else {
+                      pageNumber = pageIndex - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => table.setPageIndex(pageNumber)}
+                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          pageIndex === pageNumber
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNumber + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                  className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                  disabled={!table.getCanNextPage()}
+                  className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronsRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Page size selector */}
+              <select
+                value={table.getState().pagination.pageSize}
+                onChange={(e) => {
+                  table.setPageSize(Number(e.target.value));
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {[5, 10, 20, 30, 50].map((pageSize) => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize} par page
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -61,7 +331,7 @@ const HoverNode = ({ data }) => (
   </div>
 );
 
-const CollapsibleField = ({ label, value, isFirst, modulType, category, newSold}) => {
+const CollapsibleField = ({ label, value, isFirst, modelType, category, newSold}) => {
   const isReactNode = React.isValidElement(value);
 
   const isObject = value && typeof value === "object" && !isReactNode;
@@ -92,7 +362,7 @@ const CollapsibleField = ({ label, value, isFirst, modulType, category, newSold}
   );
 };
 
-const SimulationCard = memo(({ data, basesRef, modulType}) => {
+const SimulationCard = memo(({ data, basesRef, modelType}) => {
   const [Clicked, setClicked] = useState(false);
   const [editing, setEditing] = useState(false);
   const [query, setQuery] = useState("");
@@ -205,7 +475,7 @@ return (
       {data.eleType !== "Source"  && (fields.map((field, idx) => {
         if(field.label !== "Nouveau solde")
           return(<div key={idx} className='row-span-2'>
-              <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0 || idx === 3} modulType={modulType} category={data.category} newSold={data.newSold}/>
+              <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0 || idx === 3} modelType={modelType} category={data.category} newSold={data.newSold}/>
         </div>)
         }))}
             
@@ -225,7 +495,7 @@ return (
             ) : (
               <>
              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
-                {data.eleType !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : fields[2].value} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
+                {data.eleType !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : fields[2].value} isFirst={false} modelType={modelType} category={data.category} newSold={data.newSold}/>)}
                 {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
                   <Pencil size={14} className="absolute bottom-11 right-10 text-gray-500 hover:text-gray-700" />
                 </button>)}
@@ -233,7 +503,7 @@ return (
               </>
             )}
       
-      {data.eleType !== "Source" && (<CollapsibleField label={"Var du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' && fields[1].value !== 0 && fields[2].value !== null? Number((((fields[2].value / fields[1].value) - 1)* 100).toFixed(3)).toString() + '%': "-"} isFirst={false} modulType={modulType} category={data.category} newSold={data.newSold}/>)}
+      {data.eleType !== "Source" && (<CollapsibleField label={"Var du solde"} value={((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' && fields[1].value !== 0 && fields[2].value !== null? Number((((fields[2].value / fields[1].value) - 1)* 100).toFixed(3)).toString() + '%': "-"} isFirst={false} modelType={modelType} category={data.category} newSold={data.newSold}/>)}
 
       {data.eleType === "Source"  && (<div className="text-base text-gray-700">{data.label}</div>)}
       {/* {data.eleType !== "Ratio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
@@ -251,7 +521,7 @@ return (
   );
 });
 
-const CustomNode = memo(({ data, basesRef, modulType}) => {
+const CustomNode = memo(({ data, basesRef, modelType}) => {
   const [Clicked, setClicked] = useState(false);
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
@@ -284,7 +554,7 @@ return (
   >
     {data.eleType === "Source" && (<select value={data.Source || ""}  onChange={(e) => {data.setSource(e.target.value); data.Selected.current = true}}>
     <option value="" disabled>{data.SelectTitle}</option>
-      {SourceArrays[modulType].map(key =>{
+      {SourceArrays[modelType].map(key =>{
         const element = Elements.find(elem => elem.id === key)
          return(<option key={key} value={key}>{element.nameFr}</option>)          
             })}
@@ -305,7 +575,7 @@ return (
 
           return (
             <div key={idx} className={idx === 0 && fields[1]?.value?.length < 2 * fields[0]?.value?.props?.children[1]?.length / 3 ? "row-span-3" : ""}>
-              <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0} modulType={modulType} category={data.category} newSold={data.newSold}/>
+              <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0} modelType={modelType} category={data.category} newSold={data.newSold}/>
             </div>
           );
         }))}
@@ -346,20 +616,20 @@ const KPIDiagram = () => {
   const basesRef = useRef({});
   const chilLimit = useRef('');
   const [loading, setLoading] = useState(false);
-  const [modulType, setModelType] = useState("simulation");
+  const [modelType, setModelType] = useState("simulation");
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const nodeTypes = useMemo(() => ({
     customNode: (props) => {
-      if (modulType === "simulation") {
-        return <SimulationCard {...props} basesRef={basesRef} modulType={modulType} />;
+      if (modelType === "simulation") {
+        return <SimulationCard {...props} basesRef={basesRef} modelType={modelType} />;
       } else {
-        return <CustomNode {...props} basesRef={basesRef} modulType={modulType} />;
+        return <CustomNode {...props} basesRef={basesRef} modelType={modelType} />;
       }
     }
-  }), [basesRef, modulType]);
+  }), [basesRef, modelType]);
 
   //  useEffect( ()=>{
     
@@ -378,10 +648,10 @@ const KPIDiagram = () => {
   // }, [])
   // Enhanced tree layout positioning algorithm
   const calculateTreeLayout = useCallback(() => {
-    const nodeMap = new Map(newNodesRef.current[modulType].map(node => [node.id, node]));
+    const nodeMap = new Map(newNodesRef.current[modelType].map(node => [node.id, node]));
     const visitedNodes = new Set();
-    const horizontalSpacing = modulType !== "simulation" ? 700 : 500;
-    const verticalSpacing = modulType !== "simulation" ? 350 : 250;
+    const horizontalSpacing = modelType !== "simulation" ? 700 : 500;
+    const verticalSpacing = modelType !== "simulation" ? 350 : 250;
 
     const positionSubtree = (nodeId, x, y, level = 0) => {
       if (visitedNodes.has(nodeId)) return { width: 0, height: 0 };
@@ -392,7 +662,7 @@ const KPIDiagram = () => {
       visitedNodes.add(nodeId);
       
       // Get children of this node
-      const children = edgesRef.current[modulType]
+      const children = edgesRef.current[modelType]
         .filter(edge => edge.source === nodeId)
         .map(edge => edge.target)
         .filter(childId => nodeMap.has(childId));
@@ -422,8 +692,8 @@ const KPIDiagram = () => {
     };
 
     // Find root nodes (nodes with no incoming edges)
-    const rootNodes = newNodesRef.current[modulType].filter(node => 
-      !edgesRef.current[modulType].some(edge => edge.target === node.id)
+    const rootNodes = newNodesRef.current[modelType].filter(node => 
+      !edgesRef.current[modelType].some(edge => edge.target === node.id)
     );
 
     let currentY = 0;
@@ -431,13 +701,13 @@ const KPIDiagram = () => {
       const subtreeSize = positionSubtree(rootNode.id, 50, currentY, 0);
       currentY += subtreeSize.height + 100; // Add spacing between root trees
     });
-  }, [modulType]);
+  }, [modelType]);
 
   // Enhanced camera positioning function
   const focusOnNodeAndChildren = useCallback((parentNodeId) => {
     if (!reactFlowInstance.current) return;
     
-    const parentNode = newNodesRef.current[modulType].find(n => n.id === parentNodeId);
+    const parentNode = newNodesRef.current[modelType].find(n => n.id === parentNodeId);
     if (!parentNode) return;
     console.log(parentNode);
     if(parentNode.data.eleType === 'Source' && !parentNode.data.expanded)
@@ -452,11 +722,11 @@ const KPIDiagram = () => {
     }
 
     // Get all children nodes
-    const childrenIds = edgesRef.current[modulType]
+    const childrenIds = edgesRef.current[modelType]
       .filter(edge => edge.source === parentNodeId)
       .map(edge => edge.target);
     
-    const childrenNodes = newNodesRef.current[modulType].filter(n => childrenIds.includes(n.id));
+    const childrenNodes = newNodesRef.current[modelType].filter(n => childrenIds.includes(n.id));
     const allNodes = [parentNode, ...childrenNodes];
 
     if (allNodes.length === 0) return;
@@ -465,8 +735,8 @@ const KPIDiagram = () => {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     
     allNodes.forEach(node => {
-      const nodeWidth = modulType === "simulation" ? 300 : 400;
-      const nodeHeight = modulType === "simulation" ? 200 : 250;
+      const nodeWidth = modelType === "simulation" ? 300 : 400;
+      const nodeHeight = modelType === "simulation" ? 200 : 250;
       
       minX = Math.min(minX, node.position.x);
       maxX = Math.max(maxX, node.position.x + nodeWidth);
@@ -505,13 +775,13 @@ const KPIDiagram = () => {
       { x, y, zoom },
       { duration: 800 }
     );
-  }, [modulType]);
+  }, [modelType]);
 
   // MODIFIED: fetchNode function to include expandedNodes
-  const fetchNode = async (nodeId, modulType, basesRef, expandedNodes = []) => {
+  const fetchNode = async (nodeId, modelType, basesRef, expandedNodes = []) => {
     try {
       const res = await axios.post(`${URL}/api/node2/${nodeId}`, {
-        modulType: modulType, 
+        modelType: modelType, 
         basesRef: basesRef.current,
         expandedNodes: expandedNodes  // NEW: Send expanded nodes array
       });
@@ -526,7 +796,7 @@ const KPIDiagram = () => {
     try {
       const expandedArray = expandedNodes.map(node => node.trim())
       const res = await axios.post(`${URL}/api/calculation`, {
-        // modulType: modulType, 
+        // modelType: modelType, 
         basesRef: basesRef.current,
         expandedNodes: expandedArray  // NEW: Send expanded nodes array
       });
@@ -545,13 +815,13 @@ const KPIDiagram = () => {
     
     while (stack.length > 0) {
       const current = stack.pop();
-      const children = edgesRef.current[modulType]
+      const children = edgesRef.current[modelType]
         .filter(e => e.source === current)
         .map(e => e.target);
       
       for (const childId of children) {
         // Check if this child has other parents that are not being removed
-        const otherParents = edgesRef.current[modulType].filter(
+        const otherParents = edgesRef.current[modelType].filter(
           e => e.target === childId && e.source !== current
         );
         
@@ -559,7 +829,7 @@ const KPIDiagram = () => {
         const validParents = otherParents.filter(par => {
           let source = par.source;
           while (source) {
-            const parentEdge = edgesRef.current[modulType].find(e => e.target === source);
+            const parentEdge = edgesRef.current[modelType].find(e => e.target === source);
             if (!parentEdge) return true;
             if (source === current || toRemove.has(source)) return false;
             source = parentEdge.source;
@@ -575,19 +845,19 @@ const KPIDiagram = () => {
     }
     
     // Remove nodes and edges
-    newNodesRef.current[modulType] = newNodesRef.current[modulType].filter(n => !toRemove.has(n.id));
-    edgesRef.current[modulType] = edgesRef.current[modulType].filter(
+    newNodesRef.current[modelType] = newNodesRef.current[modelType].filter(n => !toRemove.has(n.id));
+    edgesRef.current[modelType] = edgesRef.current[modelType].filter(
       e => !toRemove.has(e.source) && !toRemove.has(e.target)
     );
 
     // Update parent node state
-    expandedNodesRef.current[modulType].delete(parentId);
+    expandedNodesRef.current[modelType].delete(parentId);
     
     // NEW: Remove from expandedNodesArrayRef
-    expandedNodesArrayRef.current[modulType] = expandedNodesArrayRef.current[modulType].filter(nodeId => nodeId !== parentId);
+    expandedNodesArrayRef.current[modelType] = expandedNodesArrayRef.current[modelType].filter(nodeId => nodeId !== parentId);
     // console.log('Updated expanded nodes array:', expandedNodesArrayRef.current);
     
-    newNodesRef.current[modulType] = newNodesRef.current[modulType].map(n =>
+    newNodesRef.current[modelType] = newNodesRef.current[modelType].map(n =>
       n.id === parentId ? { ...n, data: { ...n.data, expanded: false } } : n
     );
 
@@ -597,12 +867,12 @@ const KPIDiagram = () => {
 
   // MODIFIED: handleDrill function to include expandedNodes in fetchNode calls
   const handleDrill = useCallback(
-    async (nodeId, isRoot = false, modulType, basesRef) => {
-      const isExpanded = expandedNodesRef.current[modulType].has(nodeId);
+    async (nodeId, isRoot = false, modelType, basesRef) => {
+      const isExpanded = expandedNodesRef.current[modelType].has(nodeId);
       if (isExpanded) {
         removeDescendants(nodeId);
-        setNodes([...newNodesRef.current[modulType]]);
-        setEdges([...edgesRef.current[modulType]]);
+        setNodes([...newNodesRef.current[modelType]]);
+        setEdges([...edgesRef.current[modelType]]);
         
         // Focus on the collapsed parent node
         setTimeout(() => {
@@ -615,7 +885,7 @@ const KPIDiagram = () => {
       // NEW: Pass the current expanded nodes array to fetchNode
       
      
-      const node = await fetchNode(nodeId, modulType, basesRef, expandedNodesArrayRef.current[modulType]);
+      const node = await fetchNode(nodeId, modelType, basesRef, expandedNodesArrayRef.current[modelType]);
       if (!node || !node.childrenData || chilLimit.current.includes(node.parentId)) return;
       
       const entries = Object.entries(node.childrenData);
@@ -632,7 +902,7 @@ const KPIDiagram = () => {
       
       // Add children nodes and edges
       entries.forEach(([childId, childLabel], index) => {
-        edgesRef.current[modulType].push({
+        edgesRef.current[modelType].push({
           id: `e-${nodeId}-${childId}`,
           source: nodeId,
           target: childId,
@@ -643,7 +913,7 @@ const KPIDiagram = () => {
           animated: false
         });
         
-        newNodesRef.current[modulType].push({
+        newNodesRef.current[modelType].push({
           id: childId,
           type: 'customNode',
           position: { x: 0, y: 0 }, // Will be calculated by layout
@@ -652,7 +922,7 @@ const KPIDiagram = () => {
             ...childLabel,
             sign: childLabel.childSign,
             expanded: false,
-            onDrill: () => handleDrill(childId, false, modulType, basesRef),
+            onDrill: () => handleDrill(childId, false, modelType, basesRef),
             Source,          
             setSource, 
             Selected,
@@ -660,17 +930,17 @@ const KPIDiagram = () => {
         });
       });
 
-      expandedNodesRef.current[modulType].add(nodeId);
+      expandedNodesRef.current[modelType].add(nodeId);
       // console.log(node.childrenIds);
       
-      if (!expandedNodesArrayRef.current[modulType].includes(node.childrenIds)) {
-        expandedNodesArrayRef.current[modulType].push(...node.childrenIds);
+      if (!expandedNodesArrayRef.current[modelType].includes(node.childrenIds)) {
+        expandedNodesArrayRef.current[modelType].push(...node.childrenIds);
         // console.log('Added to expanded nodes array:', nodeId);
         // console.log('Current expanded nodes array:', expandedNodesArrayRef.current);
       }
       // NEW: Add to expandedNodesArrayRef if not already present
      
-      newNodesRef.current[modulType] = newNodesRef.current[modulType].map(n =>
+      newNodesRef.current[modelType] = newNodesRef.current[modelType].map(n =>
         n.id === nodeId
           ? { ...n, data: { ...n.data, expanded: true } }
           : n
@@ -679,8 +949,8 @@ const KPIDiagram = () => {
       // Calculate new layout
       calculateTreeLayout();
 
-      const uniqueNodes = Array.from(new Map(newNodesRef.current[modulType].map((n) => [n.id, n])).values());
-      const uniqueEdges = Array.from(new Map(edgesRef.current[modulType].map((e) => [e.id, e])).values());
+      const uniqueNodes = Array.from(new Map(newNodesRef.current[modelType].map((n) => [n.id, n])).values());
+      const uniqueEdges = Array.from(new Map(edgesRef.current[modelType].map((e) => [e.id, e])).values());
 
       setNodes(uniqueNodes);
       setEdges(uniqueEdges);
@@ -688,7 +958,7 @@ const KPIDiagram = () => {
       // Focus camera on the expanded parent and its children
       setTimeout(() => {
         focusOnNodeAndChildren(nodeId);
-        lastPrentId.current[modulType] = nodeId;
+        lastPrentId.current[modelType] = nodeId;
       }, 100);
     },
     [level, calculateTreeLayout, removeDescendants, Source, focusOnNodeAndChildren]
@@ -703,16 +973,16 @@ const KPIDiagram = () => {
     setLoading(true);
     const updatedNodes = [];
     // for (let node of newNodesRef.current) {
-      const calculation = await fetchCalculation(basesRef, expandedNodesArrayRef.current[modulType]);
+      const calculation = await fetchCalculation(basesRef, expandedNodesArrayRef.current[modelType]);
       console.log(calculation)
       if(calculation.success)
       {
-           for (let i = 0; i < newNodesRef.current[modulType].length; i++) {
-              const node = newNodesRef.current[modulType][i];
-              const newNode = await fetchNode(node.id, modulType, basesRef);
+           for (let i = 0; i < newNodesRef.current[modelType].length; i++) {
+              const node = newNodesRef.current[modelType][i];
+              const newNode = await fetchNode(node.id, modelType, basesRef);
 
               // update the node in place
-              newNodesRef.current[modulType][i] = {
+              newNodesRef.current[modelType][i] = {
                 ...node,
                 position: node.position,
                 data: { ...node.data, ...newNode }
@@ -720,7 +990,7 @@ const KPIDiagram = () => {
             }
 
             // then update state with the ref content
-            setNodes([...newNodesRef.current[modulType]]);
+            setNodes([...newNodesRef.current[modelType]]);
 
       }
     setLoading(false);
@@ -731,10 +1001,10 @@ const KPIDiagram = () => {
     try {
       await axios.get(`${URL}/api/reset/`);
       basesRef.current = {};
-      expandedNodesArrayRef.current[modulType] = []; 
-      newNodesRef.current[modulType] = [];
-      edgesRef.current[modulType] = [];// NEW: Clear expanded nodes array
-      expandedNodesRef.current[modulType].clear();
+      expandedNodesArrayRef.current[modelType] = []; 
+      newNodesRef.current[modelType] = [];
+      edgesRef.current[modelType] = [];// NEW: Clear expanded nodes array
+      expandedNodesRef.current[modelType].clear();
       setEdges([]);
       setNodes([]);
       // console.log('Reset - cleared expanded nodes array');
@@ -748,14 +1018,14 @@ const KPIDiagram = () => {
   const loadRoot = async (restart = false) => {
     // newNodesRef.current = [];
     // edgesRef.current = [];
-    // expandedNodesRef.current[modulType].clear();
+    // expandedNodesRef.current[modelType].clear();
     // expandedNodesArrayRef.current = []; // NEW: Clear expanded nodes array
     
     if(!Source)
     {
-      if(!newNodesRef.current[modulType].length)
+      if(!newNodesRef.current[modelType].length)
       {
-        newNodesRef.current[modulType].push({
+        newNodesRef.current[modelType].push({
           id: 'firstNode',
           type: 'customNode',
           position: { x: 50, y: 200 },
@@ -770,7 +1040,7 @@ const KPIDiagram = () => {
           },
         });
       }
-      if(newNodesRef.current[modulType].length <= 1)
+      if(newNodesRef.current[modelType].length <= 1)
       {
         if (reactFlowInstance.current) {
           setTimeout(() => {
@@ -783,14 +1053,14 @@ const KPIDiagram = () => {
           }, 100);
         }
       }
-      setNodes(newNodesRef.current[modulType]);
-      setEdges(edgesRef.current[modulType]);
+      setNodes(newNodesRef.current[modelType]);
+      setEdges(edgesRef.current[modelType]);
 
       
       return;
     }
     
-    const root = await fetchNode(Source, modulType, basesRef, expandedNodesArrayRef.current[modulType]);
+    const root = await fetchNode(Source, modelType, basesRef, expandedNodesArrayRef.current[modelType]);
     if (!root) return;
     
     if (root.childrenLimit) {
@@ -800,7 +1070,7 @@ const KPIDiagram = () => {
     const rootId = root.parentId || Source;
     // console.log(root);
 
-    newNodesRef.current[modulType].push({
+    newNodesRef.current[modelType].push({
       id: rootId,
       type: 'customNode',
       position: { x: 50, y: 200 },
@@ -811,7 +1081,7 @@ const KPIDiagram = () => {
         isRoot: true,
         childrenNum: Object.entries(root.childrenData || {}).length,
         expanded: false,
-        onDrill: () => handleDrill(rootId, true, modulType, basesRef),
+        onDrill: () => handleDrill(rootId, true, modelType, basesRef),
         Source,          
         setSource,
         Selected,
@@ -819,8 +1089,8 @@ const KPIDiagram = () => {
       },
     });
     
-    setNodes([...newNodesRef.current[modulType]]);
-    setEdges([...edgesRef.current[modulType]]);
+    setNodes([...newNodesRef.current[modelType]]);
+    setEdges([...edgesRef.current[modelType]]);
     
     if (reactFlowInstance.current) {
       setTimeout(() => {
@@ -835,17 +1105,18 @@ const KPIDiagram = () => {
   };
 
   useEffect(() => {
-    if(Selected.current)
+    if(modelType !== "reports")
+  {  if(Selected.current)
     {
-      expandedNodesArrayRef.current[modulType] = []; 
-      newNodesRef.current[modulType] = [];
-      edgesRef.current[modulType] = [];// NEW: Clear expanded nodes array
-      expandedNodesRef.current[modulType].clear();
+      expandedNodesArrayRef.current[modelType] = []; 
+      newNodesRef.current[modelType] = [];
+      edgesRef.current[modelType] = [];// NEW: Clear expanded nodes array
+      expandedNodesRef.current[modelType].clear();
       Selected.current = false;
     }
-    focusOnNodeAndChildren(lastPrentId.current[modulType]);
-    loadRoot();
-  }, [Source, modulType]);
+    focusOnNodeAndChildren(lastPrentId.current[modelType]);
+    loadRoot();}
+  }, [Source, modelType]);
 
   return (
     
@@ -853,9 +1124,41 @@ const KPIDiagram = () => {
       <img 
           src={finansiaLogo}
           // alt="FiNANZiA - decoding finance, revealing insights" 
-          className="absolute h-20 object-contain"
+          className="absolute top-1 h-20 object-contain"
         />
-      <ReactFlow
+          <div className="absolute w-[40rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500 top-4">
+          {["Élément comptable", "Ratio", "Simulation", "Reports"].map((label, index) => (
+            <button
+              key={index}
+              className={`text-white px-5 py-2 rounded-md transition-all duration-200 hover:bg-slate-500 hover:scale-105 active:scale-95 ${
+                modelType === label.toLowerCase() ? 'bg-slate-500' : ''
+              }`}
+              onClick={() => {
+                // setEdges([...edgesRef.current[modelType]])
+                setModelType(label.toLowerCase());
+                // console.log(edgesRef.current);
+
+                setSource('');
+                if (label === "Élément comptable") {
+                  SelectTitle.current = 'Sélectionnez un rapport'; 
+                } else {
+                  SelectTitle.current = 'Sélectionnez une famille';  
+                }
+                // console.log(lastPrentId.current[modelType]);
+                // if (reactFlowInstance.current) {
+                //   reactFlowInstance.current.setViewport({
+                //     x: -reactFlowWrapper.current.clientWidth / 2 + 190,
+                //     y: reactFlowWrapper.current.clientHeight / 2 - 182,
+                //     zoom: 2
+                //   });
+                // }
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+     { modelType !== 'reports' && (<ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -871,41 +1174,10 @@ const KPIDiagram = () => {
         <Controls />
         
         {/* Mode Selection Bar */}
-        <div className="absolute w-[40rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500 top-4">
-          {["Élément comptable", "Ratio", "Simulation"].map((label, index) => (
-            <button
-              key={index}
-              className={`text-white px-5 py-2 rounded-md transition-all duration-200 hover:bg-slate-500 hover:scale-105 active:scale-95 ${
-                modulType === label.toLowerCase() ? 'bg-slate-500' : ''
-              }`}
-              onClick={() => {
-                // setEdges([...edgesRef.current[modulType]])
-                setModelType(label.toLowerCase());
-                // console.log(edgesRef.current);
-
-                setSource('');
-                if (label === "Élément comptable") {
-                  SelectTitle.current = 'Sélectionnez un rapport'; 
-                } else {
-                  SelectTitle.current = 'Sélectionnez une famille';  
-                }
-                // console.log(lastPrentId.current[modulType]);
-                // if (reactFlowInstance.current) {
-                //   reactFlowInstance.current.setViewport({
-                //     x: -reactFlowWrapper.current.clientWidth / 2 + 190,
-                //     y: reactFlowWrapper.current.clientHeight / 2 - 182,
-                //     zoom: 2
-                //   });
-                // }
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+      
 
         {/* Simulation Controls */}
-        {modulType === "simulation" && (
+        {modelType === "simulation" && (
           <div className="absolute left-5 top-20 flex gap-2 z-50">
             <button 
               className='bg-blue-500 hover:bg-blue-600 w-24 h-8 text-white rounded-md transition-colors duration-200' 
@@ -925,10 +1197,12 @@ const KPIDiagram = () => {
      
 
         {/* NEW: Debug info for expanded nodes (optional - remove in production) */}
-        {process.env.REACT_APP_NODE_ENV === 'development' && (
+        {process.env.REACT_APP_NODE_ENV === 'development' && modelType !== "reports" && (
+         
           <div className="absolute left-5 bottom-5 bg-black bg-opacity-70 text-white p-3 rounded-md text-xs z-50">
-            <div>Expanded Nodes: {expandedNodesArrayRef.current[modulType].length}</div>
-            <div>[{expandedNodesArrayRef.current[modulType].join(', ')}]</div>
+             {console.log(modelType)}
+            <div>Expanded Nodes: {expandedNodesArrayRef.current[modelType].length}</div>
+            <div>[{expandedNodesArrayRef.current[modelType].join(', ')}]</div>
           </div>
         )}
 
@@ -939,8 +1213,9 @@ const KPIDiagram = () => {
             <p className="text-white mt-4 text-lg font-medium">Chargement des éléments...</p>
           </div>
         )}
-      {/* <TableExample/> */}
-      </ReactFlow>
+
+      </ReactFlow>)}
+     {modelType === "reports" && ( <TableExample/>)}
     </div>
   );
 };
