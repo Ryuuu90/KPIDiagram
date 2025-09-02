@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 
 const esg = mongoose.Schema({
+    order : Number,
     "NumEc" : String,
     Definition : String,
     Exercice : Number,

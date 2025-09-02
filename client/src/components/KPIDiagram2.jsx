@@ -16,6 +16,9 @@ import './KPIDiagram.css'
 import Elements from './Elements';
 import finansiaLogo from '../public/finansia-logo.jpeg';
 import { isNumeral } from 'numeral';
+import { useDeepCompareMemo } from 'use-deep-compare';
+import { FaBalanceScale, FaChartBar, FaLeaf, FaFileInvoice } from "react-icons/fa";
+
 
 import {
   useReactTable,
@@ -30,89 +33,245 @@ import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUp
 const URL = process.env.REACT_APP_BACKEND_URL;
 
 // Mock axios for demo purposes
-
 const TableExample = () => {
   const [allData, setAllData] = useState([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState([]);
+  const [reportType, setReportType] = useState('Passif')
+  const [isLoading, setIsLoading] = useState(false);
+  // const [activeReport, setActiveReport] = useState("CPC");
 
+  // const reports =;
+  const reports = [
+    { name: "Passif", icon: <FaBalanceScale /> },
+    { name: "Actif", icon: <FaChartBar /> },
+    { name: "ESG", icon: <FaLeaf /> },
+    { name: "CPC", icon: <FaFileInvoice /> },
+  ];
+  const color = useRef('white');
+  
   // Mock data for demonstration (replace with your actual API call)
   useEffect(() => {
-   
     const getAllData = async () => {
+      setIsLoading(true)
       try {
-        const response = await axios.post(`${URL}/api/reports`, {reportType : 'CPC'});
+        // console.log(reportType);
+        const response = await axios.post(`${URL}/api/reports`, {reportType : reportType});
         setAllData(response.data.report);
         console.log(response.data.report);
       } catch(error) {
         console.error(error.message);
       }
+      finally {
+        setIsLoading(false)
+      }
     }
     getAllData();
-  }, []);
+  }, [reportType]);
 
-  // Column definitions
+  // Column definitions - FIXED: Changed dependency to [reportType]
   const columns = useMemo(
-    () => [
-      {
-        accessorKey: 'Nature',
-        header: 'Nature',
-        cell: ({ getValue }) => (
-          <span className="font-medium text-gray-800">
-            {getValue()}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "Operations propres l'exercice",
-        header: "Opérations propres à l'exercice",
-        cell: ({ getValue }) => (
-          <span className="font-semibold text-green-600">
-            {new Intl.NumberFormat('fr-FR', { 
-              style: 'currency', 
-              currency: 'MAD' 
-            }).format(getValue())}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'Operations concernant les exercices precedents',
-        header: 'Opérations exercices précédents',
-        cell: ({ getValue }) => (
-          <span className="font-semibold text-blue-600">
-            {new Intl.NumberFormat('fr-FR', { 
-              style: 'currency', 
-              currency: 'MAD' 
-            }).format(getValue())}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "TOTAUX DE L'EXERCICE (3 = 2+1)",
-        header: "Totaux de l'exercice",
-        cell: ({ getValue }) => (
-          <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded">
-            {new Intl.NumberFormat('fr-FR', { 
-              style: 'currency', 
-              currency: 'MAD' 
-            }).format(getValue())}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "Totaux de l'exercice precedent",
-        header: "Totaux exercice précédent",
-        cell: ({ getValue }) => (
-          <span className="font-semibold text-gray-600">
-            {new Intl.NumberFormat('fr-FR', { 
-              style: 'currency', 
-              currency: 'MAD' 
-            }).format(getValue())}
-          </span>
-        ),
-      },
-    ],
-    []
+    () => {
+      if(reportType === 'CPC')
+        return [{
+          accessorKey: 'Nature',
+          header: 'Nature',
+          cell: ({ getValue }) => {
+            const value = getValue();
+            return (
+              <span className="font-medium text-gray-800">
+                {value ? value.trim() : ''}
+              </span>
+            );
+          },
+        },
+        {
+          accessorKey: "Operations propres l'exercice",
+          header: "Opérations propres à l'exercice",
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-green-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        },
+        {
+          accessorKey: 'Operations concernant les exercices precedents',
+          header: 'Opérations exercices précédents',
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-blue-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        },
+        {
+          accessorKey: "TOTAUX DE L'EXERCICE (3 = 2+1)",
+          header: "Totaux de l'exercice",
+          cell: ({ getValue }) => (
+            <span className="font-bold text-indigo-700  px-2 py-1 rounded">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        },
+        {
+          accessorKey: "Totaux de l'exercice precedent",
+          header: "Totaux exercice précédent",
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-gray-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        }];
+      
+      else if(reportType === 'ESG')
+        return [{
+          accessorKey: 'Definition',
+          header: 'Definition',
+          cell: ({ getValue }) => (
+            <span className="font-medium text-gray-800">
+              {getValue()}
+            </span>
+          ),
+        },
+        {
+          accessorKey: "Exercice",
+          header: "Exercice",
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-green-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        },
+        {
+          accessorKey: 'Exercice Precedent',
+          header: 'Exercice Precedent',
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-blue-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        }];
+      
+      else if(reportType === 'Actif')
+        return [{
+          accessorKey: 'Actif',
+          header: 'Actif',
+          cell: ({ getValue }) => (
+            <span className="font-medium text-gray-800">
+              {getValue()}
+            </span>
+          ),
+        },
+        {
+          id: "exercice-brut",
+          accessorFn: (row) => row.Exercice?.Brut || 0,
+          header: "Brut",
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-green-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        },
+        {
+          id: "exercice-amortissements",
+          accessorFn: (row) => row.Exercice?.['Amortissements et provisions'] || 0,
+          header: 'Amortissements et provisions',
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-blue-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        },
+        {
+          id: "exercice-net",
+          accessorFn: (row) => row.Exercice?.['Net'] || 0,
+          header: 'Net Exercice',
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-blue-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        },
+        {
+          accessorKey: 'Exercice Precedent',
+          header: 'Exercice Precedent',
+          cell: ({ getValue }) => {
+            const value = getValue() || 0;
+            return (
+              <span className="font-semibold text-blue-600">
+                {new Intl.NumberFormat('fr-FR', { 
+                  style: 'currency', 
+                  currency: 'MAD' 
+                }).format(value)}
+              </span>
+            );
+          },
+        }];
+      
+      else if(reportType === 'Passif')
+        return [{
+          accessorKey: 'Passif',
+          header: 'Passif',
+          cell: ({ getValue }) => (
+            <span className="font-medium text-gray-800">
+              {getValue()}
+            </span>
+          ),
+        },
+        {
+          accessorKey: "Exercice",
+          header: "Exercice",
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-green-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        },
+        {
+          accessorKey: 'Exercice Precedent',
+          header: 'Exercice Precedent',
+          cell: ({ getValue }) => (
+            <span className="font-semibold text-blue-600">
+              {new Intl.NumberFormat('fr-FR', { 
+                style: 'currency', 
+                currency: 'MAD' 
+              }).format(getValue())}
+            </span>
+          ),
+        }];
+
+      return []; // fallback
+    },
+    [reportType] // FIXED: Changed from [allData] to [reportType]
   );
 
   const table = useReactTable({
@@ -125,19 +284,50 @@ const TableExample = () => {
     state: {
       globalFilter,
       sorting,
+      pagination: {
+        pageIndex: 0,
+        pageSize: allData.length, // <<< هذا يضمن عرض جميع الصفوف
+      },
     },
     onGlobalFilterChange: setGlobalFilter,
   });
 
-
   return (
-    <div className="p-6 bg-gray-50 min-h-screen mt-28">
+    <div className="p-6 bg-white min-h-screen mt-28">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
-            <h2 className="text-2xl font-bold mb-2">Rapport Financier CPC</h2>
-            <p className="text-blue-100">Tableau des comptes de produits et charges</p>
+          <div className="flex gap-4 p-4 h-44 bg-blue-600 rounded-xl shadow-lg">
+            {reports.map(({ name, icon }) => {
+              const isActive = reportType === name;
+              return (
+                <div
+                  key={name}
+                  onClick={() => setReportType(name)}
+                  className={`
+                    cursor-pointer relative flex flex-col justify-between rounded-2xl 
+                    transition-all duration-700 transform overflow-hidden
+                    ${isActive 
+                      ? "flex-[2] scale-100  bg-blue-600 text-white" 
+                      : "flex-1 bg-white text-gray-800 hover:bg-blue-100 hover:scale-105"}
+                  `}
+                >
+                  <div className="relative p-6 flex flex-col justify-between h-full">
+                    <div className="flex items-center gap-3 mb-4 text-2xl">
+                      <span className={`${isActive ? "text-white" : "text-blue-500 "} transition-colors duration-300`}>
+                        {icon}
+                      </span>
+                      <h2 className={`font-bold text-xl transition-colors duration-300 ${isActive ? "text-white text-3xl" : "text-gray-900"}`}>
+                        {name}
+                      </h2>
+                    </div>
+                    <p className={`text-sm transition-colors duration-300 ${isActive ? "text-blue-100  transition-[font-size,color] duration-800 text-xl " : "text-gray-500"} `}>
+                      Tableau des comptes de produits et charges
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Controls */}
@@ -163,7 +353,13 @@ const TableExample = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          {isLoading && (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="mt-2 text-gray-600">Chargement...</p>
+            </div>
+          )}
+          {!isLoading && (<div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-100">
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -185,138 +381,91 @@ const TableExample = () => {
                 ))}
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {table.getRowModel().rows.map((row, index) => (
-                  <tr
-                    key={row.id}
-                    className={`hover:bg-blue-50 transition-colors ${
-                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                    }`}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3 text-sm border-b border-gray-100">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {(() => {
+                  let useGray = true; // toggle state
+                  let currentColor = "gray"; // start with gray
+
+                  return table.getRowModel().rows.map((row) => {
+                    // check if this row has a Roman numeral in the "Nature" column
+                    const natureCell = row.getVisibleCells().find(
+                      (cell) => cell.column.columnDef.header === "Nature" || cell.column.columnDef.header === "Definition" 
+                      || cell.column.columnDef.header === "Actif"  || cell.column.columnDef.header === "Passif" 
+                    );
+                    // console.log(row);
+                    if (reportType === "CPC" && natureCell) {
+                      const cellValue = natureCell.getValue();
+                      if (cellValue && typeof cellValue === 'string') {
+                        const roman = cellValue.trim().split(".")[0];
+                        if (/^[IVXLCDM]+$/.test(roman)) {
+                          useGray = !useGray;
+                          currentColor = useGray ? "gray" : "orange";
+                        }
+                      }
+                    }
+                    if(reportType === 'ESG' && natureCell) {
+                      if(natureCell.getValue() === "I. Tableau de formation des R;sultats (T.F.R )")
+                        currentColor = "gray";
+                      else if(natureCell.getValue() === "II. CAPACITE D'AUTOFINANCEMENT (C.A.F.) - AUTOFINANCEMENT")
+                        currentColor = "orange"
+                    }
+                    if(reportType === 'Actif' && natureCell) {
+                      if(natureCell.getValue() === "IMMOBILISATIONS EN NON VALEUR (A)" || natureCell.getValue() === "IMMOBILISATIONS CORPORELLES (C)" ||  natureCell.getValue() === "ECARTS DE CONVERSION - ACTIF (E)" 
+                      || natureCell.getValue() === "CREANCES DE L'ACTIF CIRCULANT (G)" || natureCell.getValue() === "ECARTS DE CONVERSION - ACTIF (I)")
+                        currentColor = "gray";
+                      else if(natureCell.getValue() === "IMMOBILISATIONS INCORPORELLES (B)" || natureCell.getValue() === "IMMOBILISATIONS FINANCIERES (D)" ||  natureCell.getValue() === "STOCKS (F)" 
+                      || natureCell.getValue() === "TITRES ET VALEURS DE PLACEMENT (H)" || natureCell.getValue() === "TRESORIE ACTIF")
+                        currentColor = "orange"
+                    }
+                    if(reportType === 'Passif' && natureCell) {
+                      if(natureCell.getValue() === "CAPITAUX PROPRES" || natureCell.getValue() === "DETTES DE FINANCEMENT" ||  natureCell.getValue() === "ECARTS DE CONVERSION PASSIF" 
+                    || natureCell.getValue() === "AUTRES PROVISIONS POUR RISQUE ET CHARGE            (G)")
+                        currentColor = "gray";
+                      else if(natureCell.getValue() === "CAPITAUX PROPRES ASSIMILES" || natureCell.getValue() === "PROVISIONS DURABLES POUR RISQUES ET CHARGE" ||  natureCell.getValue() === "DETTES DU PASSIF CIRCULANT " 
+                      || natureCell.getValue() === "TITRES ET VALEURS DE PLACEMENT (H)" || natureCell.getValue() === "TRESORIE - PASSIF")
+                        currentColor = "orange"
+                    }
+
+                    // two fixed Tailwind classes
+                    const bgClassMap = {
+                      gray: "bg-gray-50 hover:bg-gray-200",
+                      orange: "bg-orange-50 hover:bg-orange-200",
+                    };
+
+                    const rowBgClass = bgClassMap[currentColor];
+
+                    return (
+                      <tr key={row.id} className={`transition-colors ${rowBgClass}`}>
+                        {row.getVisibleCells().map((cell) => {
+                          const value = cell.getValue();
+                          const isNumeric = typeof value === "number" || value === null;
+
+                          return (
+                            <td
+                              key={cell.id}
+                              className={`px-4 py-3 text-sm border-b border-gray-100 ${
+                                isNumeric ? "text-right" : "text-left"
+                              }`}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  });
+                })()}
               </tbody>
             </table>
-          </div>
+          </div>)}
 
           {/* Empty state */}
-          {table.getFilteredRowModel().rows.length === 0 && (
+          {!isLoading && table.getFilteredRowModel().rows.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               <Search className="mx-auto w-12 h-12 text-gray-300 mb-4" />
               <p className="text-lg font-medium">Aucun résultat trouvé</p>
               <p className="text-sm">Essayez de modifier vos critères de recherche</p>
             </div>
           )}
-
-          {/* Pagination */}
-          <div className="bg-white px-6 py-4 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              {/* Page info */}
-              <div className="text-sm text-gray-700">
-                Affichage de{' '}
-                <span className="font-medium">
-                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-                </span>{' '}
-                à{' '}
-                <span className="font-medium">
-                  {Math.min(
-                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                    table.getFilteredRowModel().rows.length
-                  )}
-                </span>{' '}
-                sur{' '}
-                <span className="font-medium">
-                  {table.getFilteredRowModel().rows.length}
-                </span>{' '}
-                résultats
-              </div>
-
-              {/* Pagination controls */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => table.setPageIndex(0)}
-                  disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronsLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                  className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                {/* Page numbers */}
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, table.getPageCount()) }, (_, i) => {
-                    const pageIndex = table.getState().pagination.pageIndex;
-                    const totalPages = table.getPageCount();
-                    
-                    let pageNumber;
-                    if (totalPages <= 5) {
-                      pageNumber = i;
-                    } else if (pageIndex < 3) {
-                      pageNumber = i;
-                    } else if (pageIndex > totalPages - 4) {
-                      pageNumber = totalPages - 5 + i;
-                    } else {
-                      pageNumber = pageIndex - 2 + i;
-                    }
-
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => table.setPageIndex(pageNumber)}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                          pageIndex === pageNumber
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {pageNumber + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                  disabled={!table.getCanNextPage()}
-                  className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronsRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Page size selector */}
-              <select
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => {
-                  table.setPageSize(Number(e.target.value));
-                }}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {[5, 10, 20, 30, 50].map((pageSize) => (
-                  <option key={pageSize} value={pageSize}>
-                    {pageSize} par page
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
         </div>
       </div>
     </div>

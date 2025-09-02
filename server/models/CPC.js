@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 
 const cpc = mongoose.Schema({
+    order : Number,
     "NumEC F" : String,
     "NumEC G" : String,
     "NumEC H" : String,

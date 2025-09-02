@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 
 const actif = mongoose.Schema({
+    order : Number,
     "NumEc colonne F" : String,
     "NumEc colonne G" : String,
     "NumEc colonne H" : String,

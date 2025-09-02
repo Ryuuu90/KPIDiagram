@@ -22,11 +22,12 @@ exports.modelsReports = async (req , res) => {
         // let esg;
         // if(reportType === 'ESG')
         // {
-        //     esg = sheet.map(row =>{
+        //     esg = sheet.map((row, index) =>{
         //         const element = row['NumEC'] ? data.find(elem => elem.parentId === row['NumEC']) : null;
         //         return({
+        //              order : index,
         //             "NumEC" : element ? element.parentId : null,
-        //             "Definition" : row['NumEC'] ? row.Definition : null,
+        //             "Definition" : row.Definition,
         //             "Exercice" : element ? element.SoldeValue : null,
         //             "Exercice Precedent" : element ? 0 : null,
         //         })
@@ -36,11 +37,12 @@ exports.modelsReports = async (req , res) => {
         // }
         // if(reportType === 'Passif')
         // {
-        //     esg = sheet.map(row =>{
+        //     esg = sheet.map((row, index) =>{
         //         const element = row['NumEC'] ? data.find(elem => elem.parentId === row['NumEC']) : null;
         //         return({
+        //              order : index,
         //             "NumEC" : element ? element.parentId : null,
-        //             "Passif" : row['NumEC'] ? row.Definition : null,
+        //             "Passif" :row['PASSIF'],
         //             "Exercice" : element ? element.SoldeValue : null,
         //             "Exercice Precedent" : element ? 0 : null,
         //         })
@@ -50,12 +52,13 @@ exports.modelsReports = async (req , res) => {
         // }
         // if(reportType === 'Actif')
         // {
-        //     esg = sheet.map(row =>{
+        //     esg = sheet.map((row , index)=>{
         //         const element1 = row['NumEC F'] ? data.find(elem => elem.parentId === row['NumEC F']) : null ;
         //         const element2 = row['NumEC G'] ? data.find(elem => elem.parentId === row['NumEC G']) : null ;
         //         const element3 = row['NumEC H'] ? data.find(elem => elem.parentId === row['NumEC H']) : null ;
                 
         //         return({
+                        // order : index,
         //             "NumEC F" : element1 ? element1.parentId : null,
         //             "NumEC G" : element2 ? element2.parentId : null,
         //             "NumEC H" : element3 ? element3.parentId : null,
@@ -70,12 +73,13 @@ exports.modelsReports = async (req , res) => {
 
         // if(reportType === 'CPC')
         // {
-        //     esg = sheet.map(row =>{
+        //     esg = sheet.map((row , index)=>{
         //         const element1 = row['NumEC1'] ? data.find(elem => elem.parentId === row['NumEC1']) : null ;
         //         const element2 = row['NumEC2'] ? data.find(elem => elem.parentId === row['NumEC2']) : null ;
         //         const element3 = row['NumEC3'] ? data.find(elem => elem.parentId === row['NumEC3']) : null ;
         //         console.log(row);
         //         return({
+        //             order : index,
         //             "NumEC F" : element1 ? element1.parentId : null,
         //             "NumEC G" : element2 ? element2.parentId : null,
         //             "NumEC H" : element3 ? element3.parentId : null,
@@ -92,15 +96,15 @@ exports.modelsReports = async (req , res) => {
 
         let data;
         if(reportType === 'ESG')
-            data = await ESG.find({});
+            data = await ESG.find({}).sort({ order: 1 });
         else if(reportType === 'Passif')
-            data = await Passif.find({});
+            data = await Passif.find({}).sort({ order: 1 });
         else if(reportType === 'Actif')
-            data = await Actif.find({});
+            data = await Actif.find({}).sort({ order: 1 });
         else if(reportType === 'CPC')
-            data = await CPC.find({});
+            data = await CPC.find({}).sort({ order: 1 });
 
-        console.log(data);
+        // console.log(data);
 
         res.status(200).json({success : true, message : "getting report data", report : data});
     }
