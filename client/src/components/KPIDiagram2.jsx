@@ -20,6 +20,7 @@ import { useDeepCompareMemo } from 'use-deep-compare';
 import { FaBalanceScale, FaChartBar, FaLeaf, FaFileInvoice } from "react-icons/fa";
 
 
+
 import {
   useReactTable,
   getCoreRowModel,
@@ -31,6 +32,186 @@ import {
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 const URL = process.env.REACT_APP_BACKEND_URL;
+
+
+
+const SimulationTable = ({ Source, basesRef, setSource }) => {
+  const [baseElements, setBaseElements] = useState([]);
+  const [baseSlenght, setBasesLenght]  = useState(0);
+  const [editingRow, setEditingRow] = useState(null); // track which row is being edited
+  const [query, setQuery] = useState("");
+  const inputRef = useRef(null);
+
+
+  // Save value for a specific element
+  const handleSave = (elementId) => {
+    if (inputRef.current) {
+      const val = inputRef.current.value.trim();
+      if (val.length > 12) return;
+      basesRef.current[elementId] = val; // save globally
+      setEditingRow(null); // close edit mode
+    }
+  };
+  const formatNumber = (num) => {
+    if (num === "-" || num === "" || num == null) return "-";
+    return new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(Number(num));
+  };
+  // Handle search (if you type an element name)
+  const handleInputFocus = (e) => {
+    if (e.code === "Enter") {
+      const source = Elements.find(
+        (elem) => elem.nameFr.toLowerCase() === query.toLowerCase()
+      );
+      if (source) setSource(source.id);
+    }
+  };
+
+  // Fetch data only when Source changes
+  useEffect(() => {
+    const getBaseElements = async () => {
+      try {
+        const result = await axios.post(`${URL}/api/search/`, {
+          elementId: Source,
+        });
+        setBaseElements(result.data.elements);
+        setBasesLenght(result.data.elements.length);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getBaseElements();
+  }, [Source]);
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "parentId",
+        header: "element ID",
+        cell: ({ getValue }) => <span>{getValue()}</span>,
+      },
+      {
+        accessorKey: "nameFr",
+        header: "Le nom de l’élément",
+        cell: ({ getValue }) => <span>{getValue()}</span>,
+      },
+      {
+        accessorKey: "SoldeValue",
+        header: "Valeur du solde",
+        cell: ({ getValue }) => <span>{formatNumber(getValue())}</span>,
+      },
+      {
+        accessorKey: "newSold",
+        header: "Nouveau solde",
+        cell: ({ row }) => {
+          const elementId = row.original.parentId;
+          const savedValue = basesRef.current[elementId] || "-";
+
+          return (
+            <div className="flex items-center gap-2">
+              {editingRow === elementId ? (
+                <input
+                  type="number"
+                  defaultValue={savedValue === "-" ? "" : savedValue}
+                  ref={inputRef}
+                  onBlur={() => handleSave(elementId)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSave(elementId)}
+                  className="w-24 text-xs text-gray-800 border border-gray-300 rounded px-1"
+                  autoFocus
+                />
+              ) : (
+                <>
+                  <span>{formatNumber(savedValue)}</span>
+                  <button onClick={() => setEditingRow(elementId)}>
+                    <Pencil
+                      size={14}
+                      className="text-gray-500 hover:text-gray-700"
+                    />
+                  </button>
+                </>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [editingRow]
+  );
+
+  const table = useReactTable({
+    data: baseElements,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  useEffect(() => {
+    table.setPageSize(baseSlenght);
+  }, [baseSlenght]);
+
+  return (
+    <div>
+      <table className="w-full h-full border border-gray-200">
+        {/* HEAD */}
+        <thead className="bg-gray-100">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                if (header.column.columnDef.header === "element ID") return null;
+                return (
+                  <th
+                    key={header.id}
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </th>
+                );
+              })}
+            </tr>
+          ))}
+        </thead>
+
+        {/* BODY */}
+        <tbody>
+          {table.getRowModel().rows.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length}
+                className="text-center py-4 text-gray-500"
+              >
+                No data available
+              </td>
+            </tr>
+          ) : (
+            table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="border-b hover:bg-gray-50">
+                {row.getVisibleCells().map((cell) => {
+                  if (cell.column.columnDef.header === "element ID") return null;
+                  return (
+                    <td key={cell.id} className="px-4 py-2 text-sm text-gray-800">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+
+
+
 
 // Mock axios for demo purposes
 const TableExample = () => {
@@ -321,7 +502,7 @@ const TableExample = () => {
                         {name}
                       </h2>
                     </div>
-                    <p className={`text-sm transition-colors duration-300 ${isActive ? "text-blue-100  transition-[font-size,color] duration-800 text-xl " : "text-gray-500"} `}>
+                    <p className={`text-sm transition-colors duration-300 ${isActive ? "text-blue-100 duration-800 text-xl " : "text-gray-500"} `}>
                       Tableau des comptes de produits et charges
                     </p>
                   </div>
@@ -763,10 +944,11 @@ const KPIDiagram = () => {
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef(null);
   const basesRef = useRef({});
+  const [baseElements, setBaseElements] = useState([]);
   const chilLimit = useRef('');
   const [loading, setLoading] = useState(false);
   const [modelType, setModelType] = useState("simulation");
-
+  const [isOpen, setIsOpen] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -1254,17 +1436,20 @@ const KPIDiagram = () => {
   };
 
   useEffect(() => {
-    if(modelType !== "reports")
-  {  if(Selected.current)
-    {
-      expandedNodesArrayRef.current[modelType] = []; 
-      newNodesRef.current[modelType] = [];
-      edgesRef.current[modelType] = [];// NEW: Clear expanded nodes array
-      expandedNodesRef.current[modelType].clear();
-      Selected.current = false;
-    }
-    focusOnNodeAndChildren(lastPrentId.current[modelType]);
-    loadRoot();}
+
+      if(modelType !== "reports")
+      {  if(Selected.current)
+        {
+          expandedNodesArrayRef.current[modelType] = []; 
+          newNodesRef.current[modelType] = [];
+          edgesRef.current[modelType] = [];// NEW: Clear expanded nodes array
+          expandedNodesRef.current[modelType].clear();
+          Selected.current = false;
+        }
+        focusOnNodeAndChildren(lastPrentId.current[modelType]);
+        loadRoot();
+       
+      }
   }, [Source, modelType]);
 
   return (
@@ -1342,7 +1527,24 @@ const KPIDiagram = () => {
               Reset
             </button>
           </div>
-        )}
+          )}
+        {modelType === "simulation" && ( <div className="absolute top-1/4 left-1 flex">
+            {/* Toggle button */}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 bg-gray-800 z-[1000] text-white rounded-r-lg shadow hover:bg-gray-700 transition"
+            >
+              {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+            </button>
+      
+            {/* The table container */}
+            <div
+                className={`table-dropdown z-[100] w-5/6 bg-white shadow-lg rounded-l-lg transition-all duration-300 ${
+                  isOpen ? "opacity-100 translate-x-0 " : " -translate-x-full"}`}>
+                <SimulationTable Source={Source} basesRef={basesRef} setSource={setSource}/>
+              </div>
+          </div>)}
+
      
 
         {/* NEW: Debug info for expanded nodes (optional - remove in production) */}

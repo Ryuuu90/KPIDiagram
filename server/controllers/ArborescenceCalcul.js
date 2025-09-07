@@ -7,6 +7,28 @@ function isValidFormula(str) {
     // Allowed chars: digits, spaces, + - * / ( ) .
     return /^[0-9+\-*/().\s]+$/.test(str);
   }
+
+  const getBaseElments = (elementId, arb, visited = new Set()) =>{
+    const results = [];
+    if(visited.has(elementId))
+        return results;
+    visited.add(elementId);
+    const parent = arb.find(ele => ele.parentId === elementId);
+    if(!parent || !parent.childrenIds) 
+        return results;
+    for( let childId of parent.childrenIds.map(id => id.trim()))
+    {
+        const child = arb.find(ele => ele.parentId === elementId);
+        if(!child)
+            continue;
+        if(child.category === 'Elément de base')
+            results.push(childId);
+        else
+            results.push(...getBaseElments(childId, arb, visited));
+    }
+    return results;
+
+}
 exports.ArborescenceCalcul = async (req, res) =>{
     try{
         const {basesRef, expandedNodes} = req.body;
@@ -17,15 +39,16 @@ exports.ArborescenceCalcul = async (req, res) =>{
         // sheet = sheet.filter(row=> row['NumEC'])
         // const elemBase = sheet.map(row => row['NumEC']);
         // console.log(elemBase);
+        // console.log(Object.keys(basesRef));
         let arb = await Arborescence.find();
         let length = arb.length;
         atb = arb.map(elem => elem = elem.toObject());
-        // console.log(arb);
+        // console.log(getBaseElments('EC127', arb));
         arb = arb.map(elem => {
             elem = elem.toObject();
             const found =  Object.entries(basesRef).find(([key, value] ) => key === elem.parentId)
             let newSold;
-            if(found && elem.category !== "Elément calculé")
+            if(found && elem.category !== "Elément calculé" && found[1] !== null && found[1] !== "")
             {
                 // console.log(found['SoldeValue']);
                 // if(typeof(found['SoldeValue']) !== 'number')
@@ -56,15 +79,15 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 const formula = arb[i].formula;
                 let evaluatedFormula = formula.replace(/EC\d+|R\d{2}/g, match => {
                     const found = arb.find(elem => elem.parentId.trim() === match.trim());
-                    // console.log(found)
+                    // console.log(getBaseElments(found.parentId));
                     if (found && found.newSold !== null) {
                         return found.newSold;
                     }
-                    else if  (found && found.newSold === null && expandedNodes.includes(found.parentId) && found.category !== 'Elément de base')
+                    else if  (found && found.newSold === null &&( getBaseElments(found.parentId, arb).includes(...Object.keys(basesRef))) && found.category !== 'Elément de base')
                     {
                         return match; 
                     }
-                    else if(found && found.newSold === null && found.SoldeValue !== undefined)
+                    else if(found && found.newSold === null  && found.SoldeValue !== undefined)
                     {
                         return found.SoldeValue;
                     }
