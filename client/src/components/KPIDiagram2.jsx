@@ -105,7 +105,7 @@ const SimulationTable = ({ Source, basesRef, setSource }) => {
       {
         accessorKey: "newSold",
         header: "Nouveau solde",
-        cell: ({ row }) => {
+        cell: ({ getValue, row }) => {
           const elementId = row.original.parentId;
           const savedValue = basesRef.current[elementId] || "-";
 
@@ -123,7 +123,7 @@ const SimulationTable = ({ Source, basesRef, setSource }) => {
                 />
               ) : (
                 <>
-                  <span>{formatNumber(savedValue)}</span>
+                  <span>{savedValue === '-' && getValue() !== null ? getValue() :formatNumber(savedValue)}</span>
                   <button onClick={() => setEditingRow(elementId)}>
                     <Pencil
                       size={14}
