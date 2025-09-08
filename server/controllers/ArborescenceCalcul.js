@@ -110,6 +110,8 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 }
                 else
                 {
+                    if(evaluatedFormula.includes("Infinity"))
+                        return res.status(422).json({success : false, message : "La valeur de cet élément ne doit pas être 0 dans ce cas."})
                     console.log(arb[i].parentId , ":", arb[i].nameFr ," : ", evaluatedFormula);
                     update = true;
                 }

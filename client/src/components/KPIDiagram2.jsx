@@ -15,6 +15,7 @@ import { motion } from 'framer-motion';
 import './KPIDiagram.css'
 import Elements from './Elements';
 import finansiaLogo from '../public/finansia-logo.jpeg';
+import toast, { Toaster } from "react-hot-toast";
 import { isNumeral } from 'numeral';
 import { useDeepCompareMemo } from 'use-deep-compare';
 import { FaBalanceScale, FaChartBar, FaLeaf, FaFileInvoice } from "react-icons/fa";
@@ -1136,9 +1137,18 @@ const KPIDiagram = () => {
         expandedNodes: expandedArray  // NEW: Send expanded nodes array
       });
       return res.data;
-    } catch (error) {
+    } catch (err) {
+        if (err.response) {
+          // Backend responded with a 4xx or 5xx
+          console.error("Error fetching node:", err.response.data);
+          toast.error(err.response.data.message || "Une erreur est survenue");
+        } else {
+          // Network or other error
+          console.error("Unexpected error:", err);
+          toast.error("Erreur de connexion au serveur");
+        }
+      
       setLoading(false)
-      console.error('Error fetching node:', error);
       return null;
     }
   };
@@ -1309,7 +1319,12 @@ const KPIDiagram = () => {
     const updatedNodes = [];
     // for (let node of newNodesRef.current) {
       const calculation = await fetchCalculation(basesRef, expandedNodesArrayRef.current[modelType]);
-      console.log(calculation)
+      // console.log(calculation)
+      if(!calculation)
+      {
+        setLoading(false);
+        return;
+      }
       if(calculation.success)
       {
            for (let i = 0; i < newNodesRef.current[modelType].length; i++) {
@@ -1328,6 +1343,10 @@ const KPIDiagram = () => {
             setNodes([...newNodesRef.current[modelType]]);
 
       }
+      // else
+      // {
+      //   toast.error(calculation.message);
+      // }
     setReset(false)
     setLoading(false);
   };
@@ -1462,6 +1481,25 @@ const KPIDiagram = () => {
   return (
     
     <div style={{ width: '100vw', height: '100vh' }} ref={reactFlowWrapper}>
+      <Toaster position="top-right" toastOptions={{
+          // Default styles for all toasts
+          style: {
+            background: "#333",
+            color: "#fff",
+            borderRadius: "10px",
+            padding: "14px 20px",
+            fontSize: "14px",
+          },
+          duration: 1500,
+          success: {
+            icon: "✅",
+            style: { background: "#4ade80", color: "#000" },
+          },
+          error: {
+            icon: "❌",
+            style: { background: "#f87171", color: "#000" },
+          },
+        }} />
       <img 
           src={finansiaLogo}
           // alt="FiNANZiA - decoding finance, revealing insights" 
