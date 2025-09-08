@@ -110,7 +110,7 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 }
                 else
                 {
-                    // console.log(i ," : ", evaluatedFormula);
+                    console.log(arb[i].parentId , ":", arb[i].nameFr ," : ", evaluatedFormula);
                     update = true;
                 }
                 // console.log(i, arb[i].parentId, ":" , safeFormula);

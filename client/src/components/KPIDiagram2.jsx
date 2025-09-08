@@ -35,7 +35,7 @@ const URL = process.env.REACT_APP_BACKEND_URL;
 
 
 
-const SimulationTable = ({ Source, basesRef, setSource }) => {
+const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
   const [baseElements, setBaseElements] = useState([]);
   const [baseSlenght, setBasesLenght]  = useState(0);
   const [editingRow, setEditingRow] = useState(null); // track which row is being edited
@@ -71,6 +71,7 @@ const SimulationTable = ({ Source, basesRef, setSource }) => {
 
   // Fetch data only when Source changes
   useEffect(() => {
+    console.log("here ===", reset);
     const getBaseElements = async () => {
       try {
         const result = await axios.post(`${URL}/api/search/`, {
@@ -78,12 +79,13 @@ const SimulationTable = ({ Source, basesRef, setSource }) => {
         });
         setBaseElements(result.data.elements);
         setBasesLenght(result.data.elements.length);
+        console.log(result.data.elements);
       } catch (error) {
         console.log(error);
       }
     };
     getBaseElements();
-  }, [Source]);
+  }, [Source, reset]);
 
   const columns = useMemo(
     () => [
@@ -123,7 +125,7 @@ const SimulationTable = ({ Source, basesRef, setSource }) => {
                 />
               ) : (
                 <>
-                  <span>{savedValue === '-' && getValue() !== null ? getValue() :formatNumber(savedValue)}</span>
+                  <span>{savedValue === '-' && getValue() !== null ? formatNumber(getValue()) :formatNumber(savedValue)}</span>
                   <button onClick={() => setEditingRow(elementId)}>
                     <Pencil
                       size={14}
@@ -137,7 +139,7 @@ const SimulationTable = ({ Source, basesRef, setSource }) => {
         },
       },
     ],
-    [editingRow]
+    [editingRow, reset]
   );
 
   const table = useReactTable({
@@ -161,7 +163,7 @@ const SimulationTable = ({ Source, basesRef, setSource }) => {
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
-                if (header.column.columnDef.header === "element ID") return null;
+                // if (header.column.columnDef.header === "element ID") return null;
                 return (
                   <th
                     key={header.id}
@@ -193,7 +195,7 @@ const SimulationTable = ({ Source, basesRef, setSource }) => {
             table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="border-b hover:bg-gray-50">
                 {row.getVisibleCells().map((cell) => {
-                  if (cell.column.columnDef.header === "element ID") return null;
+                  // if (cell.column.columnDef.header === "element ID") return null;
                   return (
                     <td key={cell.id} className="px-4 py-2 text-sm text-gray-800">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -503,7 +505,7 @@ const TableExample = () => {
                       </h2>
                     </div>
                     <p className={`text-sm transition-colors duration-300 ${isActive ? "text-blue-100 duration-800 text-xl " : "text-gray-500"} `}>
-                      Tableau des comptes de produits et charges
+                      {name === 'ESG' ? "Tableau des comptes de produits et charges" : name === 'CPC' ? "Tableau des comptes de Produits et Charges" : name === 'Passif' ? "Tableau du Passif" : "Tableau de l’Actif"}
                     </p>
                   </div>
                 </div>
@@ -932,6 +934,8 @@ const defaultEdgeOptions = {
 
 const KPIDiagram = () => {
   const [Source, setSource] = useState('');
+  const [reset, setReset] = useState(false);
+
   const SelectTitle = useRef('');
   const Selected = useRef(false);
   const lastPrentId = useRef({"simulation" : '', "ratio" : '', "élément comptable" : ''})
@@ -1324,6 +1328,7 @@ const KPIDiagram = () => {
             setNodes([...newNodesRef.current[modelType]]);
 
       }
+    setReset(false)
     setLoading(false);
   };
 
@@ -1338,6 +1343,8 @@ const KPIDiagram = () => {
       expandedNodesRef.current[modelType].clear();
       setEdges([]);
       setNodes([]);
+      setReset(true);
+
       // console.log('Reset - cleared expanded nodes array');
       loadRoot(true);
     } catch (error) {
@@ -1541,7 +1548,7 @@ const KPIDiagram = () => {
             <div
                 className={`table-dropdown z-[100] w-5/6 bg-white shadow-lg rounded-l-lg transition-all duration-300 ${
                   isOpen ? "opacity-100 translate-x-0 " : " -translate-x-full"}`}>
-                <SimulationTable Source={Source} basesRef={basesRef} setSource={setSource}/>
+                <SimulationTable Source={Source} basesRef={basesRef} setSource={setSource} reset={reset}/>
               </div>
           </div>)}
 
