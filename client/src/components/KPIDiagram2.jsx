@@ -164,7 +164,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
-                // if (header.column.columnDef.header === "element ID") return null;
+                if (header.column.columnDef.header === "element ID") return null;
                 return (
                   <th
                     key={header.id}
@@ -196,7 +196,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
             table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="border-b hover:bg-gray-50">
                 {row.getVisibleCells().map((cell) => {
-                  // if (cell.column.columnDef.header === "element ID") return null;
+                  if (cell.column.columnDef.header === "element ID") return null;
                   return (
                     <td key={cell.id} className="px-4 py-2 text-sm text-gray-800">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -695,7 +695,7 @@ const CollapsibleField = ({ label, value, isFirst, modelType, category, newSold}
   );
 };
 
-const SimulationCard = memo(({ data, basesRef, modelType}) => {
+const SimulationCard = memo(({ data, basesRef, modelType, cardRef}) => {
   const [Clicked, setClicked] = useState(false);
   const [editing, setEditing] = useState(false);
   const [query, setQuery] = useState("");
@@ -761,6 +761,7 @@ return (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.98 }}
     transition={{ duration: 0.2 }}
+    ref={cardRef}
     className={`relative ${data.eleType === "Source" ? "w-[250px] grid grid-cols-1" : "w-[330px] grid grid-cols-2" }  bg-white border border-gray-200 rounded-xl p-4 shadow-sm font-sans `}
   >
     {data.isRoot && (
@@ -936,7 +937,9 @@ const defaultEdgeOptions = {
 const KPIDiagram = () => {
   const [Source, setSource] = useState('');
   const [reset, setReset] = useState(false);
-
+  const tableRef = useRef(null);
+  const cardRef = useRef(null);
+  const [tableCoords, setTableCoords] = useState({x : 0, y : 0, width : 0});
   const SelectTitle = useRef('');
   const Selected = useRef(false);
   const lastPrentId = useRef({"simulation" : '', "ratio" : '', "élément comptable" : ''})
@@ -960,7 +963,7 @@ const KPIDiagram = () => {
   const nodeTypes = useMemo(() => ({
     customNode: (props) => {
       if (modelType === "simulation") {
-        return <SimulationCard {...props} basesRef={basesRef} modelType={modelType} />;
+        return <SimulationCard {...props} basesRef={basesRef} modelType={modelType} cardRef={cardRef} />;
       } else {
         return <CustomNode {...props} basesRef={basesRef} modelType={modelType} />;
       }
@@ -1292,7 +1295,7 @@ const KPIDiagram = () => {
       );
 
       // Calculate new layout
-      calculateTreeLayout();
+        calculateTreeLayout();
 
       const uniqueNodes = Array.from(new Map(newNodesRef.current[modelType].map((n) => [n.id, n])).values());
       const uniqueEdges = Array.from(new Map(edgesRef.current[modelType].map((e) => [e.id, e])).values());
@@ -1445,21 +1448,57 @@ const KPIDiagram = () => {
         ...root,
       },
     });
-    
+
+    // calculateTreeLayout();
+
     setNodes([...newNodesRef.current[modelType]]);
     setEdges([...edgesRef.current[modelType]]);
     
     if (reactFlowInstance.current) {
       setTimeout(() => {
         reactFlowInstance.current.fitView({ 
-          padding: 0.4,
+          padding: 1,
           includeHiddenNodes: false,
-          maxZoom: 2,
+          maxZoom: 1.5,
           duration: restart ? 500 : 0
         });
       }, 100);
     }
   };
+  useEffect(()=>{
+    if(tableRef.current)
+    {
+      const react = tableRef.current.getBoundingClientRect();
+      setTableCoords({x : react.x, y : react.y, width : react.width});
+    }
+  },[isOpen,Source, tableRef])
+
+  useEffect(()=>{
+    // calculateTreeLayout();
+    // if(cardRef.current)
+    //   console.log(cardRef.current.getBoundingClientRect());
+    if (reactFlowInstance.current && cardRef.current) {
+      // setTimeout(() => {
+        reactFlowInstance.current.fitView({ 
+          padding: 1,
+          includeHiddenNodes: false,
+          maxZoom: 1,
+          duration: 500 });
+      const { x, y, zoom } = reactFlowInstance.current.getViewport();
+      let zoomUse = zoom > 0.6 ? 0.6 : zoom
+      reactFlowInstance.current.setViewport({
+        x : isOpen ? x +  tableCoords.width * zoomUse : x - tableCoords.width  * zoomUse,
+        y : y,
+        zoom : zoom,
+      },
+    {
+      duration : 500
+    })
+    }
+        // calculateTreeLayout();
+
+
+  }, [isOpen, tableCoords.x, tableCoords.y])
 
   useEffect(() => {
 
@@ -1584,6 +1623,7 @@ const KPIDiagram = () => {
       
             {/* The table container */}
             <div
+              ref={tableRef}
                 className={`table-dropdown z-[100] w-5/6 bg-white shadow-lg rounded-l-lg transition-all duration-300 ${
                   isOpen ? "opacity-100 translate-x-0 " : " -translate-x-full"}`}>
                 <SimulationTable Source={Source} basesRef={basesRef} setSource={setSource} reset={reset}/>
