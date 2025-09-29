@@ -1,6 +1,7 @@
 const Arborescence = require('../models/Arborescence2.model');
 const xlsx = require('xlsx');
-const path = require('path')
+const path = require('path');
+const { Console } = require('console');
 
 
 function isValidFormula(str) {
@@ -38,12 +39,16 @@ exports.ArborescenceCalcul = async (req, res) =>{
         // let sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
         // sheet = sheet.filter(row=> row['NumEC'])
         // const elemBase = sheet.map(row => row['NumEC']);
-        // console.log(elemBase);
+        // console.log(basesRef);
         // console.log(Object.keys(basesRef));
         let arb = await Arborescence.find();
         let length = arb.length;
         atb = arb.map(elem => elem = elem.toObject());
+        let affected = {'EC048' : null, 'EC157' : null, 'EC158' : null, 'EC156' : null, 'EC159' : null, 'EC160' : null, 'EC073' : null};
         // console.log(getBaseElments('EC127', arb));
+        let influencers = ['EC041', 'EC074', 'EC113', 'EC078', 'EC080']
+        let infAndAff = {'EC041' : 'EC157', 'EC074' : 'EC158', 'EC113' : 'EC156', 'EC078': 'EC159', 'EC080' : 'EC160'}
+
         arb = arb.map(elem => {
             elem = elem.toObject();
             const found =  Object.entries(basesRef).find(([key, value] ) => key === elem.parentId)
@@ -52,11 +57,24 @@ exports.ArborescenceCalcul = async (req, res) =>{
             {
                 // console.log(found['SoldeValue']);
                 // if(typeof(found['SoldeValue']) !== 'number')
-                //     SoldeValue = 0;
-                // else
-                //     SoldeValue = found['SoldeValue'];
                 newSold = found[1];
-                // console.log(elem.parentId, "--->" , found, "--->" , newSold);
+
+                if(influencers.includes(elem.parentId))
+                {
+                    const divNum = elem.parentId === 'EC041' ? 20 : elem.parentId === 'EC074' ? 10 : 5
+                    const amortissement = infAndAff[elem.parentId];
+                    const EC139 = arb.find(elem => elem.parentId === 'EC139').SoldeValue;
+                    const EC090 = arb.find(elem => elem.parentId === 'EC090').SoldeValue;
+                    const dot = elem.parentId === 'EC113'? 0 : ( newSold - elem.SoldeValue) / divNum;
+                    affected['EC048'] = arb.find(elem => elem.parentId === 'EC048');
+                    affected['EC048'].newSold =  affected['EC048'].SoldeValue + dot
+                    affected[amortissement] = arb.find(elem => elem.parentId === amortissement);
+                    affected[amortissement].newSold = affected[amortissement].SoldeValue + dot;
+                    affected['EC073'] = arb.find(elem => elem.parentId === 'EC073');
+                    affected['EC073'].newSold = (affected['EC073'].SoldeValue / EC139) * (EC139 - affected['EC048'].newSold) < 0 ? (0.25 / 100) * EC090  : (affected['EC073'].SoldeValue / EC139) * (EC139 - affected['EC048'].newSold);
+
+
+                }
 
             }
             else
@@ -67,6 +85,11 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 // SoldeValue,
                 newSold,
             }
+        })
+        arb = arb.map(elem => {
+            if(Object.keys(affected).includes(elem.parentId) && affected[elem.parentId])
+                return affected[elem.parentId];
+            return elem;
         })
         let update = true
         while(update)
@@ -79,7 +102,6 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 const formula = arb[i].formula;
                 let evaluatedFormula = formula.replace(/EC\d+|R\d{2}/g, match => {
                     const found = arb.find(elem => elem.parentId.trim() === match.trim());
-                    // console.log(getBaseElments(found.parentId));
                     if (found && found.newSold !== null) {
                         return found.newSold;
                     }
@@ -112,7 +134,6 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 {
                     if(evaluatedFormula.includes("Infinity"))
                         return res.status(422).json({success : false, message : "La valeur de cet élément ne doit pas être 0 dans ce cas."})
-                    console.log(arb[i].parentId , ":", arb[i].nameFr ," : ", evaluatedFormula);
                     update = true;
                 }
                 // console.log(i, arb[i].parentId, ":" , safeFormula);

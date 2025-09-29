@@ -13,6 +13,7 @@ import { Pencil } from "lucide-react";
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import './KPIDiagram.css'
+import LoanCalculator from'./loanCalculator'
 import Elements from './Elements';
 import finansiaLogo from '../public/finansia-logo.jpeg';
 import toast, { Toaster } from "react-hot-toast";
@@ -936,6 +937,7 @@ const defaultEdgeOptions = {
 
 const KPIDiagram = () => {
   const [Source, setSource] = useState('');
+  const [SourceTable, setSourceTable] = useState('');
   const [reset, setReset] = useState(false);
   const tableRef = useRef(null);
   const cardRef = useRef(null);
@@ -1374,6 +1376,11 @@ const KPIDiagram = () => {
     }
   };
 
+
+  useEffect(()=>{
+    if(modelType === 'simulation' && Source)
+        setSourceTable(Source)
+  }, [Source])
   // MODIFIED: loadRoot function to clear expandedNodesArrayRef and include it in fetchNode
   const loadRoot = async (restart = false) => {
     // newNodesRef.current = [];
@@ -1405,10 +1412,10 @@ const KPIDiagram = () => {
         if (reactFlowInstance.current) {
           setTimeout(() => {
             reactFlowInstance.current.fitView({ 
-              padding: 0.4,
+              padding: 1,
               includeHiddenNodes: false,
-              maxZoom: 2,
-              duration: restart ? 500 : 0
+              maxZoom: 1.5,
+              duration: restart ? 500 : 200
             });
           }, 100);
         }
@@ -1460,7 +1467,7 @@ const KPIDiagram = () => {
           padding: 1,
           includeHiddenNodes: false,
           maxZoom: 1.5,
-          duration: restart ? 500 : 0
+          duration: restart ? 500 : 200
         });
       }, 100);
     }
@@ -1471,7 +1478,7 @@ const KPIDiagram = () => {
       const react = tableRef.current.getBoundingClientRect();
       setTableCoords({x : react.x, y : react.y, width : react.width});
     }
-  },[isOpen,Source, tableRef])
+  },[isOpen, tableRef])
 
   useEffect(()=>{
     // calculateTreeLayout();
@@ -1502,7 +1509,9 @@ const KPIDiagram = () => {
 
   useEffect(() => {
 
-      if(modelType !== "reports")
+    setIsOpen(false);
+
+      if(modelType !== "reports" && modelType !== "loan calculator")
       {  if(Selected.current)
         {
           expandedNodesArrayRef.current[modelType] = []; 
@@ -1544,8 +1553,8 @@ const KPIDiagram = () => {
           // alt="FiNANZiA - decoding finance, revealing insights" 
           className="absolute top-1 h-20 object-contain"
         />
-          <div className="absolute w-[40rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500 top-4">
-          {["Élément comptable", "Ratio", "Simulation", "Reports"].map((label, index) => (
+          <div className="absolute w-[50rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500 top-4">
+          {["Élément comptable", "Ratio", "Simulation", "Reports", "Loan Calculator"].map((label, index) => (
             <button
               key={index}
               className={`text-white px-5 py-2 rounded-md transition-all duration-200 hover:bg-slate-500 hover:scale-105 active:scale-95 ${
@@ -1576,7 +1585,7 @@ const KPIDiagram = () => {
             </button>
           ))}
         </div>
-     { modelType !== 'reports' && (<ReactFlow
+     { modelType !== 'reports' && modelType !== "loan calculator" && (<ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -1584,7 +1593,7 @@ const KPIDiagram = () => {
         deleteKeyCode={null}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.4 }}
+        fitViewOptions={{ padding: 2.8 }}
         onInit={onInit}
         defaultEdgeOptions={defaultEdgeOptions}
       >
@@ -1624,16 +1633,16 @@ const KPIDiagram = () => {
             {/* The table container */}
             <div
               ref={tableRef}
-                className={`table-dropdown z-[100] w-5/6 bg-white shadow-lg rounded-l-lg transition-all duration-300 ${
-                  isOpen ? "opacity-100 translate-x-0 " : " -translate-x-full"}`}>
-                <SimulationTable Source={Source} basesRef={basesRef} setSource={setSource} reset={reset}/>
+                className={`table-dropdown z-[100] w-5/6 bg-white shadow-lg rounded-l-lg transition-all duration-300 transform  ${
+                  isOpen ? "opacity-100 translate-x-0 " : " opacity-0 -translate-x-full"}`}>
+                <SimulationTable Source={SourceTable} basesRef={basesRef} setSource={setSource} reset={reset}/>
               </div>
           </div>)}
 
      
 
         {/* NEW: Debug info for expanded nodes (optional - remove in production) */}
-        {process.env.REACT_APP_NODE_ENV === 'development' && modelType !== "reports" && (
+        {process.env.REACT_APP_NODE_ENV === 'development' && modelType !== "reports" && modelType !== "loan calculator"  && (
          
           <div className="absolute left-5 bottom-5 bg-black bg-opacity-70 text-white p-3 rounded-md text-xs z-50">
              {console.log(modelType)}
@@ -1652,6 +1661,8 @@ const KPIDiagram = () => {
 
       </ReactFlow>)}
      {modelType === "reports" && ( <TableExample/>)}
+     {modelType === "loan calculator" && (<LoanCalculator/>)}
+
     </div>
   );
 };
