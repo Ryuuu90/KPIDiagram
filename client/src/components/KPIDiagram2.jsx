@@ -20,7 +20,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { isNumeral } from 'numeral';
 import { useDeepCompareMemo , useDeepCompareEffect} from 'use-deep-compare';
 import { FaBalanceScale, FaChartBar, FaLeaf, FaFileInvoice } from "react-icons/fa";
-import calculateResults from './loanCalculator';
+import {calculateResults} from './loanCalculator';
 
 
 
@@ -48,7 +48,9 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simul
   const affected = {'EC041' : ['EC048', 'EC157', 'EC073', 'EC139'],
                     'EC074' : ['EC048', 'EC158' , 'EC073', 'EC139'],
                     'EC078' : ['EC048', 'EC159' , 'EC073', 'EC139'],
-                    'EC080' : ['EC048', 'EC160' , 'EC073', 'EC139']}
+                    'EC080' : ['EC048', 'EC160' , 'EC073', 'EC139'],
+                    'EC004' : ['EC061'],
+                    'EC008' : ['EC061']}
 
   const filtredVals = useRef(null);
 
@@ -61,7 +63,8 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simul
   useDeepCompareEffect(()=>{
     const getAffectedElements = async()=>{
       try{
-        if(nodes.includes(...Object.keys(affected)))
+        console.log(nodes.includes(...Object.keys(affected)));
+        if( Object.keys(affected).filter(key => nodes.includes(key)))
         {
           filtredVals.current = nodes.filter( key => affected[key] != undefined).map(key => affected[key]).flat();
           const response = await axios.post(`${URL}/api/affected`, {affected : filtredVals.current});
@@ -76,7 +79,7 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simul
     }
 
     getAffectedElements();
-  }, [nodes, simulate, reset])
+  }, [nodes, simulate, reset, Source])
   
 
   // return(<div>{nodes}</div>)
@@ -214,6 +217,9 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
   const [baseSlenght, setBasesLenght]  = useState(0);
   const [editingRow, setEditingRow] = useState(null); // track which row is being edited
   const [query, setQuery] = useState("");
+
+
+
   const inputRef = useRef(null);
 
 
@@ -221,7 +227,6 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
   const handleSave = (elementId) => {
     if (inputRef.current) {
       const val = inputRef.current.value.trim();
-      if(elementId === 'EC013' || elementId === 'EC054')
       if (val.length > 12) return;
       basesRef.current[elementId] = val; // save globally
       setEditingRow(null); // close edit mode
@@ -296,7 +301,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
                   className="w-24 text-xs text-gray-800 border border-gray-300 rounded px-1"
                   autoFocus
                 />
-              ) : (
+              ): (
                 <>
                   <span>{savedValue === '-' && getValue() !== null ? formatNumber(getValue()) :formatNumber(savedValue)}</span>
                   <button onClick={() => setEditingRow(elementId)}>
@@ -306,7 +311,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
                     />
                   </button>
                 </>
-              )}
+              ) }
             </div>
           );
         },
@@ -875,17 +880,34 @@ const SimulationCard = memo(({ data, basesRef, modelType, cardRef}) => {
   const [editingSold, setEditingSold] = useState(false)
   const [value, setValue] = useState("-");
   const inputRef = useRef(null);
+  const [loanCalculVal, setLoanCalculVal] = useState({amount : null,interest : null, years : null});
   
   const handleSave = () => {
-    // console.log(inputRef.current.value)
-    if (inputRef.current) {
+    console.log(loanCalculVal);
+    if(data.parentId === 'EC013' || data.parentId === 'EC054')
+    {
+        if(loanCalculVal.amount && loanCalculVal.interest && loanCalculVal.years)
+        {
+          const calculResults = calculateResults(loanCalculVal);
+          console.log(typeof(calculResults.firstYearCapital));
+          basesRef.current[data.parentId] = loanCalculVal.amount - (data.SoldeValue) >= 0 ? (loanCalculVal.amount - (data.SoldeValue) - Number(calculResults.firstYearCapital)).toFixed(2) : (Math.abs(loanCalculVal.amount - (data.SoldeValue)) + Number(calculResults.firstYearCapital)).toFixed(2);
+          console.log(basesRef.current[data.parentId])
+          setEditing(false)
+          setEditingSold(true)
+          setValue(basesRef.current[data.parentId]);
+        }
+    }
+    else if (inputRef.current) {
       const val = inputRef.current.value;
       if(val.length > 12)
         return;
-      basesRef.current[data.parentId] = val.trim();
-      setEditing(false)
-      setEditingSold(true)
-      setValue(val);
+      else
+      {
+        basesRef.current[data.parentId] = val.trim();
+        setEditing(false)
+        setEditingSold(true)
+        setValue(val);
+      }
     }
   };
 
@@ -988,15 +1010,26 @@ return (
             {editing && data.category === "Elément de base" ? (
              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
              <span>Nouveau solde:</span>
-             <input
+             {!(data.parentId === 'EC013' || data.parentId === 'EC054') && (<input
                type="number"
                defaultValue=""
                ref={inputRef}
-               onBlur={handleSave}
+               onBlur={handleSave }
                onKeyDown={(e) => e.key === "Enter" && handleSave()}
                className="w-24 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1"
+               placeholder={`${(data.parentId === 'EC013' || data.parentId === 'EC054') ? 'amount' : ''}`}
                autoFocus
-             />
+             />)}
+             {(data.parentId === 'EC013' || data.parentId === 'EC054') && (<div > 
+                {['Amount', 'Interest', 'Years'].map((label, i)=>(
+                    <input key={i} type="number" className="w-24 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1" 
+                    placeholder={label} onBlur={(e)=> setLoanCalculVal({...loanCalculVal, [label.toLowerCase()] : Number(e.target.value) })}/>
+                ))}
+                {/* <input type="number" className="w-24 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1" placeholder='interest'/>
+                <input type="number" className="w-24 mt-1 text-xs text-gray-800 border border-gray-300 rounded px-1" placeholder='years'/> */}
+                <button className='absolute right-4 bottom-[4.5rem] font-medium px-2 text-2xl bg-indigo-100 text-indigo-700 rounded ' onClick={handleSave} >=</button>
+
+            </div>)}
            </div>
             ) : (
               <>
@@ -1013,7 +1046,7 @@ return (
 
       {data.eleType === "Source"  && (<div className="text-base text-gray-700">{data.label}</div>)}
       {/* {data.eleType !== "Ratio" && (<div className={`absolute ${data.sign === '+' ? 'bg-green-300' : 'bg-red-300'}  top-1/2 left-[-1.5rem] w-6 rounded-full text-center transform -translate-y-1/2`}>{data.sign}</div>)} */}
-      {data.hasChildren && (
+      {data.hasChildren && data.childrenNum !== 0 && (
         <button
           onClick={data.onDrill}
           className="absolute bottom-2 right-2 text-sm bg-indigo-100 text-indigo-700 rounded px-2 py-0.5"
@@ -1812,7 +1845,13 @@ const KPIDiagram = () => {
               ref={tableRef}
                 className={`table-dropdown z-[100] w-5/6 bg-white shadow-lg rounded-l-lg transition-all duration-300 transform  ${
                   isOpen ? "opacity-100 translate-x-0 " : " opacity-0 -translate-x-full"}`}>
+                  <h3 className="text-xl bg-green-100 text-center font-semibold text-gray-700 border-b ">
+                    Simulation Table
+                  </h3>
                 <SimulationTable Source={SourceTable} basesRef={basesRef} setSource={setSource} reset={reset}/>
+                <h3 className="text-xl bg-red-100 text-center font-semibold text-gray-700 border-b ">
+                    Affected Elements Table
+                  </h3>
                 <AffectedElementsTable Source={SourceTable} expandedNodes={expandedNodesArrayRef.current[modelType]} setSource={setSource} reset={reset} simulate={Simulate}/>
                 </div>
              

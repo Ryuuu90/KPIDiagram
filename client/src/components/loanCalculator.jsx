@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 const COLORS = ["#3B82F6", "#F97316"];
 
-const calculateResults = ({amount, interest, years}) =>{
+export const calculateResults = ({amount, interest, years}) =>{
     const userAmount = Number(amount);
     const calculatedIntrest = Number(interest) / 100 / 12;
     const calculatedPayment = Number(years) * 12;
