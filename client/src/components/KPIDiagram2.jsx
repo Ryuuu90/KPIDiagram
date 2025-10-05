@@ -71,6 +71,11 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simul
           setBaseElements(response.data.elements)
           setBasesLenght(response.data.elements.length);
         }
+        else
+        {
+          setBaseElements([]);
+          setBasesLenght(0);
+        }
       }
       catch(error)
       {
