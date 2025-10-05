@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo, use } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -18,8 +18,9 @@ import Elements from './Elements';
 import finansiaLogo from '../public/finansia-logo.jpeg';
 import toast, { Toaster } from "react-hot-toast";
 import { isNumeral } from 'numeral';
-import { useDeepCompareMemo } from 'use-deep-compare';
+import { useDeepCompareMemo , useDeepCompareEffect} from 'use-deep-compare';
 import { FaBalanceScale, FaChartBar, FaLeaf, FaFileInvoice } from "react-icons/fa";
+import calculateResults from './loanCalculator';
 
 
 
@@ -33,7 +34,178 @@ import {
 } from '@tanstack/react-table';
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
+
 const URL = process.env.REACT_APP_BACKEND_URL;
+
+
+const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simulate}) => {
+  const [baseElements, setBaseElements] = useState([]);
+  const [baseSlenght, setBasesLenght]  = useState(0);
+  const [editingRow, setEditingRow] = useState(null); // track which row is being edited
+  const [query, setQuery] = useState("");
+  const [isInfluencers, setIsInfluencers] = useState(false);
+  const inputRef = useRef(null);
+  const affected = {'EC041' : ['EC048', 'EC157', 'EC073', 'EC139'],
+                    'EC074' : ['EC048', 'EC158' , 'EC073', 'EC139'],
+                    'EC078' : ['EC048', 'EC159' , 'EC073', 'EC139'],
+                    'EC080' : ['EC048', 'EC160' , 'EC073', 'EC139']}
+
+  const filtredVals = useRef(null);
+
+  const nodes = [...expandedNodes, Source];
+
+  
+  
+
+
+  useDeepCompareEffect(()=>{
+    const getAffectedElements = async()=>{
+      try{
+        if(nodes.includes(...Object.keys(affected)))
+        {
+          filtredVals.current = nodes.filter( key => affected[key] != undefined).map(key => affected[key]).flat();
+          const response = await axios.post(`${URL}/api/affected`, {affected : filtredVals.current});
+          setBaseElements(response.data.elements)
+          setBasesLenght(response.data.elements.length);
+        }
+      }
+      catch(error)
+      {
+        console.error(error);
+      }
+    }
+
+    getAffectedElements();
+  }, [nodes, simulate, reset])
+  
+
+  // return(<div>{nodes}</div>)
+
+
+  const formatNumber = (num) => {
+    if (num === "-" || num === "" || num == null) return "-";
+    return new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(Number(num));
+  };
+  // Handle search (if you type an element name)
+  const handleInputFocus = (e) => {
+    if (e.code === "Enter") {
+      const source = Elements.find(
+        (elem) => elem.nameFr.toLowerCase() === query.toLowerCase()
+      );
+      if (source) setSource(source.id);
+    }
+  };
+
+  // Fetch data only when Source changes
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "parentId",
+        header: "element ID",
+        cell: ({ getValue }) => <span>{getValue()}</span>,
+      },
+      {
+        accessorKey: "nameFr",
+        header: "Le nom de l’élément",
+        cell: ({ getValue }) => <span>{getValue()}</span>,
+      },
+      {
+        accessorKey: "SoldeValue",
+        header: "Valeur du solde",
+        cell: ({ getValue }) => <span>{formatNumber(getValue())}</span>,
+      },
+      {
+        accessorKey: "newSold",
+        header: "Nouveau solde",
+        cell: ({ getValue, row }) => {
+          const elementId = row.original.parentId;
+          const savedValue = filtredVals.current[elementId] || "-";
+
+          return (
+            <div className="flex items-center gap-2">
+                <>
+                  <span>{savedValue === '-' && getValue() !== null ? formatNumber(getValue()) :formatNumber(savedValue)}</span>
+                </>
+            </div>
+          );
+        },
+      },
+    ],
+    [baseSlenght, simulate, reset]
+  );
+
+  const table = useReactTable({
+    data: baseElements,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  useEffect(() => {
+    table.setPageSize(baseSlenght);
+  }, [baseSlenght]);
+
+  return (
+    <div>
+      <table className="w-full h-full border border-gray-200">
+        {/* HEAD */}
+        <thead className="bg-gray-100">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                // if (header.column.columnDef.header === "element ID") return null;
+                return (
+                  <th
+                    key={header.id}
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </th>
+                );
+              })}
+            </tr>
+          ))}
+        </thead>
+
+        {/* BODY */}
+        <tbody>
+          {table.getRowModel().rows.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length}
+                className="text-center py-4 text-gray-500"
+              >
+                No data available
+              </td>
+            </tr>
+          ) : (
+            table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="border-b hover:bg-gray-50">
+                {row.getVisibleCells().map((cell) => {
+                  // if (cell.column.columnDef.header === "element ID") return null;
+                  return (
+                    <td key={cell.id} className="px-4 py-2 text-sm text-gray-800">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 
 
@@ -49,6 +221,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
   const handleSave = (elementId) => {
     if (inputRef.current) {
       const val = inputRef.current.value.trim();
+      if(elementId === 'EC013' || elementId === 'EC054')
       if (val.length > 12) return;
       basesRef.current[elementId] = val; // save globally
       setEditingRow(null); // close edit mode
@@ -73,7 +246,6 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
 
   // Fetch data only when Source changes
   useEffect(() => {
-    console.log("here ===", reset);
     const getBaseElements = async () => {
       try {
         const result = await axios.post(`${URL}/api/search/`, {
@@ -81,7 +253,6 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
         });
         setBaseElements(result.data.elements);
         setBasesLenght(result.data.elements.length);
-        console.log(result.data.elements);
       } catch (error) {
         console.log(error);
       }
@@ -165,7 +336,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
-                if (header.column.columnDef.header === "element ID") return null;
+                // if (header.column.columnDef.header === "element ID") return null;
                 return (
                   <th
                     key={header.id}
@@ -197,7 +368,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
             table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="border-b hover:bg-gray-50">
                 {row.getVisibleCells().map((cell) => {
-                  if (cell.column.columnDef.header === "element ID") return null;
+                  // if (cell.column.columnDef.header === "element ID") return null;
                   return (
                     <td key={cell.id} className="px-4 py-2 text-sm text-gray-800">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -939,6 +1110,8 @@ const KPIDiagram = () => {
   const [Source, setSource] = useState('');
   const [SourceTable, setSourceTable] = useState('');
   const [reset, setReset] = useState(false);
+  const [Simulate, setSimulate] = useState(false);
+  const [isOpenAffected, setIsOpenAffected] = useState(false);
   const tableRef = useRef(null);
   const cardRef = useRef(null);
   const [tableCoords, setTableCoords] = useState({x : 0, y : 0, width : 0});
@@ -1220,6 +1393,7 @@ const KPIDiagram = () => {
     async (nodeId, isRoot = false, modelType, basesRef) => {
       const isExpanded = expandedNodesRef.current[modelType].has(nodeId);
       if (isExpanded) {
+        console.log(newNodesRef.current[modelType]);
         removeDescendants(nodeId);
         setNodes([...newNodesRef.current[modelType]]);
         setEdges([...edgesRef.current[modelType]]);
@@ -1348,6 +1522,7 @@ const KPIDiagram = () => {
             setNodes([...newNodesRef.current[modelType]]);
 
       }
+    setSimulate(!Simulate);
       // else
       // {
       //   toast.error(calculation.message);
@@ -1368,6 +1543,7 @@ const KPIDiagram = () => {
       setEdges([]);
       setNodes([]);
       setReset(true);
+      setIsOpen(false);
 
       // console.log('Reset - cleared expanded nodes array');
       loadRoot(true);
@@ -1621,7 +1797,7 @@ const KPIDiagram = () => {
             </button>
           </div>
           )}
-        {modelType === "simulation" && ( <div className="absolute top-1/4 left-1 flex">
+        {modelType === "simulation" && ( <> <div className="absolute top-1/4 left-1 flex">
             {/* Toggle button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -1629,6 +1805,7 @@ const KPIDiagram = () => {
             >
               {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
             </button>
+           
       
             {/* The table container */}
             <div
@@ -1636,8 +1813,10 @@ const KPIDiagram = () => {
                 className={`table-dropdown z-[100] w-5/6 bg-white shadow-lg rounded-l-lg transition-all duration-300 transform  ${
                   isOpen ? "opacity-100 translate-x-0 " : " opacity-0 -translate-x-full"}`}>
                 <SimulationTable Source={SourceTable} basesRef={basesRef} setSource={setSource} reset={reset}/>
-              </div>
-          </div>)}
+                <AffectedElementsTable Source={SourceTable} expandedNodes={expandedNodesArrayRef.current[modelType]} setSource={setSource} reset={reset} simulate={Simulate}/>
+                </div>
+             
+          </div> </>)}
 
      
 
@@ -1645,7 +1824,6 @@ const KPIDiagram = () => {
         {process.env.REACT_APP_NODE_ENV === 'development' && modelType !== "reports" && modelType !== "loan calculator"  && (
          
           <div className="absolute left-5 bottom-5 bg-black bg-opacity-70 text-white p-3 rounded-md text-xs z-50">
-             {console.log(modelType)}
             <div>Expanded Nodes: {expandedNodesArrayRef.current[modelType].length}</div>
             <div>[{expandedNodesArrayRef.current[modelType].join(', ')}]</div>
           </div>

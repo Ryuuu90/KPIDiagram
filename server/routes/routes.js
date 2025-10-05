@@ -8,6 +8,8 @@ const {resetNewSold} = require('../controllers/resetNewSold');
 const {ArborescenceCalcul} = require('../controllers/ArborescenceCalcul');
 const {modelsReports} = require('../controllers/modelsReports');
 const {searchForBE} = require('../controllers/searchForBE');
+const {getAffectedElements} = require('../controllers/getAffectedElements');
+
 
 const express = require('express');
 const router = express.Router();
@@ -24,6 +26,8 @@ router.post('/calculation', ArborescenceCalcul);
 
 router.post('/reports', modelsReports);
 router.post('/search', searchForBE);
+router.post('/affected', getAffectedElements);
+
 
 
 

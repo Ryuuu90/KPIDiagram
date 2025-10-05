@@ -4,6 +4,41 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 const COLORS = ["#3B82F6", "#F97316"];
 
+const calculateResults = ({amount, interest, years}) =>{
+    const userAmount = Number(amount);
+    const calculatedIntrest = Number(interest) / 100 / 12;
+    const calculatedPayment = Number(years) * 12;
+    const x = Math.pow(1 + calculatedIntrest, calculatedPayment);
+    const monthly = (userAmount * x * calculatedIntrest) / (x - 1);
+    let balance = userAmount;
+    if(isFinite(monthly))
+    {
+        const monthlyPaymentCalculated = monthly.toFixed(2);
+        const totalPaymentCalculated = (monthly * calculatedPayment).toFixed(2);
+        const totalIntrestCalculated = (monthly * calculatedPayment - amount).toFixed(2);
+        let interest = 0;
+        let principal = 0;
+        let payment = 0;
+        for (let i = 1; i <= 12; i++) {
+            const interestPayment = balance * calculatedIntrest;
+            const principalPayment = monthly - interestPayment;
+            // console.log(balance);
+            balance -= principalPayment;
+            interest += interestPayment;
+            principal += principalPayment;
+            payment += monthly;
+        }
+        return({
+            monthlyPayment : monthlyPaymentCalculated,
+            totalPayment : totalPaymentCalculated,
+            totalIntrest : totalIntrestCalculated,
+            firstYearPayment :  payment.toFixed(3),
+            firstYearIntrest : interest.toFixed(3),
+            firstYearCapital : principal.toFixed(3),
+            isResults : true,
+        });
+    }
+}
 
 const LoanCalculator = memo(()=>{
     const [userValues, setUserValues] = useState({
@@ -24,47 +59,13 @@ const LoanCalculator = memo(()=>{
 
 
 
-    const calculateResults = ({amount, interest, years}) =>{
-        const userAmount = Number(amount);
-        const calculatedIntrest = Number(interest) / 100 / 12;
-        const calculatedPayment = Number(years) * 12;
-        const x = Math.pow(1 + calculatedIntrest, calculatedPayment);
-        const monthly = (userAmount * x * calculatedIntrest) / (x - 1);
-        let balance = userAmount;
-        if(isFinite(monthly))
-        {
-            const monthlyPaymentCalculated = monthly.toFixed(2);
-            const totalPaymentCalculated = (monthly * calculatedPayment).toFixed(2);
-            const totalIntrestCalculated = (monthly * calculatedPayment - amount).toFixed(2);
-            let interest = 0;
-            let principal = 0;
-            let payment = 0;
-            for (let i = 1; i <= 12; i++) {
-                const interestPayment = balance * calculatedIntrest;
-                const principalPayment = monthly - interestPayment;
-                // console.log(balance);
-                balance -= principalPayment;
-                interest += interestPayment;
-                principal += principalPayment;
-                payment += monthly;
-            }
-            setResults({
-                monthlyPayment : monthlyPaymentCalculated,
-                totalPayment : totalPaymentCalculated,
-                totalIntrest : totalIntrestCalculated,
-                firstYearPayment :  payment.toFixed(3),
-                firstYearIntrest : interest.toFixed(3),
-                firstYearCapital : principal.toFixed(3),
-                isResults : true,
-            });
-        }
-    }
+
     useEffect(()=>{
         console.log(results)
     },[ results.isResults])
 
     const handleSubmitInput = ()=>{
-        calculateResults(userValues);
+        setResults(calculateResults(userValues));
     }
 
     return(

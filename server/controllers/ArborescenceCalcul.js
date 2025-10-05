@@ -44,7 +44,7 @@ exports.ArborescenceCalcul = async (req, res) =>{
         let arb = await Arborescence.find();
         let length = arb.length;
         atb = arb.map(elem => elem = elem.toObject());
-        let affected = {'EC048' : null, 'EC157' : null, 'EC158' : null, 'EC156' : null, 'EC159' : null, 'EC160' : null, 'EC073' : null};
+        let affected = {'EC048' : null, 'EC157' : null, 'EC158' : null, 'EC156' : null, 'EC159' : null, 'EC160' : null, 'EC073' : null, 'EC043' : null, 'EC061' : null};
         // console.log(getBaseElments('EC127', arb));
         let influencers = ['EC041', 'EC074', 'EC113', 'EC078', 'EC080']
         let infAndAff = {'EC041' : 'EC157', 'EC074' : 'EC158', 'EC113' : 'EC156', 'EC078': 'EC159', 'EC080' : 'EC160'}
@@ -57,7 +57,7 @@ exports.ArborescenceCalcul = async (req, res) =>{
             {
                 // console.log(found['SoldeValue']);
                 // if(typeof(found['SoldeValue']) !== 'number')
-                newSold = found[1];
+                newSold = Number(found[1]);
 
                 if(influencers.includes(elem.parentId))
                 {
@@ -72,8 +72,18 @@ exports.ArborescenceCalcul = async (req, res) =>{
                     affected[amortissement].newSold = affected[amortissement].SoldeValue + dot;
                     affected['EC073'] = arb.find(elem => elem.parentId === 'EC073');
                     affected['EC073'].newSold = (affected['EC073'].SoldeValue / EC139) * (EC139 - affected['EC048'].newSold) < 0 ? (0.25 / 100) * EC090  : (affected['EC073'].SoldeValue / EC139) * (EC139 - affected['EC048'].newSold);
-
-
+                }
+                if(elem.parentId === 'EC090')
+                {
+                    affected['EC043'] = arb.find(elem=> elem.parentId === 'EC043');
+                    affected['EC043'].newSold = affected['EC043'].SoldeValue * newSold / elem.SoldeValue;
+                }
+                if(elem.parentId === 'EC004' || elem.parentId === 'EC008')
+                {
+                    const otherElem = elem.parentId === 'EC004' ?  arb.find(elem => elem.parentId === 'EC008') : arb.find(elem => elem.parentId === 'EC004');
+                    const otherElemNewSold =  otherElem.newSold === null ? otherElem.SoldeValue : otherElem.newSold;
+                    affected['EC061'] = arb.find(elem=> elem.parentId === 'EC061');
+                    affected['EC061'].newSold = affected['EC061'].SoldeValue * ((newSold + otherElemNewSold)/ (elem.SoldeValue + otherElem.SoldeValue));
                 }
 
             }
