@@ -63,8 +63,8 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simul
   useDeepCompareEffect(()=>{
     const getAffectedElements = async()=>{
       try{
-        console.log(nodes.includes(...Object.keys(affected)));
-        if( Object.keys(affected).filter(key => nodes.includes(key)))
+        console.log(Object.keys(affected).filter(key => nodes.includes(key)))
+        if(Object.keys(affected).some(key => nodes.includes(key)))
         {
           filtredVals.current = nodes.filter( key => affected[key] != undefined).map(key => affected[key]).flat();
           const response = await axios.post(`${URL}/api/affected`, {affected : filtredVals.current});
@@ -73,6 +73,7 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simul
         }
         else
         {
+          console.log('hi');
           setBaseElements([]);
           setBasesLenght(0);
         }
