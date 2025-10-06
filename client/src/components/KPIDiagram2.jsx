@@ -49,6 +49,7 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simul
                     'EC074' : ['EC048', 'EC158' , 'EC073', 'EC139'],
                     'EC078' : ['EC048', 'EC159' , 'EC073', 'EC139'],
                     'EC080' : ['EC048', 'EC160' , 'EC073', 'EC139'],
+                    'EC090' : ['EC043'],
                     'EC004' : ['EC061'],
                     'EC008' : ['EC061']}
 
