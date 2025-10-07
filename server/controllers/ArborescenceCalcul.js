@@ -32,7 +32,8 @@ function isValidFormula(str) {
 }
 exports.ArborescenceCalcul = async (req, res) =>{
     try{
-        const {basesRef, expandedNodes} = req.body;
+        const {basesRef, expandedNodes, calculResultsRef} = req.body;
+        console.log(calculResultsRef);
         // console.log(basesRef);
         // Object.entries(basesRef).forEach(([key, value] )=> console.log(key));
         // const workbook = xlsx.readFile(path.join(__dirname, '../public', 'Arborescence2.xlsx'));
@@ -44,7 +45,8 @@ exports.ArborescenceCalcul = async (req, res) =>{
         let arb = await Arborescence.find();
         let length = arb.length;
         atb = arb.map(elem => elem = elem.toObject());
-        let affected = {'EC048' : null, 'EC157' : null, 'EC158' : null, 'EC156' : null, 'EC159' : null, 'EC160' : null, 'EC073' : null, 'EC043' : null, 'EC061' : null};
+        let affected = {'EC048' : null, 'EC157' : null, 'EC158' : null, 'EC156' : null, 'EC159' : null,
+             'EC160' : null, 'EC073' : null, 'EC043' : null, 'EC061' : null, 'EC031' : null, 'EC020' : null};
         // console.log(getBaseElments('EC127', arb));
         let influencers = ['EC041', 'EC074', 'EC113', 'EC078', 'EC080']
         let infAndAff = {'EC041' : 'EC157', 'EC074' : 'EC158', 'EC113' : 'EC156', 'EC078': 'EC159', 'EC080' : 'EC160'}
@@ -70,7 +72,8 @@ exports.ArborescenceCalcul = async (req, res) =>{
                     affected['EC048'].newSold =  affected['EC048'].SoldeValue + dot
                     affected[amortissement] = arb.find(elem => elem.parentId === amortissement);
                     affected[amortissement].newSold = affected[amortissement].SoldeValue + dot;
-                    affected['EC073'] = arb.find(elem => elem.parentId === 'EC073');
+                    if(!affected['EC073'])
+                        affected['EC073'] = arb.find(elem => elem.parentId === 'EC073');
                     affected['EC073'].newSold = (affected['EC073'].SoldeValue / EC139) * (EC139 - affected['EC048'].newSold) < 0 ? (0.25 / 100) * EC090  : (affected['EC073'].SoldeValue / EC139) * (EC139 - affected['EC048'].newSold);
                 }
                 if(elem.parentId === 'EC090')
@@ -84,6 +87,20 @@ exports.ArborescenceCalcul = async (req, res) =>{
                     const otherElemNewSold =  otherElem.newSold === null ? otherElem.SoldeValue : otherElem.newSold;
                     affected['EC061'] = arb.find(elem=> elem.parentId === 'EC061');
                     affected['EC061'].newSold = affected['EC061'].SoldeValue * ((newSold + otherElemNewSold)/ (elem.SoldeValue + otherElem.SoldeValue));
+                }
+                if(elem.parentId === 'EC054' || elem.parentId === 'EC013' && calculResultsRef)
+                {
+                    affected['EC031'] = arb.find(elem => elem.parentId === 'EC031');
+                    affected['EC020'] = arb.find(elem => elem.parentId === 'EC020');
+                    const EC139 = arb.find(elem => elem.parentId === 'EC139').SoldeValue;
+                    const EC090 = arb.find(elem => elem.parentId === 'EC090').SoldeValue;
+                    if(!affected['EC073'])
+                        affected['EC073'] = arb.find(elem => elem.parentId === 'EC073');
+                    affected['EC073'].newSold = (affected['EC073'].SoldeValue / EC139) * (EC139 - calculResultsRef.firstYearIntrest) < 0 ? (0.25 / 100) * EC090  : (affected['EC073'].SoldeValue / EC139) * (EC139 - calculResultsRef.firstYearIntrest);
+                    affected['EC031'].newSold = affected['EC031'].SoldeValue + calculResultsRef.firstYearIntrest;
+                    affected['EC020'].newSold = affected['EC020'].SoldeValue + calculResultsRef.amount - calculResultsRef.firstYearPayment - ( affected['EC073'].SoldeValue -  affected['EC073'].newSold);
+
+
                 }
 
             }

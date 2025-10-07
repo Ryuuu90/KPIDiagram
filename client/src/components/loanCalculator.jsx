@@ -29,6 +29,7 @@ export const calculateResults = ({amount, interest, years}) =>{
             payment += monthly;
         }
         return({
+            amount : amount,
             monthlyPayment : monthlyPaymentCalculated,
             totalPayment : totalPaymentCalculated,
             totalIntrest : totalIntrestCalculated,

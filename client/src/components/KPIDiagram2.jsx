@@ -94,9 +94,8 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource , reset, simul
 
   const formatNumber = (num) => {
     if (num === "-" || num === "" || num == null) return "-";
-    return new Intl.NumberFormat("fr-FR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
+    return new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
     }).format(Number(num));
   };
   // Handle search (if you type an element name)
@@ -241,9 +240,8 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
   };
   const formatNumber = (num) => {
     if (num === "-" || num === "" || num == null) return "-";
-    return new Intl.NumberFormat("fr-FR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
+    return new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
     }).format(Number(num));
   };
   // Handle search (if you type an element name)
@@ -458,10 +456,9 @@ const TableExample = () => {
           header: "Opérations propres à l'exercice",
           cell: ({ getValue }) => (
             <span className="font-semibold text-green-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         },
@@ -470,10 +467,9 @@ const TableExample = () => {
           header: 'Opérations exercices précédents',
           cell: ({ getValue }) => (
             <span className="font-semibold text-blue-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         },
@@ -482,10 +478,9 @@ const TableExample = () => {
           header: "Totaux de l'exercice",
           cell: ({ getValue }) => (
             <span className="font-bold text-indigo-700  px-2 py-1 rounded">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         },
@@ -494,10 +489,9 @@ const TableExample = () => {
           header: "Totaux exercice précédent",
           cell: ({ getValue }) => (
             <span className="font-semibold text-gray-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         }];
@@ -517,10 +511,9 @@ const TableExample = () => {
           header: "Exercice",
           cell: ({ getValue }) => (
             <span className="font-semibold text-green-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         },
@@ -529,10 +522,9 @@ const TableExample = () => {
           header: 'Exercice Precedent',
           cell: ({ getValue }) => (
             <span className="font-semibold text-blue-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         }];
@@ -553,10 +545,9 @@ const TableExample = () => {
           header: "Brut",
           cell: ({ getValue }) => (
             <span className="font-semibold text-green-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         },
@@ -566,10 +557,9 @@ const TableExample = () => {
           header: 'Amortissements et provisions',
           cell: ({ getValue }) => (
             <span className="font-semibold text-blue-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         },
@@ -579,10 +569,9 @@ const TableExample = () => {
           header: 'Net Exercice',
           cell: ({ getValue }) => (
             <span className="font-semibold text-blue-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         },
@@ -593,7 +582,7 @@ const TableExample = () => {
             const value = getValue() || 0;
             return (
               <span className="font-semibold text-blue-600">
-                {new Intl.NumberFormat('fr-FR', { 
+                {new Intl.NumberFormat('en-US', { 
                   style: 'currency', 
                   currency: 'MAD' 
                 }).format(value)}
@@ -617,10 +606,9 @@ const TableExample = () => {
           header: "Exercice",
           cell: ({ getValue }) => (
             <span className="font-semibold text-green-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         },
@@ -629,10 +617,9 @@ const TableExample = () => {
           header: 'Exercice Precedent',
           cell: ({ getValue }) => (
             <span className="font-semibold text-blue-600">
-              {new Intl.NumberFormat('fr-FR', { 
-                style: 'currency', 
-                currency: 'MAD' 
-              }).format(getValue())}
+              {new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 0,
+              }).format(getValue()) + ' MAD'}
             </span>
           ),
         }];
@@ -879,7 +866,7 @@ const CollapsibleField = ({ label, value, isFirst, modelType, category, newSold}
   );
 };
 
-const SimulationCard = memo(({ data, basesRef, modelType, cardRef}) => {
+const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, cardRef}) => {
   const [Clicked, setClicked] = useState(false);
   const [editing, setEditing] = useState(false);
   const [query, setQuery] = useState("");
@@ -896,8 +883,9 @@ const SimulationCard = memo(({ data, basesRef, modelType, cardRef}) => {
         if(loanCalculVal.amount && loanCalculVal.interest && loanCalculVal.years)
         {
           const calculResults = calculateResults(loanCalculVal);
+          calculResultsRef.current = calculResults;
           console.log(typeof(calculResults.firstYearCapital));
-          basesRef.current[data.parentId] = loanCalculVal.amount - (data.SoldeValue) >= 0 ? (loanCalculVal.amount - (data.SoldeValue) - Number(calculResults.firstYearCapital)).toFixed(2) : (Math.abs(loanCalculVal.amount - (data.SoldeValue)) + Number(calculResults.firstYearCapital)).toFixed(2);
+          basesRef.current[data.parentId] = (Math.abs((loanCalculVal.amount + (data.SoldeValue))) - Number(calculResults.firstYearCapital)).toFixed(2);
           console.log(basesRef.current[data.parentId])
           setEditing(false)
           setEditingSold(true)
@@ -1008,7 +996,10 @@ return (
     )}
 
       {data.eleType !== "Source"  && (fields.map((field, idx) => {
-        if(field.label !== "Nouveau solde")
+          if(field.label == "Nouveau solde")
+            return
+          if(field.label === 'Valeur du solde')
+            field.value = Number(field.value).toFixed(0);
           return(<div key={idx} className='row-span-2'>
               <CollapsibleField label={field.label} value={field.value} isFirst={idx === 0 || idx === 3} modelType={modelType} category={data.category} newSold={data.newSold}/>
         </div>)
@@ -1041,7 +1032,7 @@ return (
             ) : (
               <>
              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
-                {data.eleType !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : fields[2].value} isFirst={false} modelType={modelType} category={data.category} newSold={data.newSold}/>)}
+                {data.eleType !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : fields[2].value.toFixed(0)} isFirst={false} modelType={modelType} category={data.category} newSold={data.newSold}/>)}
                 {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
                   <Pencil size={14} className="absolute bottom-11 right-10 text-gray-500 hover:text-gray-700" />
                 </button>)}
@@ -1085,7 +1076,7 @@ const CustomNode = memo(({ data, basesRef, modelType}) => {
     },
     { label: 'Méthode de calcul', value: data.method },
     { label: 'Rapports contenant item', value: data.Reports },
-    { label: 'Valeur du solde', value: String(data.SoldeValue).replace(/\B(?=(\d{3})+(?!\d))/g, "."),}
+    { label: 'Valeur du solde', value: String(Number(data.SoldeValue).toFixed(0)).replace(/\B(?=(\d{3})+(?!\d))/g, ","),}
   ];
 
   
@@ -1167,6 +1158,7 @@ const KPIDiagram = () => {
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef(null);
   const basesRef = useRef({});
+  const calculResultsRef = useRef({});
   const [baseElements, setBaseElements] = useState([]);
   const chilLimit = useRef('');
   const [loading, setLoading] = useState(false);
@@ -1178,7 +1170,7 @@ const KPIDiagram = () => {
   const nodeTypes = useMemo(() => ({
     customNode: (props) => {
       if (modelType === "simulation") {
-        return <SimulationCard {...props} basesRef={basesRef} modelType={modelType} cardRef={cardRef} />;
+        return <SimulationCard {...props} basesRef={basesRef}  calculResultsRef={calculResultsRef}  modelType={modelType} cardRef={cardRef} />;
       } else {
         return <CustomNode {...props} basesRef={basesRef} modelType={modelType} />;
       }
@@ -1346,12 +1338,13 @@ const KPIDiagram = () => {
     }
   };
 
-  const fetchCalculation = async (basesRef, expandedNodes = []) => {
+  const fetchCalculation = async (basesRef, expandedNodes = [], calculResultsRef) => {
     try {
       const expandedArray = expandedNodes.map(node => node.trim())
       const res = await axios.post(`${URL}/api/calculation`, {
         // modelType: modelType, 
         basesRef: basesRef.current,
+        calculResultsRef : calculResultsRef.current,
         expandedNodes: expandedArray  // NEW: Send expanded nodes array
       });
       return res.data;
@@ -1537,7 +1530,7 @@ const KPIDiagram = () => {
     setLoading(true);
     const updatedNodes = [];
     // for (let node of newNodesRef.current) {
-      const calculation = await fetchCalculation(basesRef, expandedNodesArrayRef.current[modelType]);
+      const calculation = await fetchCalculation(basesRef, expandedNodesArrayRef.current[modelType], calculResultsRef);
       // console.log(calculation)
       if(!calculation)
       {
