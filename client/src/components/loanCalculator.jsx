@@ -13,9 +13,9 @@ export const calculateResults = ({amount, interest, years}) =>{
     let balance = userAmount;
     if(isFinite(monthly))
     {
-        const monthlyPaymentCalculated = monthly.toFixed(2);
-        const totalPaymentCalculated = (monthly * calculatedPayment).toFixed(2);
-        const totalIntrestCalculated = (monthly * calculatedPayment - amount).toFixed(2);
+        const monthlyPaymentCalculated = monthly.toFixed(0);
+        const totalPaymentCalculated = (monthly * calculatedPayment).toFixed(0);
+        const totalIntrestCalculated = (monthly * calculatedPayment - amount).toFixed(0);
         let interest = 0;
         let principal = 0;
         let payment = 0;
@@ -33,9 +33,9 @@ export const calculateResults = ({amount, interest, years}) =>{
             monthlyPayment : monthlyPaymentCalculated,
             totalPayment : totalPaymentCalculated,
             totalIntrest : totalIntrestCalculated,
-            firstYearPayment :  payment.toFixed(3),
-            firstYearIntrest : interest.toFixed(3),
-            firstYearCapital : principal.toFixed(3),
+            firstYearPayment :  payment.toFixed(0),
+            firstYearIntrest : interest.toFixed(0),
+            firstYearCapital : principal.toFixed(0),
             isResults : true,
         });
     }
@@ -121,7 +121,7 @@ const LoanCalculator = memo(()=>{
             <div className="mb-6 text-center">
               <h1 className="font-semibold text-gray-800 text-lg">Estimated Monthly Payment</h1>
               <div className="font-bold text-4xl text-blue-600 mt-2">
-                ${results.monthlyPayment}
+                {results.monthlyPayment.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} MAD
               </div>
               <div className="mx-auto border-b w-1/3 border-gray-300 mt-3"></div>
             </div>
@@ -133,19 +133,19 @@ const LoanCalculator = memo(()=>{
                 <div>
                   <h2 className="font-medium text-gray-700">Payment</h2>
                   <div className="font-bold text-lg text-gray-900">
-                    ${results.firstYearPayment}
+                    {results.firstYearPayment.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} MAD
                   </div>
                 </div>
                 <div>
                   <h2 className="font-medium text-gray-700">Interest</h2>
                   <div className="font-bold text-lg text-gray-900">
-                    ${results.firstYearIntrest}
+                    {results.firstYearIntrest.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} MAD
                   </div>
                 </div>
                 <div>
                   <h2 className="font-medium text-gray-700">Capital</h2>
                   <div className="font-bold text-lg text-gray-900">
-                    ${results.firstYearCapital}
+                    {results.firstYearCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} MAD
                   </div>
                 </div>
               </div>
@@ -157,15 +157,15 @@ const LoanCalculator = memo(()=>{
               <div className="grid grid-cols-3 gap-6">
                 <div>
                   <h2 className="font-medium text-gray-700">Total Cost</h2>
-                  <div className="font-bold text-lg text-gray-900">${results.totalPayment}</div>
+                  <div className="font-bold text-lg text-gray-900">{results.totalPayment.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} MAD</div>
                 </div>
                 <div>
                   <h2 className="font-medium text-gray-700">Total Interest</h2>
-                  <div className="font-bold text-lg text-gray-900">${results.totalIntrest}</div>
+                  <div className="font-bold text-lg text-gray-900">{results.totalIntrest.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} MAD</div>
                 </div>
                 <div>
                   <h2 className="font-medium text-gray-700">Loan Amount</h2>
-                  <div className="font-bold text-lg text-gray-900">${userValues.amount}</div>
+                  <div className="font-bold text-lg text-gray-900">{userValues.amount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} MAD</div>
                 </div>
               </div>
             </div>

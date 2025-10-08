@@ -295,7 +295,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
           const savedValue = basesRef.current[elementId] || "-";
 
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               {editingRow === elementId ? (
                 <input
                   type="number"
@@ -307,15 +307,24 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
                   autoFocus
                 />
               ): (
-                <>
-                  <span>{savedValue === '-' && getValue() !== null ? formatNumber(getValue()) :formatNumber(savedValue)}</span>
-                  <button onClick={() => setEditingRow(elementId)}>
-                    <Pencil
-                      size={14}
-                      className="text-gray-500 hover:text-gray-700"
-                    />
-                  </button>
-                </>
+                <div className="flex items-center justify-end space-x-2">
+                <span>
+                  {savedValue === '-' && getValue() !== null 
+                    ? formatNumber(getValue()) 
+                    : formatNumber(savedValue)}
+                </span>
+              
+                <button
+                  type="button"
+                  onClick={() => setEditingRow(elementId)}
+                  className="p-1 rounded hover:bg-gray-100 transition"
+                >
+                  <Pencil
+                    size={12}
+                    className="text-gray-500 hover:text-gray-700"
+                  />
+                </button>
+              </div>
               ) }
             </div>
           );
@@ -350,7 +359,7 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
                 return (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b"
+                   className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b"
                   >
                     {flexRender(
                       header.column.columnDef.header,
@@ -380,9 +389,18 @@ const SimulationTable = ({ Source, basesRef, setSource , reset}) => {
                 {row.getVisibleCells().map((cell) => {
                   // if (cell.column.columnDef.header === "element ID") return null;
                   return (
-                    <td key={cell.id} className="px-4 py-2 text-sm text-gray-800">
+                    <td key={cell.id} className={`px-4 ${cell.column.columnDef.header === "Valeur du solde" || cell.column.columnDef.header === "Nouveau solde" ? "text-right justify-end" : "text-left justify-start"} py-2 text-sm text-gray-800`}>
+                       <div
+                      className={`flex items-center space-x-2 ${
+                        ["Valeur du solde", "Nouveau solde"].includes(cell.column.columnDef.header)
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </div>
                     </td>
+                    
                   );
                 })}
               </tr>
@@ -677,7 +695,7 @@ const TableExample = () => {
                       </h2>
                     </div>
                     <p className={`text-sm transition-colors duration-300 ${isActive ? "text-blue-100 duration-800 text-xl " : "text-gray-500"} `}>
-                      {name === 'ESG' ? "Tableau des comptes de produits et charges" : name === 'CPC' ? "Tableau des comptes de Produits et Charges" : name === 'Passif' ? "Tableau du Passif" : "Tableau de l’Actif"}
+                      {name === 'ESG' ? "État des Soldes de Gestion (ESG)" : name === 'CPC' ? "Tableau des comptes de Produits et Charges" : name === 'Passif' ? "Tableau du Passif" : "Tableau de l’Actif"}
                     </p>
                   </div>
                 </div>
@@ -1032,7 +1050,7 @@ return (
             ) : (
               <>
              <div className="flex flex-col cursor-pointer text-xs font-bold text-blue-600">
-                {data.eleType !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : fields[2].value.toFixed(0)} isFirst={false} modelType={modelType} category={data.category} newSold={data.newSold}/>)}
+                {data.eleType !== "Source" && (<CollapsibleField label={fields[2].label} value={data.category === "Elément de base" && (data.newSold === null ||  editingSold)? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : fields[2].value === '-' ? fields[2].value : fields[2].value .toFixed(0)} isFirst={false} modelType={modelType} category={data.category} newSold={data.newSold}/>)}
                 {data.category === "Elément de base" && (<button onClick={() => {setEditing(true)}}>
                   <Pencil size={14} className="absolute bottom-11 right-10 text-gray-500 hover:text-gray-700" />
                 </button>)}
