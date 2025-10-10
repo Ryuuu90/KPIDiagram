@@ -21,6 +21,7 @@ import { isNumeral } from 'numeral';
 import { useDeepCompareMemo , useDeepCompareEffect} from 'use-deep-compare';
 import { FaBalanceScale, FaChartBar, FaLeaf, FaFileInvoice } from "react-icons/fa";
 import {calculateResults} from './loanCalculator';
+import InvestissementTable from '../components/investissementTable'
 
 
 
@@ -432,7 +433,6 @@ const TableExample = () => {
     { name: "ESG", icon: <FaLeaf /> },
     { name: "CPC", icon: <FaFileInvoice /> },
   ];
-  const color = useRef('white');
   
   // Mock data for demonstration (replace with your actual API call)
   useEffect(() => {
@@ -1738,7 +1738,7 @@ const KPIDiagram = () => {
 
     setIsOpen(false);
 
-      if(modelType !== "reports" && modelType !== "loan calculator")
+      if(modelType !== "reports" && modelType !== "loan calculator" && modelType !== "investissement")
       {  if(Selected.current)
         {
           expandedNodesArrayRef.current[modelType] = []; 
@@ -1781,7 +1781,7 @@ const KPIDiagram = () => {
           className="absolute top-1 h-20 object-contain"
         />
           <div className="absolute w-[50rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500 top-4">
-          {["Élément comptable", "Ratio", "Simulation", "Reports", "Loan Calculator"].map((label, index) => (
+          {["Élément comptable", "Ratio", "Simulation", "Reports", "Loan Calculator", "investissement"].map((label, index) => (
             <button
               key={index}
               className={`text-white px-5 py-2 rounded-md transition-all duration-200 hover:bg-slate-500 hover:scale-105 active:scale-95 ${
@@ -1812,7 +1812,7 @@ const KPIDiagram = () => {
             </button>
           ))}
         </div>
-     { modelType !== 'reports' && modelType !== "loan calculator" && (<ReactFlow
+     { modelType !== 'reports' && modelType !== "loan calculator" && modelType !==   "investissement" && (<ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -1878,7 +1878,7 @@ const KPIDiagram = () => {
      
 
         {/* NEW: Debug info for expanded nodes (optional - remove in production) */}
-        {process.env.REACT_APP_NODE_ENV === 'development' && modelType !== "reports" && modelType !== "loan calculator"  && (
+        {process.env.REACT_APP_NODE_ENV === 'development' && modelType !== "reports" && modelType !== "loan calculator" && modelType !== "investissement"  && (
          
           <div className="absolute left-5 bottom-5 bg-black bg-opacity-70 text-white p-3 rounded-md text-xs z-50">
             <div>Expanded Nodes: {expandedNodesArrayRef.current[modelType].length}</div>
@@ -1897,6 +1897,7 @@ const KPIDiagram = () => {
       </ReactFlow>)}
      {modelType === "reports" && ( <TableExample/>)}
      {modelType === "loan calculator" && (<LoanCalculator/>)}
+     {modelType === "investissement" && (<InvestissementTable/>)}
 
     </div>
   );

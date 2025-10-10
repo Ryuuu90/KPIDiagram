@@ -9,6 +9,8 @@ const {ArborescenceCalcul} = require('../controllers/ArborescenceCalcul');
 const {modelsReports} = require('../controllers/modelsReports');
 const {searchForBE} = require('../controllers/searchForBE');
 const {getAffectedElements} = require('../controllers/getAffectedElements');
+const {investissementData} = require('../controllers/investissementData');
+
 
 
 const express = require('express');
@@ -27,6 +29,8 @@ router.post('/calculation', ArborescenceCalcul);
 router.post('/reports', modelsReports);
 router.post('/search', searchForBE);
 router.post('/affected', getAffectedElements);
+router.post('/investissment', investissementData);
+
 
 
 

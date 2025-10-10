@@ -19,11 +19,16 @@ exports.modelsReports = async (req , res) => {
         const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[reportType]);
 
         const data = await Arborescence.find({});
+        const dataMap = Object.fromEntries(
+            data.map(elem => [elem.parentId, elem])
+          );
         let report;
         if(reportType === 'ESG')
         {
+            // const produit = data.find(elem => elem.parentId === 'EC090').SoldeValue;
+            // console.log(produit);
             report = sheet.filter(row => row['Definition'] && row['Definition']!== " ").map((row, index) =>{
-                const element = row['NumEC'] ? data.find(elem => elem.parentId === row['NumEC']) : null;
+                const element = row['NumEC'] ? dataMap[row['NumEC']] : null;
                 return({
                      order : index,
                     "NumEC" : element ? element.parentId : null,
@@ -38,7 +43,7 @@ exports.modelsReports = async (req , res) => {
         if(reportType === 'Passif')
         {
             report = sheet.filter(row => row['PASSIF'] && row['PASSIF'] !== " ").map((row, index) =>{
-                const element = row['NumEC'] ? data.find(elem => elem.parentId === row['NumEC']) : null;
+                const element = row['NumEC'] ? dataMap[row['NumEC']] : null;
                 return({
                      order : index,
                     "NumEC" : element ? element.parentId : null,
@@ -53,9 +58,9 @@ exports.modelsReports = async (req , res) => {
         if(reportType === 'Actif')
         {
             report = sheet.filter(row => row['ACTIF']  &&  row['ACTIF'] !== " ").map((row , index)=>{
-                const element1 = row['NumEC F'] ? data.find(elem => elem.parentId === row['NumEC F']) : null ;
-                const element2 = row['NumEC G'] ? data.find(elem => elem.parentId === row['NumEC G']) : null ;
-                const element3 = row['NumEC H'] ? data.find(elem => elem.parentId === row['NumEC H']) : null ;
+                const element1 = row['NumEC F'] ? dataMap[row['NumEC F']] : null ;
+                const element2 = row['NumEC G'] ? dataMap[row['NumEC G']] : null ;
+                const element3 = row['NumEC H'] ? dataMap[row['NumEC H']] : null ;
                 
                 return({
                         order : index,
@@ -74,10 +79,9 @@ exports.modelsReports = async (req , res) => {
         if(reportType === 'CPC')
         {
             report = sheet.filter(row=> row['Nature '] && row['Nature '] !== " ").map((row , index)=>{
-                const element1 = row['NumEC1'] ? data.find(elem => elem.parentId === row['NumEC1']) : null ;
-                const element2 = row['NumEC2'] ? data.find(elem => elem.parentId === row['NumEC2']) : null ;
-                const element3 = row['NumEC3'] ? data.find(elem => elem.parentId === row['NumEC3']) : null ;
-                console.log(row);
+                const element1 = row['NumEC1'] ? dataMap[row['NumEC1']] : null ;
+                const element2 = row['NumEC2'] ? dataMap[row['NumEC2']] : null ;
+                const element3 = row['NumEC3'] ? dataMap[row['NumEC3']] : null ;
                 return({
                     order : index,
                     "NumEC F" : element1 ? element1.parentId : null,
