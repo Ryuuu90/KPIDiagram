@@ -1780,7 +1780,7 @@ const KPIDiagram = () => {
           // alt="FiNANZiA - decoding finance, revealing insights" 
           className="absolute top-1 h-20 object-contain"
         />
-          <div className="absolute w-[50rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500 top-4">
+          <div className="absolute w-[52rem] flex flex-row gap-8 justify-center translate-x-1/2 h-14 items-center z-50 rounded-lg right-1/2 bg-slate-700 shadow-lg border border-slate-500 top-4">
           {["Élément comptable", "Ratio", "Simulation", "Reports", "Loan Calculator", "investissement"].map((label, index) => (
             <button
               key={index}
