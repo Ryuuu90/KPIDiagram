@@ -13,7 +13,7 @@ import axios from "axios";
 
 const URL = process.env.REACT_APP_BACKEND_URL;
 
-const InvestissementTable = memo(({setResults, results}) => {
+const InvesSimulationTable = memo(({setResults, results, userValues, tableId}) => {
   const [passifData, setPassifData] = useState([]);
   const [actifData, setActifData] = useState([]);
   const [cpcData, setCpcData] = useState([]);
@@ -21,22 +21,102 @@ const InvestissementTable = memo(({setResults, results}) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const getAllReports = async () => {
+    const getAllReports =  () => {
+      console.log(tableId);
       setIsLoading(true);
       try {
-        const fetchReport = async (reportType) => {
-          const res = await axios.post(`${URL}/api/investissment`, { reportType });
-          return Object.entries(res.data.report).map(([key, value]) => ({
+        const cpcReport = () => {
+          const progression = userValues["progression de l'activité"] / 100;
+
+            const dataMap = Object.fromEntries(
+              results.Cpc.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
+            );
+            
+            const updatedProduits = dataMap['Produits'] * (1 + progression);
+            const updatedAchats = dataMap['Achats'] * (1 + progression);
+            const updatedPersonnel = dataMap['Personnel'] * (1 + progression);
+            
+            const profitOld =
+              dataMap['Produits'] -
+              (dataMap['Achats'] + dataMap['Personnel'] + dataMap['Dotations'] + dataMap['Résultat financier']);
+            
+            const profitNew =
+              updatedProduits -
+              (updatedAchats + updatedPersonnel + dataMap['Dotations'] + dataMap['Résultat financier']);
+            
+            const updatedIS = dataMap['IS'] * (profitNew / profitOld);
+            
+            const updatedResultatNet =  dataMap['Produits'] - (dataMap['Achats'] + dataMap['Personnel'] +  updatedIS + dataMap['Résultat financier']) - dataMap['Dotations'];
+            
+            const cpc = {
+              ...dataMap,
+              Produits: updatedProduits,
+              Achats: updatedAchats,
+              Personnel: updatedPersonnel,
+              IS: updatedIS,
+              'Résultat net': updatedResultatNet,
+          };
+          return Object.entries(cpc).map(([key, value]) => ({
             label: key,
             value: value,
           }));
         };
+        const passifReport = ()=>{
+          const dataMap = Object.fromEntries(
+            results.Passif.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
+          );
+          const updatedReserves = dataMap['Réserves'] + dataMap['Résultat net'] - userValues['distribution des dividendes'] / 100 * dataMap['Résultat net'];
+          const cpc = cpcReport()
+          const updatedResNet = cpc.find(elem => elem.label === "Résultat net").value;
+          const updatedDateFinance = dataMap["Dettes de financement"] - userValues["Remboursement dette de financement"][`n+${tableId}`];
+          const updatedDateFour  = dataMap["Dettes fournisseurs"] * (1 + userValues["progression de l'activité"] / 100);
+          const passif = {
+            ...dataMap,
+            Réserves: updatedReserves,
+            "Résultat net" : updatedResNet,
+            "Dettes de financement" : updatedDateFinance,
+            "Dettes fournisseurs" : updatedDateFour,            
+          }
+          passif.Total = Object.values(passif).reduce((sum, value)=> sum + value, 0);
+          return Object.entries(passif).map(([key, value]) => ({
+            label: key,
+            value: value,
+          }));
 
-        const [passif, actif, cpc] = await Promise.all([
-          fetchReport("Passif"),
-          fetchReport("Actif"),
-          fetchReport("CPC"),
-        ]);
+        }
+        const actifReport = () =>{
+          const dataMap = Object.fromEntries(
+            results.Actif.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
+          );
+          const updatedImmob = dataMap['Immobilisations'] + (userValues["montant de l'investissement ht"] / userValues["progression de l'activité"] / 100);
+          const cpc = cpcReport();
+          const updatedAmort = dataMap["Amortissement"] - cpc.find(elem => elem.label === 'Dotations').value;
+          const updatedStock = dataMap["Stock"] * (1 + userValues["progression de l'activité"] / 100);
+          const updatedCreances = dataMap["Créances"] * (1 + userValues["progression de l'activité"] / 100);
+          const passif = passifReport();
+          const totalPassif = passif.find(elem => elem.label === 'Total').value;
+          const updatedTresorerie = totalPassif - (updatedImmob + updatedAmort + updatedStock + updatedCreances);
+          const actif = {
+            ...dataMap,
+            "Immobilisations" : updatedImmob,
+            "Amortissement" : updatedAmort,
+            "Stock" : updatedStock,
+            "Créances" : updatedCreances,
+            "Trésorerie" : updatedTresorerie,
+            "Total" : 0,
+          }
+          actif.Total = Object.values(actif).reduce((sum, value)=> sum + value, 0);
+          return Object.entries(actif).map(([key, value]) => ({
+            label: key,
+            value: value,
+          }));
+        }
+
+        const [passif, actif, cpc] = [
+          passifReport(),
+          actifReport(),
+          cpcReport(),
+        ];
         setResults((results) => ({...results, Passif : passif, Actif : actif, Cpc : cpc}))
 
         setPassifData(passif);
@@ -127,7 +207,7 @@ const InvestissementTable = memo(({setResults, results}) => {
   ];
 
   return (
-    <div className="p-6 bg-white  mt-28">
+    <div className="p-6 bg-white ">
       <div className="max-w-7xl mx-auto">
         {/* Search bar */}
 
@@ -205,4 +285,4 @@ const InvestissementTable = memo(({setResults, results}) => {
   );
 });
 
-export default InvestissementTable;
+export default InvesSimulationTable;

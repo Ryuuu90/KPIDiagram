@@ -30,15 +30,26 @@ exports.investissementData = async (req, res) =>{
                 "Résultat net": dataMap['EC108']?.SoldeValue || 0,
             };
         }
+        // let passif;
         if (reportType === 'Actif') 
         {
+            let passif = {
+                Capital: sumSolde(['EC025', 'EC212', 'EC053', 'EC088', 'EC148']),
+                Réserves: sumSolde(['EC104', 'EC018', 'EC100', 'EC109', 'EC112', 'EC099', 'EC098']),
+                "Résultat net": dataMap['EC108']?.SoldeValue || 0,
+                "Dettes de financement": dataMap['EC046']?.SoldeValue || 0,
+                "Dettes fournisseurs": sumSolde(['EC128', 'EC017', 'EC210']),
+            };
+            passif.Total = passif.Capital + passif.Réserves + passif['Résultat net'] + passif['Dettes de financement'] + passif['Dettes fournisseurs']
             report = {
                 Immobilisations: sumSolde(['EC068', 'EC070', 'EC066', 'EC069']),
                 Amortissement: sumSolde(['EC251', 'EC252', 'EC253', 'EC254']),
                 Stock: dataMap['EC248']?.SoldeValue || 0,
-                Créances: dataMap['EC248']?.SoldeValue || 0,
-                Trésorerie: sumSolde(['EC115', 'EC116', 'EC117']),
+                Créances: dataMap['EC249']?.SoldeValue || 0,
             };
+            report['Trésorerie'] = passif.Total - (report.Immobilisations + report.Amortissement + report.Créances + report.Stock)
+            report.Total = report.Immobilisations + report.Amortissement + report.Créances + report.Stock + report.Trésorerie
+            
         }
         if (reportType === 'Passif') 
         {
@@ -49,6 +60,7 @@ exports.investissementData = async (req, res) =>{
                 "Dettes de financement": dataMap['EC046']?.SoldeValue || 0,
                 "Dettes fournisseurs": sumSolde(['EC128', 'EC017', 'EC210']),
             };
+            report.Total = report.Capital + report.Réserves + report['Résultat net'] + report['Dettes de financement'] + report['Dettes fournisseurs']
         }
         res.status(200).json({ success : true , message : "investissement reporsts are ready", report : report });
     }

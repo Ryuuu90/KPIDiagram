@@ -22,6 +22,7 @@ import { useDeepCompareMemo , useDeepCompareEffect} from 'use-deep-compare';
 import { FaBalanceScale, FaChartBar, FaLeaf, FaFileInvoice } from "react-icons/fa";
 import {calculateResults} from './loanCalculator';
 import InvestissementTable from '../components/investissementTable'
+import InvestissementPage from '../pages/investissementPage';
 
 
 
@@ -1897,7 +1898,7 @@ const KPIDiagram = () => {
       </ReactFlow>)}
      {modelType === "reports" && ( <TableExample/>)}
      {modelType === "loan calculator" && (<LoanCalculator/>)}
-     {modelType === "investissement" && (<InvestissementTable/>)}
+     {modelType === "investissement" && (<InvestissementPage/>)}
 
     </div>
   );
