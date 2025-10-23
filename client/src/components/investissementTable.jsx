@@ -121,9 +121,9 @@ const InvestissementTable = memo(({setResults, results}) => {
   });
 
   const reports = [
-    { name: "Actif", icon: <FaChartBar />, table: actifTable, data: actifData },
-    { name: "Passif", icon: <FaBalanceScale />, table: passifTable, data: passifData },
     { name: "CPC", icon: <FaFileInvoice />, table: cpcTable, data: cpcData },
+    { name: "Passif", icon: <FaBalanceScale />, table: passifTable, data: passifData },
+    { name: "Actif", icon: <FaChartBar />, table: actifTable, data: actifData },
   ];
 
   return (
