@@ -46,7 +46,7 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId}) =
             
             const updatedIS = dataMap['IS'] * (profitNew / profitOld);
             
-            const updatedResultatNet =  dataMap['Produits'] - (dataMap['Achats'] + dataMap['Personnel'] +  updatedIS + dataMap['Résultat financier']) - dataMap['Dotations'];
+            const updatedResultatNet =  updatedProduits - (updatedAchats+ updatedPersonnel +  updatedIS + dataMap['Dotations']) + dataMap['Résultat financier'] ;
             
             const cpc = {
               ...dataMap,
@@ -75,7 +75,8 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId}) =
             Réserves: updatedReserves,
             "Résultat net" : updatedResNet,
             "Dettes de financement" : updatedDateFinance,
-            "Dettes fournisseurs" : updatedDateFour,            
+            "Dettes fournisseurs" : updatedDateFour,   
+            "Total" : 0,         
           }
           passif.Total = Object.values(passif).reduce((sum, value)=> sum + value, 0);
           return Object.entries(passif).map(([key, value]) => ({
@@ -207,7 +208,7 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId}) =
   ];
 
   return (
-    <div className="p-6 bg-white ">
+    <div className="p-6 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Search bar */}
 
