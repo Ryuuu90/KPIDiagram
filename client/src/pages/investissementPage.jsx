@@ -10,6 +10,7 @@ const InvestissementPage = memo(()=>{
     const [resultsN1, setResultsN1] = useState({Passif : null, Actif : null , Cpc : null , isLoading : true});
     const [resultsN2, setResultsN2] = useState({Passif : null, Actif : null , Cpc : null , isLoading : true});
     const [resultsN3, setResultsN3] = useState({Passif : null, Actif : null , Cpc : null , isLoading : true});
+    const loanResults = useRef(null);
 
 
 
@@ -106,10 +107,10 @@ const InvestissementPage = memo(()=>{
   </div>)}
   {loadTables && (
     <div className=" space-y-4">
-      { !results.isLoading &&(<InvesSimulationTable setResults={setResultsN1} results={results} userValues={userValues} tableId={1}/>)}
-      { !resultsN1.isLoading && (<InvesSimulationTable setResults={setResultsN2} results={resultsN1} userValues={userValues} tableId={2}/>)}
-      { !resultsN2.isLoading &&(<InvesSimulationTable setResults={setResultsN3} results={resultsN2} userValues={userValues} tableId={3}/>)}
-
+      { !results.isLoading &&(<InvesSimulationTable setResults={setResultsN1} results={results} userValues={userValues} tableId={1} loanResults={loanResults} initResults={results}/>)}
+      { !resultsN1.isLoading && (<InvesSimulationTable setResults={setResultsN2} results={resultsN1} userValues={userValues} tableId={2} loanResults={loanResults} initResults={results}/>)}
+      { !resultsN2.isLoading &&(<InvesSimulationTable setResults={setResultsN3} results={resultsN2} userValues={userValues} tableId={3} loanResults={loanResults} initResults={results}/>)}
+      {console.log(loanResults)}
     </div>
   )}
 </div>

@@ -8,25 +8,59 @@ export const calculateResults = ({amount, interest, years}) =>{
     const userAmount = Number(amount);
     const calculatedIntrest = Number(interest) / 100 / 12;
     const calculatedPayment = Number(years) * 12;
+    if (!userAmount || !calculatedIntrest || !calculatedPayment) {
+      return {
+        isResults: false,
+        error: "Veuillez entrer un montant, un taux d'intérêt et une durée valides.",
+      };
+    }
     const x = Math.pow(1 + calculatedIntrest, calculatedPayment);
     const monthly = (userAmount * x * calculatedIntrest) / (x - 1);
     let balance = userAmount;
     if(isFinite(monthly))
     {
-        const monthlyPaymentCalculated = monthly.toFixed(0);
-        const totalPaymentCalculated = (monthly * calculatedPayment).toFixed(0);
-        const totalIntrestCalculated = (monthly * calculatedPayment - amount).toFixed(0);
+        const monthlyPaymentCalculated = monthly.toFixed(3);
+        const totalPaymentCalculated = (monthly * calculatedPayment).toFixed(3);
+        const totalIntrestCalculated = (monthly * calculatedPayment - amount).toFixed(3);
         let interest = 0;
         let principal = 0;
         let payment = 0;
-        for (let i = 1; i <= 12; i++) {
-            const interestPayment = balance * calculatedIntrest;
-            const principalPayment = monthly - interestPayment;
-            // console.log(balance);
-            balance -= principalPayment;
-            interest += interestPayment;
-            principal += principalPayment;
-            payment += monthly;
+        let interestN2 = 0;
+        let principalN2 = 0;
+        let paymentN2 = 0;
+        let interestN3 = 0;
+        let principalN3 = 0;
+        let paymentN3 = 0;
+        
+        for (let i = 1 ; i <= 36 ; i++)
+        {
+            if (i >= 1 && i <= 12) {
+                const interestPayment = balance * calculatedIntrest;
+                const principalPayment = monthly - interestPayment;
+                // console.log(balance);
+                balance -= principalPayment;
+                interest += interestPayment;
+                principal += principalPayment;
+                payment += monthly;
+            }
+            if ( i > 12 && i <= 24 ) {
+              const interestPayment = balance * calculatedIntrest;
+              const principalPayment = monthly - interestPayment;
+              // console.log(balance);
+              balance -= principalPayment;
+              interestN2 += interestPayment;
+              principalN2 += principalPayment;
+              paymentN2 += monthly;
+            }
+            if (i > 24 && i <= 36) {
+              const interestPayment = balance * calculatedIntrest;
+              const principalPayment = monthly - interestPayment;
+              // console.log(balance);
+              balance -= principalPayment;
+              interestN3 += interestPayment;
+              principalN3 += principalPayment;
+              paymentN3 += monthly;
+          }
         }
         return({
             amount : amount,
@@ -36,6 +70,18 @@ export const calculateResults = ({amount, interest, years}) =>{
             firstYearPayment :  payment.toFixed(0),
             firstYearIntrest : interest.toFixed(0),
             firstYearCapital : principal.toFixed(0),
+            simulation : {
+              firstYearPayment :  payment.toFixed(0),
+              firstYearIntrest : interest.toFixed(0),
+              firstYearCapital : principal.toFixed(0),
+              secondYearPayment :  paymentN2.toFixed(0),
+              secondYearIntrest : interestN2.toFixed(0),
+              secondYearCapital : principalN2.toFixed(0),
+              thirdYearPayment :  paymentN3.toFixed(0),
+              thirdYearIntrest : interestN3.toFixed(0),
+              thirdYearCapital : principalN3.toFixed(0), 
+
+            },
             isResults : true,
         });
     }

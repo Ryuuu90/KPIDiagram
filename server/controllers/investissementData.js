@@ -27,8 +27,8 @@ exports.investissementData = async (req, res) =>{
                 Dotations: dataMap['EC048']?.SoldeValue || 0,
                 "Résultat financier": dataMap['EC107']?.SoldeValue || 0,
                 IS: dataMap['EC073']?.SoldeValue || 0,
-                "Résultat net": dataMap['EC108']?.SoldeValue || 0,
             };
+            report["Résultat net"] =  report.Produits - (report.Achats+ report.Personnel +  report['IS'] + report.Dotations) + report['Résultat financier'] ;
         }
         // let passif;
         if (reportType === 'Actif') 
