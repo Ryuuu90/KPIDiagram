@@ -1,6 +1,16 @@
-import React, {useState, useEffect, useRef, memo} from "react";
+import React, {useState, useEffect, useRef,useCallback, memo} from "react";
 import InvestissementTable from "../components/investissementTable";
 import InvesSimulationTable from "../components/invesSimulationTable";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ReferenceLine,
+  ResponsiveContainer,
+} from "recharts";
 
 
 const InvestissementPage = memo(()=>{
@@ -10,6 +20,7 @@ const InvestissementPage = memo(()=>{
     const [resultsN1, setResultsN1] = useState({Passif : null, Actif : null , Cpc : null , isLoading : true});
     const [resultsN2, setResultsN2] = useState({Passif : null, Actif : null , Cpc : null , isLoading : true});
     const [resultsN3, setResultsN3] = useState({Passif : null, Actif : null , Cpc : null , isLoading : true});
+    const [tresorerieData, setTresorerieData] = useState([]);
     const loanResults = useRef(null);
 
 
@@ -21,7 +32,15 @@ const InvestissementPage = memo(()=>{
       }
     }
 
-    return(
+    const handleTresorerieChange = useCallback((newEntry) => {
+      setTresorerieData((prev) => {
+        const existing = prev.filter((d) => d.year !== newEntry.year);
+        return [...existing, newEntry].sort((a, b) =>
+          a.year.localeCompare(b.year)
+        );
+      });
+    }, []);
+  return(
         <div className="w-full flex flex-col items-center bg-gray-50 min-h-screen py-6 space-y-6 text-sm">
 
   {/* Table Section */}
@@ -41,11 +60,13 @@ const InvestissementPage = memo(()=>{
       {/* Left Column */}
       <div className="space-y-4">
         {[
-          { label: "Montant de l'investissement HT", placeholder: "Ex: 250000" },
+          { label: "Montant de l'investissement HT", placeholder: "Ex: 250000 MAD" },
           { label: "Durée d'amortissement", placeholder: "Ex: 5 ans" },
           { label: "Durée d'investissement", placeholder: "Ex: 7 ans" },
           { label: "Progression de l'activité", placeholder: "Ex: 10%" },
           { label: "Distribution des dividendes", placeholder: "Ex: 20%" },
+          { label: "Découvert", placeholder: "Ex: -10000000 MAD" },
+
         ].map((field, i) => (
           <div key={i} className="flex flex-col">
             <label className="text-gray-700 font-medium mb-0.5">{field.label}</label>
@@ -105,11 +126,74 @@ const InvestissementPage = memo(()=>{
     </div>
 
   </div>)}
+  {tresorerieData.length > 0 && (
+  <div className="w-full max-w-4xl bg-white rounded-lg shadow-md p-6">
+    <h2 className="text-xl font-semibold text-center text-gray-700 mb-4">
+      Évolution de la Trésorerie
+    </h2>
+    <ResponsiveContainer width="100%" height={400}>
+      <LineChart
+        data={tresorerieData.map(d => ({
+          ...d,
+          tresorerie: Math.abs(Number(d.tresorerie)), // ✅ ensure numeric values
+        }))}
+        margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis
+          dataKey="year"
+          tick={{
+            fontSize: 14,
+            dy: 10, // move labels down (+) or up (-)
+            fill: "#374151", // gray-700
+          }}
+        />
+        <YAxis
+          tick={{ fontSize: 10 }}
+          domain={[
+            (dataMin) => {
+              const decouvert = Number(userValues["découvert"]) || dataMin;
+              return Math.min(dataMin, decouvert); // make sure Y-axis starts at least at the découvert
+            },
+            (dataMax) => {
+              const decouvert = Number(userValues["découvert"]) || dataMax;
+              return Math.max(dataMax, decouvert); // make sure Y-axis starts at least at the découvert
+            }, // let max be automatic
+          ]}
+          tickFormatter={(value) => `${Number(value.toFixed(0)).toLocaleString()} MAD`}
+        />
+        <Tooltip  formatter={(v) => `${Number(v).toLocaleString()} MAD`} />
+        <Line
+          type="monotone"
+          dataKey="tresorerie"
+          stroke="#2563EB"
+          strokeWidth={3}
+          dot={{ r: 6, fill: "#2563EB" }}
+        />
+        <ReferenceLine
+          y={Math.abs(Number(userValues["découvert"]))}
+          stroke="red"
+          strokeDasharray="5 5"
+          strokeWidth={2}
+          label={{
+            value: `Découvert (${userValues["découvert"].toLocaleString()} MAD)`,
+            position: "middle",
+            dy: 10,
+            // dx: 60,
+            fill: "red",
+            fontSize: 10,
+            fontWeight: 600,
+          }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+      )}
   {loadTables && (
     <div className=" space-y-4">
-      { !results.isLoading &&(<InvesSimulationTable setResults={setResultsN1} results={results} userValues={userValues} tableId={1} loanResults={loanResults} initResults={results}/>)}
-      { !resultsN1.isLoading && (<InvesSimulationTable setResults={setResultsN2} results={resultsN1} userValues={userValues} tableId={2} loanResults={loanResults} initResults={results}/>)}
-      { !resultsN2.isLoading &&(<InvesSimulationTable setResults={setResultsN3} results={resultsN2} userValues={userValues} tableId={3} loanResults={loanResults} initResults={results}/>)}
+      { !results.isLoading &&(<InvesSimulationTable setResults={setResultsN1} results={results} userValues={userValues} tableId={1} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange}/>)}
+      { !resultsN1.isLoading && (<InvesSimulationTable setResults={setResultsN2} results={resultsN1} userValues={userValues} tableId={2} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange}/>)}
+      { !resultsN2.isLoading &&(<InvesSimulationTable setResults={setResultsN3} results={resultsN2} userValues={userValues} tableId={3} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange}/>)}
       {console.log(loanResults)}
     </div>
   )}

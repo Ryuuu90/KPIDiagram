@@ -1,4 +1,5 @@
 import { useState, useEffect, memo, useMemo } from "react";
+import { useDeepCompareEffect } from "use-deep-compare";
 import {
   useReactTable,
   getCoreRowModel,
@@ -14,7 +15,7 @@ import LoanCalculator, { calculateResults } from "./loanCalculator";
 
 const URL = process.env.REACT_APP_BACKEND_URL;
 
-const InvesSimulationTable = memo(({setResults, results, userValues, tableId, loanResults, initResults}) => {
+const InvesSimulationTable = memo(({setResults, results, userValues, tableId, loanResults, initResults, onTresorerieChange}) => {
   const [passifData, setPassifData] = useState([]);
   const [actifData, setActifData] = useState([]);
   const [cpcData, setCpcData] = useState([]);
@@ -25,7 +26,7 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
                                               "Dette de financement" : {"Montant" : null , "Durée" : null, "Taux" : null},
                                               "Augmentation de capital" : null})
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     const getAllReports =  () => {
       console.log(tableId);
       setIsLoading(true);
@@ -138,7 +139,7 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
     };
 
     getAllReports();
-  }, []);
+  }, [results]);
 
   const formatCurrency = (value) => (
     <span className="font-semibold text-green-600">
@@ -374,8 +375,16 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
     setActifData(actif);
     
 
-
   }
+  useEffect(() => {
+    if (!actifData || !actifData.length) return;
+
+    const tresoItem = actifData.find((elem) => elem.label === "Trésorerie");
+    if (tresoItem) {
+      // send the value to the parent
+      onTresorerieChange({ year: `N+${tableId}`, tresorerie: Number(tresoItem.value) });
+    }
+  }, [tableId, actifData.find((elem) => elem.label === "Trésorerie")]);
 
   return (
     <div className="p-6 ">
