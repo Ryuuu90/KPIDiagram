@@ -22,6 +22,7 @@ const InvestissementPage = memo(()=>{
     const [resultsN3, setResultsN3] = useState({Passif : null, Actif : null , Cpc : null , isLoading : true});
     const [tresorerieData, setTresorerieData] = useState([]);
     const loanResults = useRef(null);
+    const simulationId = useRef(0);
 
 
 
@@ -31,15 +32,39 @@ const InvestissementPage = memo(()=>{
             setLoadTables(true);
       }
     }
-
     const handleTresorerieChange = useCallback((newEntry) => {
       setTresorerieData((prev) => {
-        const existing = prev.filter((d) => d.year !== newEntry.year);
-        return [...existing, newEntry].sort((a, b) =>
+        // get the current simulation key (ex: "simulate-1")
+        const simKey = `simulate-${simulationId.current}`;
+    
+        // get existing array for this simulation (or empty)
+        const existing = prev[simKey] ? prev[simKey].filter((d) => d.year !== newEntry.year) : [];
+    
+        // merge + sort new entry
+        const updated = [...existing, newEntry].sort((a, b) =>
           a.year.localeCompare(b.year)
         );
+    
+        // return the new state (keeping other simulations untouched)
+        return {
+          ...prev,
+          [simKey]: updated.map((d) => ({
+            ...d,
+            tresorerie: Math.abs(Number(d.tresorerie)), // ensure numeric values
+          })),
+        };
       });
     }, []);
+    
+
+    // const handleTresorerieChange = useCallback((newEntry) => {
+    //   setTresorerieData((prev) => {
+    //     const existing = prev.filter((d) => d.year !== newEntry.year);
+    //     return ([...existing, newEntry].sort((a, b) =>
+    //       a.year.localeCompare(b.year))
+    //     );
+    //   });
+    // }, []);
   return(
         <div className="w-full flex flex-col items-center bg-gray-50 min-h-screen py-6 space-y-6 text-sm">
 
@@ -126,19 +151,36 @@ const InvestissementPage = memo(()=>{
     </div>
 
   </div>)}
-  {tresorerieData.length > 0 && (
+  {console.log("id == ", simulationId.current)}
+  {console.log(tresorerieData)}
+  {Object.entries(tresorerieData).length > 0 && (
   <div className="w-full max-w-4xl bg-white rounded-lg shadow-md p-6">
     <h2 className="text-xl font-semibold text-center text-gray-700 mb-4">
       Évolution de la Trésorerie
     </h2>
     <ResponsiveContainer width="100%" height={400}>
-      <LineChart
-        data={tresorerieData.map(d => ({
-          ...d,
-          tresorerie: Math.abs(Number(d.tresorerie)), // ✅ ensure numeric values
-        }))}
-        margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
-      >
+        <LineChart
+          data={(() => {
+            // merge all simulations into one array for a single shared X-axis
+            const allYears = Array.from(
+              new Set(
+                Object.values(tresorerieData)
+                  .flat()
+                  .map((d) => d.year)
+              )
+            ).sort((a, b) => a.localeCompare(b));
+
+            return allYears.map((year) => {
+              const entry = { year };
+              for (const [simKey, simData] of Object.entries(tresorerieData)) {
+                const found = simData.find((d) => d.year === year);
+                entry[simKey] = found ? found.tresorerie : null;
+              }
+              return entry;
+            });
+          })()}
+          margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+        >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="year"
@@ -152,31 +194,42 @@ const InvestissementPage = memo(()=>{
           tick={{ fontSize: 10 }}
           domain={[
             (dataMin) => {
-              const decouvert = Number(userValues["découvert"]) || dataMin;
+              const decouvert = Math.abs(Number(userValues["découvert"]) )|| dataMin;
               return Math.min(dataMin, decouvert); // make sure Y-axis starts at least at the découvert
             },
             (dataMax) => {
-              const decouvert = Number(userValues["découvert"]) || dataMax;
+              const decouvert = Math.abs(Number(userValues["découvert"])) || dataMax;
               return Math.max(dataMax, decouvert); // make sure Y-axis starts at least at the découvert
             }, // let max be automatic
           ]}
           tickFormatter={(value) => `${Number(value.toFixed(0)).toLocaleString()} MAD`}
         />
-        <Tooltip  formatter={(v) => `${Number(v).toLocaleString()} MAD`} />
-        <Line
-          type="monotone"
-          dataKey="tresorerie"
-          stroke="#2563EB"
-          strokeWidth={3}
-          dot={{ r: 6, fill: "#2563EB" }}
-        />
+        <Tooltip  formatter={(v) => `${Number(v.toFixed(0)).toLocaleString()} MAD`} />
+        {Object.keys(tresorerieData).map((simKey, index) => (
+          <Line
+            key={simKey}
+            type="monotone"
+            dataKey={simKey} // ✅ use simulation key as dataKey
+            name={simKey}
+            strokeWidth={2}
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
+            stroke={[
+              "#3b82f6",
+              "#10b981",
+              "#f59e0b",
+              "#ef4444",
+              "#8b5cf6",
+            ][index % 5]}
+          />
+        ))}
         <ReferenceLine
           y={Math.abs(Number(userValues["découvert"]))}
           stroke="red"
           strokeDasharray="5 5"
           strokeWidth={2}
           label={{
-            value: `Découvert (${userValues["découvert"].toLocaleString()} MAD)`,
+            value: `Découvert (${Math.abs(Number(userValues["découvert"])).toLocaleString()} MAD)`,
             position: "middle",
             dy: 10,
             // dx: 60,
@@ -191,9 +244,9 @@ const InvestissementPage = memo(()=>{
       )}
   {loadTables && (
     <div className=" space-y-4">
-      { !results.isLoading &&(<InvesSimulationTable setResults={setResultsN1} results={results} userValues={userValues} tableId={1} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange}/>)}
-      { !resultsN1.isLoading && (<InvesSimulationTable setResults={setResultsN2} results={resultsN1} userValues={userValues} tableId={2} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange}/>)}
-      { !resultsN2.isLoading &&(<InvesSimulationTable setResults={setResultsN3} results={resultsN2} userValues={userValues} tableId={3} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange}/>)}
+      { !results.isLoading &&(<InvesSimulationTable setResults={setResultsN1} results={results} userValues={userValues} tableId={1} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange} simulationId={simulationId}/>)}
+      { !resultsN1.isLoading && (<InvesSimulationTable setResults={setResultsN2} results={resultsN1} userValues={userValues} tableId={2} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange} simulationId={simulationId}/>)}
+      { !resultsN2.isLoading &&(<InvesSimulationTable setResults={setResultsN3} results={resultsN2} userValues={userValues} tableId={3} loanResults={loanResults} initResults={results} onTresorerieChange={handleTresorerieChange} simulationId={simulationId}/>)}
       {console.log(loanResults)}
     </div>
   )}

@@ -15,7 +15,7 @@ import LoanCalculator, { calculateResults } from "./loanCalculator";
 
 const URL = process.env.REACT_APP_BACKEND_URL;
 
-const InvesSimulationTable = memo(({setResults, results, userValues, tableId, loanResults, initResults, onTresorerieChange}) => {
+const InvesSimulationTable = memo(({setResults, results, userValues, tableId, loanResults, initResults, onTresorerieChange, simulationId}) => {
   const [passifData, setPassifData] = useState([]);
   const [actifData, setActifData] = useState([]);
   const [cpcData, setCpcData] = useState([]);
@@ -30,6 +30,7 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
     const getAllReports =  () => {
       console.log(tableId);
       setIsLoading(true);
+
       try {
         const cpcReport = () => {
           const progression = userValues["progression de l'activité"] / 100;
@@ -217,7 +218,8 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
     const amount = userInput['Dette de financement']['Montant'];
     const years = userInput['Dette de financement']['Durée'];
     const interest = userInput['Dette de financement']['Taux'];
-
+    console.log(tableId);
+    simulationId.current = tableId;
     const loanCalculation = calculateResults({amount, interest, years});
     console.log(loanCalculation);
     loanResults.current = {...loanResults.current , [`N+${tableId}`] :  loanCalculation['simulation']};
