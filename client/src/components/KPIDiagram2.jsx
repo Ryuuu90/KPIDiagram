@@ -812,7 +812,7 @@ const TableExample = () => {
                         {row.getVisibleCells().map((cell) => {
                           const value = cell.getValue();
                           const isNumeric = typeof value === "number" || value === null;
-
+                          // console.log(value);
                           return (
                             <td
                               key={cell.id}

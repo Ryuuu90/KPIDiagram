@@ -42,13 +42,28 @@ exports.modelsReports = async (req , res) => {
         }
         if(reportType === 'Passif')
         {
+            let total = 0;
             report = sheet.filter(row => row['PASSIF'] && row['PASSIF'] !== " ").map((row, index) =>{
+                let sold = 0;
                 const element = row['NumEC'] ? dataMap[row['NumEC']] : null;
+                sold = element ? element.SoldeValue : 0;
+                if(row['PASSIF'] === 'TOTAL I (A+B+C+D+E)')
+                {
+                    sold = dataMap['EC052'].SoldeValue + dataMap['EC098'].SoldeValue + dataMap['EC046'].SoldeValue + dataMap['EC027'].SoldeValue + dataMap['EC026'].SoldeValue;
+                    total += sold;
+                }
+                if(row['PASSIF'] === 'TOTAL II (F+G+H)')
+                {
+                    sold = dataMap['EC017'].SoldeValue + dataMap['EC210'].SoldeValue + dataMap['EC128'].SoldeValue
+                    total += sold;
+                }
+                if( row['PASSIF'] === 'TOTAL III')
+                    sold = total + dataMap['EC117'].SoldeValue;
                 return({
                      order : index,
                     "NumEC" : element ? element.parentId : null,
                     "Passif" :row['PASSIF'],
-                    "Exercice" : element ? element.SoldeValue : null,
+                    "Exercice" : sold ,
                     "Exercice Precedent" : element ? 0 : null,
                 })
             })
@@ -57,18 +72,70 @@ exports.modelsReports = async (req , res) => {
         }
         if(reportType === 'Actif')
         {
+            let total = 0;
             report = sheet.filter(row => row['ACTIF']  &&  row['ACTIF'] !== " ").map((row , index)=>{
+                let sold1 = 0;
+                let sold2 = 0;
+
                 const element1 = row['NumEC F'] ? dataMap[row['NumEC F']] : null ;
                 const element2 = row['NumEC G'] ? dataMap[row['NumEC G']] : null ;
                 const element3 = row['NumEC H'] ? dataMap[row['NumEC H']] : null ;
-                
+                sold2 = element2 ? element2.SoldeValue : null;
+                sold1 = element1 ? element1.SoldeValue : null;
+
+                if(row['ACTIF'] === 'IMMOBILISATIONS INCORPORELLES (B)')
+                {
+                    sold2 = dataMap['EC152'].SoldeValue + dataMap['EC153'].SoldeValue + dataMap['EC154'].SoldeValue + dataMap['EC155'].SoldeValue;
+                    total += sold2;
+                }
+                if(row['ACTIF'] === 'IMMOBILISATIONS CORPORELLES (C)')
+                {
+                    sold2 = dataMap['EC156'].SoldeValue + dataMap['EC157'].SoldeValue + dataMap['EC158'].SoldeValue + dataMap['EC159'].SoldeValue + dataMap['EC160'].SoldeValue + dataMap['EC161'].SoldeValue + dataMap['EC162'].SoldeValue
+                    total += sold2;
+                }
+                if( row['ACTIF'] === 'IMMOBILISATIONS FINANCIERES (D)')
+                {
+                    sold2 = dataMap['EC164'].SoldeValue + dataMap['EC165'].SoldeValue + dataMap['EC166'].SoldeValue + dataMap['EC167'].SoldeValue;
+                    total += sold2;
+                }
+                if( row['ACTIF'] === 'ECARTS DE CONVERSION - ACTIF (E)')
+                {
+                    sold2 = dataMap['EC141'].SoldeValue + dataMap['EC142'].SoldeValue
+                    total += sold2;
+                }
+                if( row['ACTIF'] === 'TOTAL I (A+B+C+D+E)')
+                {
+                    sold2 = total + dataMap['EC251'].SoldeValue;
+                    sold1 = dataMap['EC068'].SoldeValue + dataMap['EC070'].SoldeValue + dataMap['EC066'].SoldeValue + dataMap['EC069'].SoldeValue + dataMap['EC051'].SoldeValue
+                }
+                if(row['ACTIF'] === 'STOCKS (F)')
+                {
+                    total = 0;
+                    sold2 = dataMap['EC168'].SoldeValue + dataMap['EC169'].SoldeValue + dataMap['EC170'].SoldeValue + dataMap['EC171'].SoldeValue + dataMap['EC172'].SoldeValue;
+                    total += sold2;
+                }
+                if(row['ACTIF'] === "CREANCES DE L'ACTIF CIRCULANT (G)")
+                {
+                    sold2 = dataMap['EC173'].SoldeValue + dataMap['EC174'].SoldeValue + dataMap['EC175'].SoldeValue + dataMap['EC176'].SoldeValue + dataMap['EC177'].SoldeValue ;
+                    total += sold2;
+                }
+                if( row['ACTIF'] === 'TITRES ET VALEURS DE PLACEMENT (H)')
+                {
+                    sold2 = dataMap['EC178'].SoldeValue 
+                    total += sold2;
+                }
+                if( row['ACTIF'] === 'TOTAL II (F+G+H+I)')
+                {
+                    sold2 = total
+                    sold1 = dataMap['EC125'].SoldeValue + dataMap['EC258'].SoldeValue + dataMap['EC115'].SoldeValue + dataMap['EC209'].SoldeValue ;
+                }
                 return({
                         order : index,
                     "NumEC F" : element1 ? element1.parentId : null,
                     "NumEC G" : element2 ? element2.parentId : null,
                     "NumEC H" : element3 ? element3.parentId : null,
                     "Actif" : row['ACTIF'],
-                    "Exercice" : {"Brut" : element1 ? element1.SoldeValue : null , "Amortissements et provisions" :  element2 ? element2.SoldeValue : null , "Net" : element3 ? element3.SoldeValue : null },
+                    "Exercice" : {"Brut" : sold1 , "Amortissements et provisions" : sold2 , "Net" : sold1 - sold2 },
                     "Exercice Precedent" : element1 ? 0 : null
                 })
             })
@@ -88,7 +155,7 @@ exports.modelsReports = async (req , res) => {
                     "NumEC G" : element2 ? element2.parentId : null,
                     "NumEC H" : element3 ? element3.parentId : null,
                     "Nature" : row['Nature '],
-                    "Operations propres l'exercice" : element1 ? element1.SoldeValue : null , "Operations concernant les exercices precedents" :  element2 ? element2.SoldeValue : null , "TOTAUX DE L'EXERCICE (3 = 2+1)" : element3 ? element3.SoldeValue : null,
+                    "Operations propres l'exercice" : element1 ? element1.SoldeValue : null , "Operations concernant les exercices precedents" :  element2 ? element2.SoldeValue : null , "TOTAUX DE L'EXERCICE (3 = 2+1)" : element3 ? element3.SoldeValue : element1 ? element1.SoldeValue : null,
                     "Totaux de l'exercice precedent" : element1 ? 0 : null
                 })
             })
