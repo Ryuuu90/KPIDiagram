@@ -19,12 +19,12 @@ const MONGODB_URL = process.env.MONGODB_URL;
 
 app.use(cors(corsOptions));
 app.use(express.json());
-mongoose.connect(MONGODB_URL).then(() => {
+mongoose.connect(MONGODB_URL).then(()=>{
     console.log("DB is connected");
 })
 app.use('/api', router);
 
-app.listen(PORT, () => {
+app.listen(PORT, ()=>{
     console.log(`server is running on port ${PORT}`);
 })
 
