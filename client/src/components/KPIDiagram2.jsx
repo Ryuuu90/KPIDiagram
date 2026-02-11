@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState, memo, use } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
   useNodesState,
-  useReactFlow,
   useEdgesState,
   Handle,
   Position,
@@ -17,10 +16,8 @@ import LoanCalculator from './loanCalculator'
 import Elements from './Elements';
 // import finansiaLogo from '../public/finansia-logo.jpeg';
 import toast, { Toaster } from "react-hot-toast";
-import { isNumeral } from 'numeral';
-import { useDeepCompareMemo, useDeepCompareEffect } from 'use-deep-compare';
+import {  useDeepCompareEffect } from 'use-deep-compare';
 import { FaBalanceScale, FaChartBar, FaLeaf, FaFileInvoice } from "react-icons/fa";
-import calculateResults from './loanCalculator';
 
 
 
