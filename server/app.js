@@ -14,17 +14,21 @@ const corsOptions = {
 
 
 const app = express();
-const PORT = 8000 || process.env.PORT;
+const PORT = process.env.PORT || 8000;
 const MONGODB_URL = process.env.MONGODB_URL;
 
 app.use(cors(corsOptions));
 app.use(express.json());
-mongoose.connect(MONGODB_URL).then(()=>{
+mongoose.connect(MONGODB_URL).then(() => {
     console.log("DB is connected");
 })
 app.use('/api', router);
 
-app.listen(PORT, ()=>{
-    console.log(`server is running on port ${PORT}`);
-})
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`server is running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
 
