@@ -14,7 +14,7 @@ const corsOptions = {
 
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = 8000 || process.env.PORT;
 const MONGODB_URL = process.env.MONGODB_URL;
 
 app.use(cors(corsOptions));
@@ -24,11 +24,7 @@ mongoose.connect(MONGODB_URL).then(() => {
 })
 app.use('/api', router);
 
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(`server is running on port ${PORT}`);
-    });
-}
-
-module.exports = app;
+app.listen(PORT, () => {
+    console.log(`server is running on port ${PORT}`);
+})
 
