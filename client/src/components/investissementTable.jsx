@@ -13,7 +13,7 @@ import axios from "axios";
 
 const URL = process.env.REACT_APP_BACKEND_URL;
 
-const InvestissementTable = memo(({setResults, results}) => {
+const InvestissementTable = memo(({ setResults, results }) => {
   const [passifData, setPassifData] = useState([]);
   const [actifData, setActifData] = useState([]);
   const [cpcData, setCpcData] = useState([]);
@@ -37,7 +37,7 @@ const InvestissementTable = memo(({setResults, results}) => {
           fetchReport("Actif"),
           fetchReport("CPC"),
         ]);
-        setResults((results) => ({...results, Passif : passif, Actif : actif, Cpc : cpc}))
+        setResults((results) => ({ ...results, Passif: passif, Actif: actif, Cpc: cpc }))
 
         setPassifData(passif);
         setActifData(actif);
@@ -46,7 +46,7 @@ const InvestissementTable = memo(({setResults, results}) => {
         console.error("Erreur lors du chargement des rapports:", error.message);
       } finally {
         setIsLoading(false);
-        setResults(results => ({...results, isLoading : false}));
+        setResults(results => ({ ...results, isLoading: false }));
 
       }
     };
@@ -127,36 +127,36 @@ const InvestissementTable = memo(({setResults, results}) => {
   ];
 
   return (
-    <div className="p-6 bg-white  mt-28">
+    <div className="p-6 mt-28">
       <div className="max-w-7xl mx-auto">
         {/* Search bar */}
 
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">Chargement des rapports...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-finance-accent"></div>
+            <p className="mt-2 text-slate-500 font-medium">Chargement des rapports...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {reports.map(({ name, icon, table, data }) => (
               <div
                 key={name}
-                className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden flex flex-col"
+                className="card-premium flex flex-col h-full"
               >
-                <div className="flex items-center gap-3 p-4 bg-blue-600 text-white">
-                  <span className="text-2xl">{icon}</span>
-                  <h2 className="font-bold text-xl">{name}</h2>
+                <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-b border-white/10">
+                  <span className="text-xl p-2 bg-white/10 rounded-lg text-finance-accent">{icon}</span>
+                  <h2 className="font-display font-bold text-lg tracking-wide">{name}</h2>
                 </div>
 
                 <div className="overflow-x-auto flex-1">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
+                    <thead className="bg-slate-50">
                       {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>
                           {headerGroup.headers.map((header) => (
                             <th
                               key={header.id}
-                              className="px-3 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200"
+                              className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200"
                             >
                               {flexRender(
                                 header.column.columnDef.header,
@@ -167,17 +167,16 @@ const InvestissementTable = memo(({setResults, results}) => {
                         </tr>
                       ))}
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
+                    <tbody className="divide-y divide-slate-100">
                       {table.getRowModel().rows.map((row) => (
-                        <tr key={row.id} className="hover:bg-gray-50">
+                        <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
                           {row.getVisibleCells().map((cell) => (
                             <td
                               key={cell.id}
-                              className={`px-3 py-2 ${
-                                typeof cell.getValue() === "number"
-                                  ? "text-right"
-                                  : "text-left"
-                              }`}
+                              className={`px-4 py-3 font-medium text-slate-700 ${typeof cell.getValue() === "number"
+                                ? "text-right"
+                                : "text-left"
+                                }`}
                             >
                               {flexRender(
                                 cell.column.columnDef.cell,
@@ -192,7 +191,7 @@ const InvestissementTable = memo(({setResults, results}) => {
                 </div>
 
                 {data.length === 0 && (
-                  <div className="text-center py-6 text-gray-500 text-sm">
+                  <div className="text-center py-8 text-slate-400 text-sm italic bg-slate-50/50">
                     Aucun résultat pour {name}
                   </div>
                 )}

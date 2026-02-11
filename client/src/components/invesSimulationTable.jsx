@@ -15,19 +15,21 @@ import LoanCalculator, { calculateResults } from "./loanCalculator";
 
 const URL = process.env.REACT_APP_BACKEND_URL;
 
-const InvesSimulationTable = memo(({setResults, results, userValues, tableId, loanResults, initResults, onTresorerieChange, simulationId}) => {
+const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, loanResults, initResults, onTresorerieChange, simulationId }) => {
   const [passifData, setPassifData] = useState([]);
   const [actifData, setActifData] = useState([]);
   const [cpcData, setCpcData] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [resimulationCard, setResimulationCard] = useState(false);
-  const [userInput, setUserInput] = useState({"Progression de l'activité" : null, "Distriution des dividendes" : null , 
-                                              "Dette de financement" : {"Montant" : null , "Durée" : null, "Taux" : null},
-                                              "Augmentation de capital" : null})
+  const [userInput, setUserInput] = useState({
+    "Progression de l'activité": null, "Distriution des dividendes": null,
+    "Dette de financement": { "Montant": null, "Durée": null, "Taux": null },
+    "Augmentation de capital": null
+  })
 
   useDeepCompareEffect(() => {
-    const getAllReports =  () => {
+    const getAllReports = () => {
       console.log(tableId);
       setIsLoading(true);
 
@@ -35,40 +37,40 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
         const cpcReport = () => {
           const progression = userValues["progression de l'activité"] / 100;
 
-            const dataMap = Object.fromEntries(
-              results.Cpc.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
-            );
-            
-            const updatedProduits = dataMap['Produits'] * (1 + progression);
-            const updatedAchats = dataMap['Achats'] * (1 + progression);
-            const updatedPersonnel = dataMap['Personnel'] * (1 + progression);
-            
-            const profitOld =
-              dataMap['Produits'] -
-              (dataMap['Achats'] + dataMap['Personnel'] + dataMap['Dotations'] + dataMap['Résultat financier']);
-            
-            const profitNew =
-              updatedProduits -
-              (updatedAchats + updatedPersonnel + dataMap['Dotations'] + dataMap['Résultat financier']);
-            
-            const updatedIS = dataMap['IS'] * (profitNew / profitOld);
-            
-            const updatedResultatNet =  updatedProduits - (updatedAchats+ updatedPersonnel +  updatedIS + dataMap['Dotations']) + dataMap['Résultat financier'] ;
-            
-            const cpc = {
-              ...dataMap,
-              Produits: updatedProduits,
-              Achats: updatedAchats,
-              Personnel: updatedPersonnel,
-              IS: updatedIS,
-              'Résultat net': updatedResultatNet,
+          const dataMap = Object.fromEntries(
+            results.Cpc.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
+          );
+
+          const updatedProduits = dataMap['Produits'] * (1 + progression);
+          const updatedAchats = dataMap['Achats'] * (1 + progression);
+          const updatedPersonnel = dataMap['Personnel'] * (1 + progression);
+
+          const profitOld =
+            dataMap['Produits'] -
+            (dataMap['Achats'] + dataMap['Personnel'] + dataMap['Dotations'] + dataMap['Résultat financier']);
+
+          const profitNew =
+            updatedProduits -
+            (updatedAchats + updatedPersonnel + dataMap['Dotations'] + dataMap['Résultat financier']);
+
+          const updatedIS = dataMap['IS'] * (profitNew / profitOld);
+
+          const updatedResultatNet = updatedProduits - (updatedAchats + updatedPersonnel + updatedIS + dataMap['Dotations']) + dataMap['Résultat financier'];
+
+          const cpc = {
+            ...dataMap,
+            Produits: updatedProduits,
+            Achats: updatedAchats,
+            Personnel: updatedPersonnel,
+            IS: updatedIS,
+            'Résultat net': updatedResultatNet,
           };
           return Object.entries(cpc).map(([key, value]) => ({
             label: key,
             value: value,
           }));
         };
-        const passifReport = ()=>{
+        const passifReport = () => {
           const dataMap = Object.fromEntries(
             results.Passif.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
           );
@@ -76,23 +78,23 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
           const cpc = cpcReport()
           const updatedResNet = cpc.find(elem => elem.label === "Résultat net").value;
           const updatedDateFinance = dataMap["Dettes de financement"] - userValues["Remboursement dette de financement"][`n+${tableId}`];
-          const updatedDateFour  = dataMap["Dettes fournisseurs"] * (1 + userValues["progression de l'activité"] / 100);
+          const updatedDateFour = dataMap["Dettes fournisseurs"] * (1 + userValues["progression de l'activité"] / 100);
           const passif = {
             ...dataMap,
             Réserves: updatedReserves,
-            "Résultat net" : updatedResNet,
-            "Dettes de financement" : updatedDateFinance,
-            "Dettes fournisseurs" : updatedDateFour,   
-            "Total" : 0,         
+            "Résultat net": updatedResNet,
+            "Dettes de financement": updatedDateFinance,
+            "Dettes fournisseurs": updatedDateFour,
+            "Total": 0,
           }
-          passif.Total = Object.values(passif).reduce((sum, value)=> sum + value, 0);
+          passif.Total = Object.values(passif).reduce((sum, value) => sum + value, 0);
           return Object.entries(passif).map(([key, value]) => ({
             label: key,
             value: value,
           }));
 
         }
-        const actifReport = () =>{
+        const actifReport = () => {
           const dataMap = Object.fromEntries(
             results.Actif.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
           );
@@ -106,14 +108,14 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
           const updatedTresorerie = totalPassif - (updatedImmob + updatedAmort + updatedStock + updatedCreances);
           const actif = {
             ...dataMap,
-            "Immobilisations" : updatedImmob,
-            "Amortissement" : updatedAmort,
-            "Stock" : updatedStock,
-            "Créances" : updatedCreances,
-            "Trésorerie" : updatedTresorerie,
-            "Total" : 0,
+            "Immobilisations": updatedImmob,
+            "Amortissement": updatedAmort,
+            "Stock": updatedStock,
+            "Créances": updatedCreances,
+            "Trésorerie": updatedTresorerie,
+            "Total": 0,
           }
-          actif.Total = Object.values(actif).reduce((sum, value)=> sum + value, 0);
+          actif.Total = Object.values(actif).reduce((sum, value) => sum + value, 0);
           return Object.entries(actif).map(([key, value]) => ({
             label: key,
             value: value,
@@ -125,7 +127,7 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
           actifReport(),
           cpcReport(),
         ];
-        setResults((results) => ({...results, Passif : passif, Actif : actif, Cpc : cpc}))
+        setResults((results) => ({ ...results, Passif: passif, Actif: actif, Cpc: cpc }))
 
         setPassifData(passif);
         setActifData(actif);
@@ -134,7 +136,7 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
         console.error("Erreur lors du chargement des rapports:", error.message);
       } finally {
         setIsLoading(false);
-        setResults(results => ({...results, isLoading : false}));
+        setResults(results => ({ ...results, isLoading: false }));
 
       }
     };
@@ -214,78 +216,76 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
     { name: "Actif", icon: <FaChartBar />, table: actifTable, data: actifData },
   ];
 
-  const resimulationCalcul = () =>{
+  const resimulationCalcul = () => {
     const amount = userInput['Dette de financement']['Montant'];
     const years = userInput['Dette de financement']['Durée'];
     const interest = userInput['Dette de financement']['Taux'];
     console.log(tableId);
     simulationId.current = tableId;
-    const loanCalculation = calculateResults({amount, interest, years});
+    const loanCalculation = calculateResults({ amount, interest, years });
     console.log(loanCalculation);
-    loanResults.current = {...loanResults.current , [`N+${tableId}`] :  loanCalculation['simulation']};
+    loanResults.current = { ...loanResults.current, [`N+${tableId}`]: loanCalculation['simulation'] };
     const cpcReport = () => {
       const progression = userInput["Progression de l'activité"] / 100;
 
-        const dataMap = Object.fromEntries(
-          results.Cpc.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
-        );
-        const initDataMap = Object.fromEntries(
-          initResults.Cpc.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
-        );
-        
-        const updatedProduits = dataMap['Produits'] * (1 + progression);
-        const updatedAchats = dataMap['Achats'] * (1 + progression);
-        const updatedPersonnel = dataMap['Personnel'] * (1 + progression);
-        console.log(loanCalculation)
-        // const updatedResFin = tableId === 1 ? dataMap['Résultat financier'] - loanCalculation['simulation']['firstYearIntrest'] : 
-        //                       tableId === 2 && loanResults.current?.[`N+${tableId - 1}`] ? dataMap['Résultat financier'] - loanResults.current?.[`N+${tableId - 1}`]?.['secondYearIntrest'] - LoanCalculator['simulation']['firstYearIntrest']:
-        //                       dataMap['Résultat financier'] - loanResults.current?.[`N+${tableId - 1}`]['secondYearIntrest'] - LoanCalculator['simulation']['firstYearIntrest'] - loanResults.current?.[`N+${tableId - 2}`]['thirdYearIntrest'] - loanResults.current?.[`N+${tableId - 1}`]['thirdYearIntrest']  - LoanCalculator['simulation']['thirdYearIntrest']
+      const dataMap = Object.fromEntries(
+        results.Cpc.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
+      );
+      const initDataMap = Object.fromEntries(
+        initResults.Cpc.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
+      );
 
-        let updatedResFin = tableId === 2 ? initDataMap['Résultat financier'] : dataMap['Résultat financier'];
-        if(tableId === 1)
-          updatedResFin -=  loanCalculation['simulation'] ? loanCalculation['simulation']['firstYearIntrest'] : 0;
-        else if (tableId === 2)
-        {
-          updatedResFin -=  loanCalculation['simulation'] ? loanCalculation['simulation']['firstYearIntrest'] : 0;
-          if(loanResults.current[`N+${tableId - 1}`])
-            updatedResFin -= loanResults.current?.[`N+${tableId - 1}`]?.['secondYearIntrest'];
-          else
-            updatedResFin -=  loanCalculation['simulation'] ? loanCalculation['simulation']['secondYearIntrest'] : 0;
-        }
-        else if (tableId === 3)
-        {
+      const updatedProduits = dataMap['Produits'] * (1 + progression);
+      const updatedAchats = dataMap['Achats'] * (1 + progression);
+      const updatedPersonnel = dataMap['Personnel'] * (1 + progression);
+      console.log(loanCalculation)
+      // const updatedResFin = tableId === 1 ? dataMap['Résultat financier'] - loanCalculation['simulation']['firstYearIntrest'] : 
+      //                       tableId === 2 && loanResults.current?.[`N+${tableId - 1}`] ? dataMap['Résultat financier'] - loanResults.current?.[`N+${tableId - 1}`]?.['secondYearIntrest'] - LoanCalculator['simulation']['firstYearIntrest']:
+      //                       dataMap['Résultat financier'] - loanResults.current?.[`N+${tableId - 1}`]['secondYearIntrest'] - LoanCalculator['simulation']['firstYearIntrest'] - loanResults.current?.[`N+${tableId - 2}`]['thirdYearIntrest'] - loanResults.current?.[`N+${tableId - 1}`]['thirdYearIntrest']  - LoanCalculator['simulation']['thirdYearIntrest']
 
+      let updatedResFin = tableId === 2 ? initDataMap['Résultat financier'] : dataMap['Résultat financier'];
+      if (tableId === 1)
+        updatedResFin -= loanCalculation['simulation'] ? loanCalculation['simulation']['firstYearIntrest'] : 0;
+      else if (tableId === 2) {
+        updatedResFin -= loanCalculation['simulation'] ? loanCalculation['simulation']['firstYearIntrest'] : 0;
+        if (loanResults.current[`N+${tableId - 1}`])
+          updatedResFin -= loanResults.current?.[`N+${tableId - 1}`]?.['secondYearIntrest'];
+        else
+          updatedResFin -= loanCalculation['simulation'] ? loanCalculation['simulation']['secondYearIntrest'] : 0;
+      }
+      else if (tableId === 3) {
+
+        updatedResFin -= loanCalculation['simulation'] ? loanCalculation['simulation']['thirdYearIntrest'] : 0;
+        if (loanResults.current[`N+${tableId - 2}`])
+          updatedResFin -= loanResults.current?.[`N+${tableId - 2}`]['thirdYearIntrest'];
+        else
           updatedResFin -= loanCalculation['simulation'] ? loanCalculation['simulation']['thirdYearIntrest'] : 0;
-          if(loanResults.current[`N+${tableId - 2}`])
-            updatedResFin -= loanResults.current?.[`N+${tableId - 2}`]['thirdYearIntrest'];
-          else
-            updatedResFin -=  loanCalculation['simulation'] ? loanCalculation['simulation']['thirdYearIntrest'] : 0;
-          if(loanResults.current[`N+${tableId - 1}`])
-            updatedResFin -= loanResults.current?.[`N+${tableId - 1}`]['thirdYearIntrest']; 
-          else
-            updatedResFin -=  loanCalculation['simulation'] ? loanCalculation['simulation']['thirdYearIntrest'] : 0; 
-        }
-          
-        const updatedDotation = tableId === 3 ? dataMap['Dotations'] + (userValues["montant de l'investissement ht"] / userValues["durée d'amortissement"]) :  dataMap['Dotations'];
-        const profitOld = 
-          initDataMap['Produits'] -(initDataMap['Achats'] + initDataMap['Personnel'] + initDataMap['Dotations'] + initDataMap['Résultat financier']);
-        const profitNew =
-          updatedProduits - (updatedAchats + updatedPersonnel + updatedDotation + updatedResFin);
+        if (loanResults.current[`N+${tableId - 1}`])
+          updatedResFin -= loanResults.current?.[`N+${tableId - 1}`]['thirdYearIntrest'];
+        else
+          updatedResFin -= loanCalculation['simulation'] ? loanCalculation['simulation']['thirdYearIntrest'] : 0;
+      }
 
-        
-        const updatedIS = initDataMap['IS'] * (profitNew / profitOld);
-        
-        const updatedResultatNet =  updatedProduits - (updatedAchats+ updatedPersonnel +  updatedIS + updatedDotation) + dataMap['Résultat financier'] ;
-        
-        const cpc = {
-          ...dataMap,
-          Produits: updatedProduits,
-          Achats: updatedAchats,
-          Personnel: updatedPersonnel,
-          Dotations : updatedDotation,
-          'Résultat financier' : updatedResFin,
-          IS: updatedIS,
-          'Résultat net': updatedResultatNet,
+      const updatedDotation = tableId === 3 ? dataMap['Dotations'] + (userValues["montant de l'investissement ht"] / userValues["durée d'amortissement"]) : dataMap['Dotations'];
+      const profitOld =
+        initDataMap['Produits'] - (initDataMap['Achats'] + initDataMap['Personnel'] + initDataMap['Dotations'] + initDataMap['Résultat financier']);
+      const profitNew =
+        updatedProduits - (updatedAchats + updatedPersonnel + updatedDotation + updatedResFin);
+
+
+      const updatedIS = initDataMap['IS'] * (profitNew / profitOld);
+
+      const updatedResultatNet = updatedProduits - (updatedAchats + updatedPersonnel + updatedIS + updatedDotation) + dataMap['Résultat financier'];
+
+      const cpc = {
+        ...dataMap,
+        Produits: updatedProduits,
+        Achats: updatedAchats,
+        Personnel: updatedPersonnel,
+        Dotations: updatedDotation,
+        'Résultat financier': updatedResFin,
+        IS: updatedIS,
+        'Résultat net': updatedResultatNet,
       };
 
       return Object.entries(cpc).map(([key, value]) => ({
@@ -294,30 +294,27 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
       }));
 
     };
-    const passifReport = ()=>{
+    const passifReport = () => {
       const dataMap = Object.fromEntries(
         results.Passif.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
       );
       const updatedCapital = dataMap['Capital'] + Number(userInput['Augmentation de capital']);
       let loanCapital = 0;
-      if(tableId === 1)
-      {
+      if (tableId === 1) {
         loanCapital = loanCalculation['simulation'] ? Number(loanCalculation['simulation']['firstYearCapital']) : 0;
       }
-      if(tableId === 2)
-      {
-        if(loanCalculation['simulation'])
-            loanCapital += Number(loanCalculation['simulation']['firstYearCapital']);
-        if(loanResults.current[`N+${tableId - 1}`])
-            loanCapital += Number(loanResults.current[`N+${tableId - 1}`]['secondYearCapital']);
+      if (tableId === 2) {
+        if (loanCalculation['simulation'])
+          loanCapital += Number(loanCalculation['simulation']['firstYearCapital']);
+        if (loanResults.current[`N+${tableId - 1}`])
+          loanCapital += Number(loanResults.current[`N+${tableId - 1}`]['secondYearCapital']);
       }
-      if(tableId === 3)
-      {
-        if(loanCalculation['simulation'])
-            loanCapital += Number(loanCalculation['simulation']['firstYearCapital']);
-        if(loanResults.current[`N+${tableId - 1}`])
-            loanCapital += Number(loanResults.current[`N+${tableId - 1}`]['secondYearCapital']);
-        if(loanResults.current[`N+${tableId - 2}`])
+      if (tableId === 3) {
+        if (loanCalculation['simulation'])
+          loanCapital += Number(loanCalculation['simulation']['firstYearCapital']);
+        if (loanResults.current[`N+${tableId - 1}`])
+          loanCapital += Number(loanResults.current[`N+${tableId - 1}`]['secondYearCapital']);
+        if (loanResults.current[`N+${tableId - 2}`])
           loanCapital += Number(loanResults.current[`N+${tableId - 2}`]['thirdYearCapital']);
       }
 
@@ -326,23 +323,23 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
       const cpc = cpcReport()
       const updatedResNet = cpc.find(elem => elem.label === "Résultat net").value;
       const updatedDateFinance = dataMap["Dettes de financement"] - userValues["Remboursement dette de financement"][`n+${tableId}`] + Number(userInput['Dette de financement']['Montant']) - Number(loanCapital);
-      const updatedDateFour  = dataMap["Dettes fournisseurs"] * (1 + userInput["Progression de l'activité"] / 100);
+      const updatedDateFour = dataMap["Dettes fournisseurs"] * (1 + userInput["Progression de l'activité"] / 100);
       const passif = {
         ...dataMap,
-        "Capital" : updatedCapital,
+        "Capital": updatedCapital,
         Réserves: updatedReserves,
-        "Résultat net" : updatedResNet,
-        "Dettes de financement" : updatedDateFinance,
-        "Dettes fournisseurs" : updatedDateFour,   
-        "Total" : 0,         
+        "Résultat net": updatedResNet,
+        "Dettes de financement": updatedDateFinance,
+        "Dettes fournisseurs": updatedDateFour,
+        "Total": 0,
       }
-      passif.Total = Object.values(passif).reduce((sum, value)=> sum + value, 0);
+      passif.Total = Object.values(passif).reduce((sum, value) => sum + value, 0);
       return Object.entries(passif).map(([key, value]) => ({
         label: key,
         value: value,
       }));
     }
-    const actifReport = () =>{
+    const actifReport = () => {
       const dataMap = Object.fromEntries(
         results.Actif.map(elem => [elem.label, Number(elem.value)]) // ensure numeric
       );
@@ -356,26 +353,26 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
       const updatedTresorerie = totalPassif - (updatedImmob + updatedAmort + updatedStock + updatedCreances);
       const actif = {
         ...dataMap,
-        "Immobilisations" : updatedImmob,
-        "Amortissement" : updatedAmort,
-        "Stock" : updatedStock,
-        "Créances" : updatedCreances,
-        "Trésorerie" : updatedTresorerie,
-        "Total" : 0,
+        "Immobilisations": updatedImmob,
+        "Amortissement": updatedAmort,
+        "Stock": updatedStock,
+        "Créances": updatedCreances,
+        "Trésorerie": updatedTresorerie,
+        "Total": 0,
       }
-      actif.Total = Object.values(actif).reduce((sum, value)=> sum + value, 0);
+      actif.Total = Object.values(actif).reduce((sum, value) => sum + value, 0);
       return Object.entries(actif).map(([key, value]) => ({
         label: key,
         value: value,
       }));
     }
-    
-    const [cpc ,passif, actif]= [cpcReport(), passifReport(), actifReport()];
-    setResults(results =>( {...results, Cpc : cpc, Passif : passif, Actif : actif}));
+
+    const [cpc, passif, actif] = [cpcReport(), passifReport(), actifReport()];
+    setResults(results => ({ ...results, Cpc: cpc, Passif: passif, Actif: actif }));
     setCpcData(cpc);
     setPassifData(passif);
     setActifData(actif);
-    
+
 
   }
   useEffect(() => {
@@ -393,39 +390,36 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
       <h1 className="text-center  text-gray-700 font-bold text-5xl">N+{tableId}</h1>
       <div className="max-w-12xl mx-auto">
         {/* Search bar */}
-        <button className={`relative ${resimulationCard ? "hidden" : ""} bottom-12 font-semibold w-28 bg-blue-600 rounded text-white p-3 `} onClick={()=> setResimulationCard(true)}>resimulation</button>
+        <button className={`relative ${resimulationCard ? "hidden" : ""} bottom-12 btn-primary !px-4 !py-2`} onClick={() => setResimulationCard(true)}>Resimulation</button>
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">Chargement des rapports...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-finance-accent"></div>
+            <p className="mt-2 text-slate-500 font-medium">Chargement des rapports...</p>
           </div>
         ) : (
           <>
-          <div
-              className={`relative bottom-11 transition-all duration-700 ${
-                resimulationCard
-                  ? "w-80 top-[3.8rem] right-[9.1rem] h-[3.75rem] p-3"
-                  : "w-0 h-0 p-0 bg-transparent"
-              } font-semibold bg-blue-600 text-center rounded text-white`}
+            <div
+              className={`relative bottom-11 transition-all duration-700 ${resimulationCard
+                ? "w-80 top-[3.8rem] right-[9.1rem] h-[3.75rem] p-3"
+                : "w-0 h-0 p-0 bg-transparent"
+                } font-semibold bg-gradient-to-r from-orange-500 to-orange-600 text-center rounded-t-xl text-white`}
             >
               <h1 className="text-2xl">{resimulationCard ? "Simulation" : ""}</h1>
-              
+
               {/* Content card */}
               <div
-                className={`relative transition-all flex flex-col justify-around duration-700 shadow-lg bg-white rounded ${
-                  resimulationCard
-                    ? "w-80 top-7 h-[17.5rem] right-3 opacity-100 translate-y-0"
-                    : "w-0 h-0 p-0 opacity-0 translate-y-5 pointer-events-none"
-                }`}
+                className={`relative transition-all flex flex-col justify-around duration-700 shadow-lg bg-white rounded ${resimulationCard
+                  ? "w-80 top-7 h-[17.5rem] right-3 opacity-100 translate-y-0"
+                  : "w-0 h-0 p-0 opacity-0 translate-y-5 pointer-events-none"
+                  }`}
               >
                 {["Progression de l'activité", "Distriution des dividendes", "Dette de financement :", "Montant", "Durée", "Taux", "Augmentation de capital"].map((label, i) => {
                   if (label === "Dette de financement :")
                     return (
                       <div key={i} className="flex flex-row justify-between transition-all duration-[1700ms]">
                         <h1
-                          className={`text-black ml-[0.6rem] font-medium transition-opacity duration-[1700ms] ${
-                            resimulationCard ? "opacity-100" : "opacity-0"
-                          }`}
+                          className={`text-black ml-[0.6rem] font-medium transition-opacity duration-[1700ms] ${resimulationCard ? "opacity-100" : "opacity-0"
+                            }`}
                         >
                           Dette de financement :
                         </h1>
@@ -435,20 +429,18 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
                     return (
                       <div
                         key={i}
-                        className={`flex flex-row justify-between transition-all duration-[1700ms] ${
-                          resimulationCard ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
-                        }`}
+                        className={`flex flex-row justify-between transition-all duration-[1700ms] ${resimulationCard ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+                          }`}
                       >
                         <h1 className="text-green-500 ml-[0.6rem] font-medium">- {label}</h1>
                         <input
-                          className="w-28 mr-[0.7rem] text-black px-2 p-[0.15rem] -mt-1 border border-gray-300 rounded-md 
-                                    focus:ring-1 focus:ring-blue-500 focus:border-blue-500 
-                                    outline-none transition-all text-sm"
+                          className="w-28 mr-[0.7rem] text-slate-800 px-2 py-1 -mt-1 bg-slate-50 border border-slate-200 rounded-lg 
+                                    focus:ring-2 focus:ring-finance-accent/20 focus:border-finance-accent
+                                    outline-none transition-all text-sm font-medium"
                           type="text"
-                          onBlur={(e)=> setUserInput({...userInput, "Dette de financement" : {...userInput["Dette de financement"] ,[label] : e.target.value}})}
-                          placeholder={`Ex: ${
-                            label === "Montant" ? "500000" : label === "Durée" ? "7" : "4%"
-                          }`}
+                          onBlur={(e) => setUserInput({ ...userInput, "Dette de financement": { ...userInput["Dette de financement"], [label]: e.target.value } })}
+                          placeholder={`Ex: ${label === "Montant" ? "500000" : label === "Durée" ? "7" : "4%"
+                            }`}
                         />
                       </div>
                     );
@@ -456,98 +448,94 @@ const InvesSimulationTable = memo(({setResults, results, userValues, tableId, lo
                   return (
                     <div
                       key={i}
-                      className={`flex flex-row justify-between transition-all duration-[1700ms] ${
-                        resimulationCard ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
-                      }`}
+                      className={`flex flex-row justify-between transition-all duration-[1700ms] ${resimulationCard ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+                        }`}
                     >
                       <h1 className="text-black ml-[0.6rem] font-medium">{label}</h1>
                       <input
                         className="w-28 mr-[0.7rem] text-black px-2 p-[0.15rem] -mt-1 border border-gray-300 rounded-md 
                                   focus:ring-1 focus:ring-blue-500 focus:border-blue-500 
                                   outline-none transition-all text-sm"
-                        onBlur={(e)=> setUserInput({...userInput, [label] : e.target.value})}
+                        onBlur={(e) => setUserInput({ ...userInput, [label]: e.target.value })}
                         type="text"
-                        placeholder={`Ex: ${
-                          label === "Augmentation de capital" ? "300000" : "5%"
-                        } `}
+                        placeholder={`Ex: ${label === "Augmentation de capital" ? "300000" : "5%"
+                          } `}
                       />
                     </div>
                   );
                 })}
-                <button className={`text-white bg-blue-600 transition-all duration-[2000ms] ${
-                        resimulationCard ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
-                      } w-20 self-center rounded`}
-                      onClick={resimulationCalcul}>simulate</button>
+                <button className={`btn-primary !px-4 !py-1.5 transition-all duration-[2000ms] ${resimulationCard ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+                  } self-center`}
+                  onClick={resimulationCalcul}>simulate</button>
               </div>
             </div>
 
-          <div className={` transition-all duration-700 ${resimulationCard ? "gap-0 translate-x-44" : "gap-6"}  grid grid-cols-1 md:grid-cols-3`}>
-            {reports.map(({ name, icon, table, data }) => (
-              <div
-                key={name}
-                className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden flex flex-col"
-              >
-                <div className="flex items-center gap-3 p-4 bg-blue-600 text-white">
-                  <span className="text-2xl">{icon}</span>
-                  <h2 className="font-bold text-xl">{name}</h2>
-                </div>
+            <div className={` transition-all duration-700 ${resimulationCard ? "gap-0 translate-x-44" : "gap-6"}  grid grid-cols-1 md:grid-cols-3`}>
+              {reports.map(({ name, icon, table, data }) => (
+                <div
+                  key={name}
+                  className="card-premium flex flex-col h-full"
+                >
+                  <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-b border-white/10">
+                    <span className="text-xl p-2 bg-white/10 rounded-lg text-finance-accent">{icon}</span>
+                    <h2 className="font-display font-bold text-lg tracking-wide">{name}</h2>
+                  </div>
 
-                <div className="overflow-x-auto flex-1">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <tr key={headerGroup.id}>
-                          {headerGroup.headers.map((header) => (
-                            <th
-                              key={header.id}
-                              className="px-3 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200"
-                            >
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                            </th>
-                          ))}
-                        </tr>
-                      ))}
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
-                      {table.getRowModel().rows.map((row) => (
-                        <tr key={row.id} className="hover:bg-gray-50">
-                          {row.getVisibleCells().map((cell) => (
-                            <td
-                              key={cell.id}
-                              className={`px-3 py-2 ${
-                                typeof cell.getValue() === "number"
+                  <div className="overflow-x-auto flex-1">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        {table.getHeaderGroups().map((headerGroup) => (
+                          <tr key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => (
+                              <th
+                                key={header.id}
+                                className="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200"
+                              >
+                                {flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                              </th>
+                            ))}
+                          </tr>
+                        ))}
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {table.getRowModel().rows.map((row) => (
+                          <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
+                            {row.getVisibleCells().map((cell) => (
+                              <td
+                                key={cell.id}
+                                className={`px-4 py-3 font-medium text-slate-700 ${typeof cell.getValue() === "number"
                                   ? "text-right"
                                   : "text-left"
-                              }`}
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {data.length === 0 && (
-                  <div className="text-center py-6 text-gray-500 text-sm">
-                    Aucun résultat pour {name}
+                                  }`}
+                              >
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+
+                  {data.length === 0 && (
+                    <div className="text-center py-8 text-slate-400 text-sm italic bg-slate-50/50">
+                      Aucun résultat pour {name}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </>
         )}
-        
+
       </div>
-      
+
     </div>
   );
 });
