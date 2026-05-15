@@ -77,7 +77,7 @@ exports.searchForBE  = async (req, res) =>{
         const children = getBaseElments(elementId, parentMap);
         // console.log(children);
         
-        const elements = await Arborescence.find({parentId : {$in : children}});
+        const elements = await Arborescence.find({parentId : {$in : children}, clientId: req.dbUser._id });
         // console.log(elements);
 
         res.status(200).json({success : true, message : 'successfully', elements : elements});

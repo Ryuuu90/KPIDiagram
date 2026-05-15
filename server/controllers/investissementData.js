@@ -8,7 +8,7 @@ exports.investissementData = async (req, res) =>{
 
     try{
 
-        const data = await Arborescence.find({});
+        const data = await Arborescence.find({ clientId: req.dbUser._id });
         const dataMap = Object.fromEntries(
             data.map(elem => [elem.parentId, elem])
           );

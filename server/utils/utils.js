@@ -7,13 +7,13 @@ function isValidFormula(str) {
     // Allowed chars: digits, spaces, + - * / ( ) .
     return /^[0-9+\-*/().\s]+$/.test(str);
   }
-exports.ArborescenceCalcul = async () =>{
+exports.ArborescenceCalcul = async (clientId) =>{
     try{
         const workbook = xlsx.readFile(path.join(__dirname, '../public', 'Arborescence2.xlsx'));
         let sheet = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
         sheet = sheet.filter(row=> row['NumEC'])
         const elemBase = sheet.map(row => row['NumEC']);
-        let arb = await Arborescence.find();
+        let arb = await Arborescence.find({ clientId });
         let length = arb.length;
         atb = arb.map(elem => elem = elem.toObject());
         // console.log(arb);
@@ -84,7 +84,7 @@ exports.ArborescenceCalcul = async () =>{
         )
         .map(doc => ({
             updateOne: {
-            filter: { _id: doc._id },
+            filter: { _id: doc._id, clientId },
             update: { $set :doc }
             }
         }));

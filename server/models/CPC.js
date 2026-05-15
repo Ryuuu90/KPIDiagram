@@ -11,6 +11,11 @@ const cpc = mongoose.Schema({
     "Operations concernant les exercices precedents" : Number,
     "TOTAUX DE L'EXERCICE (3 = 2+1)" : Number,
     "Totaux de l'exercice precedent" : Number,
+    clientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Client',
+        required: true
+    }
 })
 
 

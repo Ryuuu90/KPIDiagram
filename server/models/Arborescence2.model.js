@@ -19,7 +19,12 @@ const arborescence2 = new mongoose.Schema({
     SoldeValue : Number,
     method : String,
     Reports : String,
-    newSold : Number
+    newSold : Number,
+    clientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Client',
+        required: true
+    }
 })
 
 const Arborescence2  = mongoose.model("Arborescence2", arborescence2);

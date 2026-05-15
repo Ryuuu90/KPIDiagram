@@ -19,7 +19,7 @@ function isValidFormula(str) {
         return results;
     for( let childId of parent.childrenIds.map(id => id.trim()))
     {
-        const child = arb.find(ele => ele.parentId === elementId);
+        const child = arb.find(ele => ele.parentId === childId);
         if(!child)
             continue;
         if(child.category === 'Elément de base')
@@ -42,7 +42,7 @@ exports.ArborescenceCalcul = async (req, res) =>{
         // const elemBase = sheet.map(row => row['NumEC']);
         // console.log(basesRef);
         // console.log(Object.keys(basesRef));
-        let arb = await Arborescence.find();
+        let arb = await Arborescence.find({ clientId: req.dbUser._id });
         let length = arb.length;
         atb = arb.map(elem => elem = elem.toObject());
         let affected = {'EC048' : null, 'EC157' : null, 'EC158' : null, 'EC156' : null, 'EC159' : null,
@@ -173,7 +173,7 @@ exports.ArborescenceCalcul = async (req, res) =>{
         )
         .map(doc => ({
             updateOne: {
-            filter: { _id: doc._id },
+            filter: { _id: doc._id, clientId: req.dbUser._id },
             update: { $set :doc }
             }
         }));

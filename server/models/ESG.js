@@ -7,6 +7,11 @@ const esg = mongoose.Schema({
     Definition : String,
     Exercice : Number,
     "Exercice Precedent" : Number,
+    clientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Client',
+        required: true
+    }
 })
 
 

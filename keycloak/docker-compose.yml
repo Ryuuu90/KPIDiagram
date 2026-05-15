@@ -1,0 +1,21 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+    volumes:
+      - ./themes:/opt/keycloak/themes
+      - ./realms:/opt/keycloak/data/import
+
+    command:
+      - start-dev
+      - --spi-theme-cache-themes=false
+      - --spi-theme-cache-templates=false
+      - --import-realm

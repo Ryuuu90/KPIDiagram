@@ -1,5 +1,7 @@
 import { useState, useEffect, memo, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useDeepCompareEffect } from "use-deep-compare";
+import toast from 'react-hot-toast';
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,13 +11,14 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { FaBalanceScale, FaChartBar, FaFileInvoice, FaKaaba } from "react-icons/fa";
-import axios from "axios";
+import api from "../utils/api";
 import LoanCalculator, { calculateResults } from "./loanCalculator";
 
 
-const URL = process.env.REACT_APP_BACKEND_URL;
+// const URL = process.env.REACT_APP_BACKEND_URL;
 
 const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, loanResults, initResults, onTresorerieChange, simulationId }) => {
+  const { t } = useTranslation();
   const [passifData, setPassifData] = useState([]);
   const [actifData, setActifData] = useState([]);
   const [cpcData, setCpcData] = useState([]);
@@ -134,6 +137,7 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
         setCpcData(cpc);
       } catch (error) {
         console.error("Erreur lors du chargement des rapports:", error.message);
+        toast.error(t('common.error_loading_reports') || "Erreur lors du chargement des rapports");
       } finally {
         setIsLoading(false);
         setResults(results => ({ ...results, isLoading: false }));
@@ -155,12 +159,12 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
     () => [
       {
         accessorKey: "label",
-        header: "Label",
+        header: t('common.label'),
         cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,
       },
       {
         accessorKey: "value",
-        header: "Valeur",
+        header: t('common.value'),
         cell: ({ getValue }) => formatCurrency(getValue()),
       },
     ],
@@ -211,9 +215,9 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
   });
 
   const reports = [
-    { name: "CPC", icon: <FaFileInvoice />, table: cpcTable, data: cpcData },
-    { name: "Passif", icon: <FaBalanceScale />, table: passifTable, data: passifData },
-    { name: "Actif", icon: <FaChartBar />, table: actifTable, data: actifData },
+    { name: t('reports.cpc'), icon: <FaFileInvoice />, table: cpcTable, data: cpcData },
+    { name: t('reports.passif'), icon: <FaBalanceScale />, table: passifTable, data: passifData },
+    { name: t('reports.actif'), icon: <FaChartBar />, table: actifTable, data: actifData },
   ];
 
   const resimulationCalcul = () => {
@@ -390,11 +394,11 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
       <h1 className="text-center  text-gray-700 font-bold text-5xl">N+{tableId}</h1>
       <div className="max-w-12xl mx-auto">
         {/* Search bar */}
-        <button className={`relative ${resimulationCard ? "hidden" : ""} bottom-12 btn-primary !px-4 !py-2`} onClick={() => setResimulationCard(true)}>Resimulation</button>
+        <button className={`relative ${resimulationCard ? "hidden" : ""} bottom-12 btn-primary !px-4 !py-2`} onClick={() => setResimulationCard(true)}>{t('investment.resimulation')}</button>
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-finance-accent"></div>
-            <p className="mt-2 text-slate-500 font-medium">Chargement des rapports...</p>
+            <p className="mt-2 text-slate-500 font-medium">{t('investment.loading_reports')}</p>
           </div>
         ) : (
           <>
@@ -404,7 +408,7 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
                 : "w-0 h-0 p-0 bg-transparent"
                 } font-semibold bg-gradient-to-r from-orange-500 to-orange-600 text-center rounded-t-xl text-white`}
             >
-              <h1 className="text-2xl">{resimulationCard ? "Simulation" : ""}</h1>
+              <h1 className="text-2xl">{resimulationCard ? t('investment.resimulation') : ""}</h1>
 
               {/* Content card */}
               <div
@@ -413,19 +417,20 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
                   : "w-0 h-0 p-0 opacity-0 translate-y-5 pointer-events-none"
                   }`}
               >
-                {["Progression de l'activité", "Distriution des dividendes", "Dette de financement :", "Montant", "Durée", "Taux", "Augmentation de capital"].map((label, i) => {
-                  if (label === "Dette de financement :")
+                {["progression_label", "dividends_label", "loan_repayment_label", "amount", "duration", "rate", "capital_increase"].map((key, i) => {
+                  const label = t(`investment.${key}`);
+                  if (key === "loan_repayment_label")
                     return (
                       <div key={i} className="flex flex-row justify-between transition-all duration-[1700ms]">
                         <h1
                           className={`text-black ml-[0.6rem] font-medium transition-opacity duration-[1700ms] ${resimulationCard ? "opacity-100" : "opacity-0"
                             }`}
                         >
-                          Dette de financement :
+                          {label} :
                         </h1>
                       </div>
                     );
-                  else if (label === "Montant" || label === "Durée" || label === "Taux")
+                  else if (key === "amount" || key === "duration" || key === "rate")
                     return (
                       <div
                         key={i}
@@ -439,7 +444,7 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
                                     outline-none transition-all text-sm font-medium"
                           type="text"
                           onBlur={(e) => setUserInput({ ...userInput, "Dette de financement": { ...userInput["Dette de financement"], [label]: e.target.value } })}
-                          placeholder={`Ex: ${label === "Montant" ? "500000" : label === "Durée" ? "7" : "4%"
+                          placeholder={`${t('common.example')} : ${key === "amount" ? "500000" : key === "duration" ? "7" : "4%"
                             }`}
                         />
                       </div>
@@ -458,7 +463,7 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
                                   outline-none transition-all text-sm"
                         onBlur={(e) => setUserInput({ ...userInput, [label]: e.target.value })}
                         type="text"
-                        placeholder={`Ex: ${label === "Augmentation de capital" ? "300000" : "5%"
+                        placeholder={`${t('common.example')} : ${key === "capital_increase" ? "300000" : "5%"
                           } `}
                       />
                     </div>
@@ -466,7 +471,7 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
                 })}
                 <button className={`btn-primary !px-4 !py-1.5 transition-all duration-[2000ms] ${resimulationCard ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
                   } self-center`}
-                  onClick={resimulationCalcul}>simulate</button>
+                  onClick={resimulationCalcul}>{t('investment.simulate_btn')}</button>
               </div>
             </div>
 
@@ -525,7 +530,7 @@ const InvesSimulationTable = memo(({ setResults, results, userValues, tableId, l
 
                   {data.length === 0 && (
                     <div className="text-center py-8 text-slate-400 text-sm italic bg-slate-50/50">
-                      Aucun résultat pour {name}
+                      {t('investment.no_result_for')} {name}
                     </div>
                   )}
                 </div>

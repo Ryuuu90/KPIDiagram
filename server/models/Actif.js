@@ -9,6 +9,11 @@ const actif = mongoose.Schema({
     Actif : String,
     Exercice : Object,
     "Exercice Precedent" : Number,
+    clientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Client',
+        required: true
+    }
 })
 
 

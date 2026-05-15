@@ -18,7 +18,7 @@ exports.modelsReports = async (req , res) => {
         const workbook = xlsx.readFile(path.join(__dirname, '../public', 'modelsReports.xlsx'))
         const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[reportType]);
 
-        const data = await Arborescence.find({});
+        const data = await Arborescence.find({ clientId: req.dbUser._id });
         const dataMap = Object.fromEntries(
             data.map(elem => [elem.parentId, elem])
           );

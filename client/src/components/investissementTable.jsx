@@ -1,4 +1,6 @@
 import { useState, useEffect, memo, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import toast from 'react-hot-toast';
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,12 +10,13 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { FaBalanceScale, FaChartBar, FaFileInvoice, FaKaaba } from "react-icons/fa";
-import axios from "axios";
+import api from "../utils/api";
 
 
-const URL = process.env.REACT_APP_BACKEND_URL;
+// const URL = process.env.REACT_APP_BACKEND_URL;
 
 const InvestissementTable = memo(({ setResults, results }) => {
+  const { t } = useTranslation();
   const [passifData, setPassifData] = useState([]);
   const [actifData, setActifData] = useState([]);
   const [cpcData, setCpcData] = useState([]);
@@ -25,7 +28,7 @@ const InvestissementTable = memo(({ setResults, results }) => {
       setIsLoading(true);
       try {
         const fetchReport = async (reportType) => {
-          const res = await axios.post(`${URL}/api/investissment`, { reportType });
+          const res = await api.post(`/investissment`, { reportType });
           return Object.entries(res.data.report).map(([key, value]) => ({
             label: key,
             value: value,
@@ -44,6 +47,7 @@ const InvestissementTable = memo(({ setResults, results }) => {
         setCpcData(cpc);
       } catch (error) {
         console.error("Erreur lors du chargement des rapports:", error.message);
+        toast.error(t('common.error_loading_reports') || "Erreur lors du chargement des rapports");
       } finally {
         setIsLoading(false);
         setResults(results => ({ ...results, isLoading: false }));
@@ -65,12 +69,12 @@ const InvestissementTable = memo(({ setResults, results }) => {
     () => [
       {
         accessorKey: "label",
-        header: "Label",
+        header: t('common.label'),
         cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,
       },
       {
         accessorKey: "value",
-        header: "Valeur",
+        header: t('common.value'),
         cell: ({ getValue }) => formatCurrency(getValue()),
       },
     ],
@@ -121,9 +125,9 @@ const InvestissementTable = memo(({ setResults, results }) => {
   });
 
   const reports = [
-    { name: "CPC", icon: <FaFileInvoice />, table: cpcTable, data: cpcData },
-    { name: "Passif", icon: <FaBalanceScale />, table: passifTable, data: passifData },
-    { name: "Actif", icon: <FaChartBar />, table: actifTable, data: actifData },
+    { name: t('reports.cpc'), icon: <FaFileInvoice />, table: cpcTable, data: cpcData },
+    { name: t('reports.passif'), icon: <FaBalanceScale />, table: passifTable, data: passifData },
+    { name: t('reports.actif'), icon: <FaChartBar />, table: actifTable, data: actifData },
   ];
 
   return (
@@ -134,7 +138,7 @@ const InvestissementTable = memo(({ setResults, results }) => {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-finance-accent"></div>
-            <p className="mt-2 text-slate-500 font-medium">Chargement des rapports...</p>
+            <p className="mt-2 text-slate-500 font-medium">{t('investment.loading_reports')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -192,7 +196,7 @@ const InvestissementTable = memo(({ setResults, results }) => {
 
                 {data.length === 0 && (
                   <div className="text-center py-8 text-slate-400 text-sm italic bg-slate-50/50">
-                    Aucun résultat pour {name}
+                    {t('investment.no_result_for')} {name}
                   </div>
                 )}
               </div>

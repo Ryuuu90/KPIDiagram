@@ -1,8 +1,7 @@
 const {saveToDatabase} = require('../controllers/saveToDatabase');
-const {saveToDatabase2} = require('../controllers/saveToDatabase2');
+const {uploadArborescence} = require('../controllers/uploadArborescence');
 
 const {getNodeById} = require('../controllers/nodesData')
-const {getNodeById2} = require('../controllers/nodesData2')
 
 const {resetNewSold} = require('../controllers/resetNewSold');
 const {ArborescenceCalcul} = require('../controllers/ArborescenceCalcul');
@@ -10,26 +9,31 @@ const {modelsReports} = require('../controllers/modelsReports');
 const {searchForBE} = require('../controllers/searchForBE');
 const {getAffectedElements} = require('../controllers/getAffectedElements');
 const {investissementData} = require('../controllers/investissementData');
+const {checkDataPresence} = require('../controllers/checkData');
 
 
 
 const express = require('express');
+const { verifyToken } = require('../middleware/auth');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
-router.get('/data', saveToDatabase);
-router.get('/data2', saveToDatabase2);
+router.get('/data', verifyToken, saveToDatabase);
+
 
 // router.post('/getData', nodesData);
-router.get('/node/:id', getNodeById);
-router.post('/node2/:id', getNodeById2);
+router.post('/node/:id', verifyToken, getNodeById);
 
-router.get('/reset', resetNewSold);
-router.post('/calculation', ArborescenceCalcul);
+router.get('/reset', verifyToken, resetNewSold);
+router.post('/calculation', verifyToken, ArborescenceCalcul);
 
-router.post('/reports', modelsReports);
-router.post('/search', searchForBE);
-router.post('/affected', getAffectedElements);
-router.post('/investissment', investissementData);
+router.post('/reports', verifyToken, modelsReports);
+router.post('/search', verifyToken, searchForBE);
+router.post('/affected', verifyToken, getAffectedElements);
+router.post('/investissment', verifyToken, investissementData);
+router.post('/upload-arborescence', verifyToken, upload.single('file'), uploadArborescence);
+router.get('/check-data', verifyToken, checkDataPresence);
 
 
 

@@ -2,7 +2,7 @@ const Arborescence = require("../models/Arborescence2.model");
 
 exports.resetNewSold = async (req, res)=>{
     try{
-        await Arborescence.updateMany({}, { $set: { newSold: null } });
+        await Arborescence.updateMany({ clientId: req.dbUser._id }, { $set: { newSold: null } });
 
         res.status(200).json({success : true, message : "newSold has been reset."});
     }

@@ -1,0 +1,55 @@
+{
+    "roles": {
+        "realm": [
+        {
+            "name": "admin"
+        },
+        {
+            "name": "user"
+        }
+        ]
+    },
+    "users": [
+        {
+        "username": "imad",
+        "firstName": "imad",
+        "lastName": "imad",
+        "email":"imad@gmail.com",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+            {
+            "type": "password",
+            "value": "imad@2025",
+            "temporary": false
+            }
+        ],
+        "realmRoles": ["admin"]
+        }
+    ],
+    "realm": "nhancit",
+    "displayName": "NHANCIT",
+    "enabled": true,
+    
+
+
+    "clients": [
+        {
+        "clientId": "finanzia-frontend",
+        "name": "Finanzia Frontend",
+        "enabled": true,
+        "publicClient": true,
+        "directAccessGrantsEnabled": true,
+        "redirectUris": ["http://localhost:3000/*"],
+        "webOrigins": ["*"]
+        },
+        {
+        "clientId": "finanzia-backend",
+        "name": "Finanzia Backend",
+        "enabled": true,
+        "secret": "finanzia-secret",
+        "serviceAccountsEnabled": true,
+        "publicClient": false
+        }
+    ]
+}
