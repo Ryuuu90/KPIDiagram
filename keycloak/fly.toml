@@ -1,0 +1,39 @@
+# fly.toml app configuration file generated for keycloak-withered-sky-1608 on 2026-05-15T21:11:13+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'keycloak-withered-sky-1608'
+primary_region = 'cdg'
+
+[build]
+
+[env]
+  KC_HEALTH_ENABLED = 'true'
+  KC_HOSTNAME_STRICT = 'false'
+  KC_HTTP_ENABLED = 'true'
+  KC_HTTP_HOST = '0.0.0.0'
+  KC_HTTP_PORT = '8080'
+  KC_MANAGEMENT_PORT = '9000'
+  KC_PROXY_HEADERS = 'xforwarded'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+  [[http_service.checks]]
+    interval = '15s'
+    timeout = '10s'
+    grace_period = '2m0s'
+    method = 'GET'
+    path = '/health/ready'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024

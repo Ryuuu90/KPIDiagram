@@ -3,6 +3,11 @@ FROM quay.io/keycloak/keycloak:latest
 COPY themes /opt/keycloak/themes
 COPY realms /opt/keycloak/data/import
 
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+ENV KC_HEALTH_ENABLED=true
+ENV KC_HTTP_ENABLED=true
+ENV KC_PROXY_HEADERS=xforwarded
 
-CMD ["start-dev", "--http-port=8080", "--hostname-strict=false", "--spi-theme-cache-themes=false", "--spi-theme-cache-templates=false", "--import-realm"]
+RUN /opt/keycloak/bin/kc.sh build
+
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+CMD ["start", "--optimized", "--import-realm"]
