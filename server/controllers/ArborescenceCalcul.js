@@ -1,4 +1,5 @@
 const Arborescence = require('../models/Arborescence2.model');
+const GlobalElements = require('../models/GlobalElements.model');
 const xlsx = require('xlsx');
 const path = require('path');
 const { Console } = require('console');
@@ -42,9 +43,40 @@ exports.ArborescenceCalcul = async (req, res) =>{
         // const elemBase = sheet.map(row => row['NumEC']);
         // console.log(basesRef);
         // console.log(Object.keys(basesRef));
-        let arb = await Arborescence.find({ clientId: req.dbUser._id });
+        let [clientArb, globalArb] = await Promise.all([
+            Arborescence.find({ clientId: req.dbUser._id }),
+            GlobalElements.find({})
+        ]);
+
+        const gMap = new Map(globalArb.map(g => [g.parentId, g.toObject()]));
+        
+        let arb = clientArb.map(c => {
+            const clientObj = c.toObject();
+            const globalObj = gMap.get(clientObj.parentId) || {};
+            return {
+                ...clientObj,
+                parentId: clientObj.parentId,
+                childrenIds: globalObj.childrenIds || [],
+                category: globalObj.Category,
+                formula: globalObj.Formula,
+                method: globalObj.Method,
+                typology: globalObj.Typology,
+                eleType: globalObj.EleType,
+                nameFr: globalObj.NameFr,
+                nameAn: globalObj.NameAn,
+                nameAr: globalObj.NameAr,
+                signification: globalObj.Signification,
+                interpretation: globalObj.Interpretation,
+                recommandations: globalObj.Recommandations,
+                example: globalObj.Example,
+                Reports: globalObj.Reports,
+                SoldeValue: clientObj.SoldeValue || 0,
+                newSold: clientObj.newSold
+            };
+        });
+
         let length = arb.length;
-        atb = arb.map(elem => elem = elem.toObject());
+        atb = arb;
         let affected = {'EC048' : null, 'EC157' : null, 'EC158' : null, 'EC156' : null, 'EC159' : null,
              'EC160' : null, 'EC073' : null, 'EC043' : null, 'EC061' : null, 'EC031' : null, 'EC020' : null};
         // console.log(getBaseElments('EC127', arb));
@@ -52,7 +84,6 @@ exports.ArborescenceCalcul = async (req, res) =>{
         let infAndAff = {'EC041' : 'EC157', 'EC074' : 'EC158', 'EC113' : 'EC156', 'EC078': 'EC159', 'EC080' : 'EC160'}
 
         arb = arb.map(elem => {
-            elem = elem.toObject();
             const found =  Object.entries(basesRef).find(([key, value] ) => key === elem.parentId)
             let newSold;
             if(found && elem.category !== "Elément calculé" && found[1] !== null && found[1] !== "")
@@ -172,7 +203,6 @@ exports.ArborescenceCalcul = async (req, res) =>{
         }
         const operations = arb
         .filter(doc => 
-            doc.eleType !== 'Source' && 
             doc._id 
         )
         .map(doc => ({
