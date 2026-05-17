@@ -2,11 +2,13 @@ const jwt = require("jsonwebtoken");
 const jwksClient = require("jwks-rsa");
 const Client = require("../models/Client");
 
-const KEYCLOAK_URL = process.env.KEYCLOAK_URL || "http://localhost:8080";
+const KEYCLOAK_URL = process.env.KEYCLOAK_URL || "https://16.171.10.56/auth";
+const KEYCLOAK_INTERNAL_URL = process.env.KEYCLOAK_INTERNAL_URL || "http://localhost:8080/auth";
 const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM || "nhancit";
 
+// Use internal URL to fetch keys (avoids self-signed SSL issues)
 const client = jwksClient({
-  jwksUri: `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs`,
+  jwksUri: `${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs`,
 });
 
 function getKey(header, callback) {

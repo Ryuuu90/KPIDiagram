@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
  *   const { data } = await api.post('/calculation', payload);
  */
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: process.env.REACT_APP_BACKEND_URL,
   headers: {
     "Content-Type": "application/json",
   },

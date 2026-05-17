@@ -38,7 +38,7 @@ function App() {
   const verifyUser = async (token) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/profile`,
+        `${process.env.REACT_APP_BACKEND_URL}/auth/profile`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
