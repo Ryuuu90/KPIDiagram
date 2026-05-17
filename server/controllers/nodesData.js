@@ -7,6 +7,15 @@ exports.getNodeById = async (req, res) => {
   const {modulType, basesRef, expandedNodes} = req.body;
 
   try {
+    // Check if the user has uploaded their file
+    const dataCount = await Arborescence.countDocuments({ clientId: req.dbUser._id });
+    if (dataCount === 0) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Veuillez d'abord importer votre fichier de données avant d'explorer le diagramme." 
+      });
+    }
+
     // 1. Fetch parent metadata + client value
     const [globalParent, clientParent] = await Promise.all([
       GlobalElements.findOne({ parentId: id }),

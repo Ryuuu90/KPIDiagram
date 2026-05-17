@@ -28,12 +28,11 @@ async function seed() {
             const eleType = row["ElementType"];
             
             let childrenIds = [];
-            if (eleType === 'EC') {
-                childrenIds = formula.split(/[+-]/).map(id => id.trim()).filter(id => id);
-            } else if (eleType === 'Ratio') {
-                childrenIds = [...new Set(formula.match(/EC\d+|R\d{2}/g) || [])];
-            } else if (formula) {
-                childrenIds = formula.split(/[.]/).map(id => id.trim()).filter(id => id);
+            if (formula) {
+                // Robust regex to extract any child element ID starting with EC or R (case-insensitive)
+                const matches = formula.match(/EC[A-Za-z0-9_]+|R[A-Za-z0-9_]+/gi) || [];
+                // Normalize to uppercase and remove duplicates
+                childrenIds = [...new Set(matches.map(id => id.toUpperCase()))];
             }
 
             return {

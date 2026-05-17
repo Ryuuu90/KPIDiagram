@@ -1284,7 +1284,11 @@ const KPIDiagram = memo(({ initialMode }) => {
       return res.data.node;
     } catch (error) {
       console.error('Error fetching node:', error);
-      toast.error(t('common.error_fetching_node') || "Erreur lors de la récupération du nœud");
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(t('common.error_fetching_node') || "Erreur lors de la récupération du nœud");
+      }
       return null;
     }
   };
