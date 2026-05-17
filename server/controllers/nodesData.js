@@ -45,53 +45,77 @@ exports.getNodeById = async (req, res) => {
 
     const parent = mergeNode(globalParent, clientParent);
     const childrenData = {};
-    const childrenIds = [];
+    let childrenIds = [];
 
-    if (parent.category === 'Elément calculé' || parent.eleType === 'Ratio' || parent.eleType === 'Source') {
+    if (parent.category === 'Elément calculé' || parent.eleType === 'Ratio' || parent.eleType === 'Source' || parent.category === 'Elément de base' || parent.category === 'Element de base') {
       parent.childrenIds.forEach((ele) => {
-        let splited = ele.split(/[  ]/).filter(id => id.trim() !== '');
-        let childId = splited.length > 1 ? splited[1] : splited[0];
-        let sign = splited.length > 1 ? splited[0] : '+';
-
-        childrenIds.push(childId);
-        if (!childrenData[childId]) {
-          childrenData[childId] = { childSign: sign };
+        if (ele.includes(',')) {
+          ele.split(',').map(s => s.trim()).filter(s => s).forEach(part => {
+            if (part === parent.parentId) return;
+            childrenIds.push(part);
+            if (!childrenData[part]) childrenData[part] = { childSign: '+' };
+          });
+        } else {
+          // e.g., "EC026 + EC027 - EC046" or "+ EC088" or "EC062"
+          let matches = ele.match(/[+-]?\s*[A-Za-z0-9_]+/g);
+          if (matches) {
+            matches.forEach(match => {
+              let trimmed = match.trim();
+              let sign = '+';
+              if (trimmed.startsWith('+')) {
+                sign = '+';
+                trimmed = trimmed.substring(1).trim();
+              } else if (trimmed.startsWith('-')) {
+                sign = '-';
+                trimmed = trimmed.substring(1).trim();
+              }
+              if (trimmed && trimmed !== parent.parentId) {
+                childrenIds.push(trimmed);
+                if (!childrenData[trimmed]) childrenData[trimmed] = { childSign: sign };
+              }
+            });
+          }
         }
       });
+
+      // 2. Fetch children metadata + client values in bulk
+      const [globalChildren, clientChildren] = await Promise.all([
+        GlobalElements.find({ parentId: { $in: childrenIds } }),
+        Arborescence.find({ parentId: { $in: childrenIds }, clientId: req.dbUser._id })
+      ]);
+
+      const gMap = new Map(globalChildren.map(g => [g.parentId, g]));
+      const cMap = new Map(clientChildren.map(c => [c.parentId, c]));
+
+      childrenIds.forEach(childId => {
+        const gNode = gMap.get(childId);
+        const cNode = cMap.get(childId);
+        const merged = mergeNode(gNode, cNode);
+
+        let validChildrenIds = merged.childrenIds ? merged.childrenIds.filter(id => id !== merged.parentId) : [];
+        let hasChildren = validChildrenIds.length > 0;
+
+        childrenData[childId] = {
+          ...childrenData[childId],
+          ...merged,
+          hasChildren,
+          childrenNum: validChildrenIds.length
+        };
+      });
+
+    } else {
+      console.log(`[nodesData] Parent ${parent.parentId} is unhandled category. Category: ${parent.category}, eleType: ${parent.eleType}`);
     }
 
-    // 2. Fetch children metadata + client values in bulk
-    const [globalChildren, clientChildren] = await Promise.all([
-      GlobalElements.find({ parentId: { $in: childrenIds } }),
-      Arborescence.find({ parentId: { $in: childrenIds }, clientId: req.dbUser._id })
-    ]);
-
-    const gMap = new Map(globalChildren.map(g => [g.parentId, g]));
-    const cMap = new Map(clientChildren.map(c => [c.parentId, c]));
-
-    childrenIds.forEach(childId => {
-      const gNode = gMap.get(childId);
-      const cNode = cMap.get(childId);
-      const merged = mergeNode(gNode, cNode);
-
-      let hasChildren = false;
-      if (merged.category === "Elément calculé" || merged.eleType === 'Ratio' || merged.eleType === 'Source') {
-        hasChildren = true;
-      }
-
-      childrenData[childId] = {
-        ...childrenData[childId],
-        ...merged,
-        hasChildren,
-        childrenNum: merged.childrenIds ? merged.childrenIds.length : 0
-      };
-    });
+    parent.childrenIds = childrenIds; // override so frontend knows the exact number of separated children
 
     const response = {
       ...parent,
       childrenData: childrenData,
       chidrenNum: parent.childrenIds ? parent.childrenIds.length : 0,
     };
+    
+    console.log(`[nodesData] Returning ${childrenIds.length} children for ${parent.parentId}.`);
 
     res.status(200).json({ success: true, message: 'Diagram data retrieved', node: response, found: true });
   } catch (error) {

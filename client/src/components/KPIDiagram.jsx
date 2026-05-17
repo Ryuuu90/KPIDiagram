@@ -562,8 +562,8 @@ const TableExample = () => {
                     <p className={`text-sm transition-colors duration-300 ${isActive ? "text-orange-50 duration-800 text-base" : "text-white/40"}`}>
                       {name === 'ESG' ? "Etats de solde de gestion"
                         : name === 'CPC' ? "Tableau des comptes de Produits et Charges"
-                        : name === 'Passif' ? "Tableau du Passif"
-                        : "Tableau de l'Actif"}
+                          : name === 'Passif' ? "Tableau du Passif"
+                            : "Tableau de l'Actif"}
                     </p>
                   </div>
                 </div>
@@ -702,17 +702,17 @@ const TableExample = () => {
 const HoverNode = ({ data }) => {
   const { t } = useTranslation();
   return (
-  <div className="tooltip-box bg-gradient-to-br from-orange-400 to-orange-500 border border-orange-300/30 shadow-2xl">
-    <div className="text-white font-semibold">
-      <span className="font-bold text-gray-600">{t('common.interpretation')}</span> : {data.interpretation}
+    <div className="tooltip-box bg-gradient-to-br from-orange-400 to-orange-500 border border-orange-300/30 shadow-2xl">
+      <div className="text-white font-semibold">
+        <span className="font-bold text-gray-600">{t('common.interpretation')}</span> : {data.interpretation}
+      </div>
+      <div className="text-white font-semibold mb-3">
+        <span className="font-bold text-gray-600">{t('common.recommandations')}</span> : {data.recommandations}
+      </div>
+      <div className="text-white font-semibold">
+        <span className="font-bold text-gray-600">{t('common.example')}</span> : {data.example}
+      </div>
     </div>
-    <div className="text-white font-semibold mb-3">
-      <span className="font-bold text-gray-600">{t('common.recommandations')}</span> : {data.recommandations}
-    </div>
-    <div className="text-white font-semibold">
-      <span className="font-bold text-gray-600">{t('common.example')}</span> : {data.example}
-    </div>
-  </div>
   );
 };
 
@@ -969,8 +969,8 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
           label={t('common.variance')}
           value={
             ((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' &&
-            fields[1].value !== 0 &&
-            fields[2].value !== null
+              fields[1].value !== 0 &&
+              fields[2].value !== null
               ? Number((((fields[2].value / fields[1].value) - 1) * 100).toFixed(3)).toString() + '%'
               : "-"
           }
@@ -1115,17 +1115,17 @@ const defaultEdgeOptions = {
 const KPIDiagram = memo(({ initialMode }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  
-  const { 
+
+  const {
     nodesState, edgesState, sourceState, updateNodes, updateEdges, updateSource,
-    newNodesRef, edgesRef, expandedNodesRef, expandedNodesArrayRef, 
-    lastPrentId, basesRef, calculResultsRef 
+    newNodesRef, edgesRef, expandedNodesRef, expandedNodesArrayRef,
+    lastPrentId, basesRef, calculResultsRef
   } = useDiagram();
 
   const [loading, setLoading] = useState(false);
   const [modelType, setModelType] = useState(initialMode || "simulation");
   const [Source, setSource] = useState(sourceState[initialMode || "simulation"] || '');
-  
+
   const [SourceTable, setSourceTable] = useState('');
   const [reset, setReset] = useState(false);
   const [Simulate, setSimulate] = useState(false);
@@ -1134,13 +1134,13 @@ const KPIDiagram = memo(({ initialMode }) => {
   const [tableCoords, setTableCoords] = useState({ x: 0, y: 0, width: 0 });
   const SelectTitle = useRef('');
   const Selected = useRef(false);
-  
+
   const [level, setLevel] = useState(0);
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef(null);
   const chilLimit = useRef('');
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const [nodes, setNodes, onNodesChange] = useNodesState(nodesState[modelType] || []);
   const [edges, setEdges, onEdgesChange] = useEdgesState(edgesState[modelType] || []);
   const [hasData, setHasData] = useState(true);
@@ -1491,20 +1491,20 @@ const KPIDiagram = memo(({ initialMode }) => {
     }
 
     if (!Source) {
-        newNodesRef.current[modelType].push({
-          id: 'firstNode',
-          type: 'customNode',
-          position: { x: 50, y: 200 },
-          data: {
-            id: '',
-            Source,
-            isRoot: true,
-            setSource,
-            Selected,
-            SelectTitle: SelectTitle.current,
-            eleType: 'Source',
-          },
-        });
+      newNodesRef.current[modelType].push({
+        id: 'firstNode',
+        type: 'customNode',
+        position: { x: 50, y: 200 },
+        data: {
+          id: '',
+          Source,
+          isRoot: true,
+          setSource,
+          Selected,
+          SelectTitle: SelectTitle.current,
+          eleType: 'Source',
+        },
+      });
       if (newNodesRef.current[modelType].length <= 1 && reactFlowInstance.current) {
         setTimeout(() => {
           reactFlowInstance.current.fitView({ padding: 1, includeHiddenNodes: false, maxZoom: 1, duration: restart ? 500 : 200 });

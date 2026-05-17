@@ -18,7 +18,7 @@ import LoadingPage from "./components/loadingPage";
 import InvestissementPage from "./pages/investissementPage";
 import DataManagementPage from "./pages/DataManagementPage";
 import LoginPage from "./pages/LoginPage";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 // Possible app states
 const STATE = {
@@ -151,42 +151,7 @@ function App() {
   return (
     <KeycloakProvider keycloak={keycloak}>
       <DiagramProvider>
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-          toastOptions={{
-            duration: 4000,
-            style: {
-              borderRadius: '12px',
-              padding: '12px 24px',
-              fontWeight: '600',
-              fontSize: '0.9rem',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            },
-            success: {
-              style: {
-                background: '#ecfdf5',
-                color: '#059669',
-                border: '1px solid #10b981',
-              },
-              iconTheme: {
-                primary: '#10b981',
-                secondary: '#fff',
-              },
-            },
-            error: {
-              style: {
-                background: '#fef2f2',
-                color: '#dc2626',
-                border: '1px solid #ef4444',
-              },
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
-              },
-            },
-          }}
-        />
+
         <Router>
           <Layout>
             <Routes>

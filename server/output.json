@@ -1,0 +1,171 @@
+{
+  "success": true,
+  "message": "Diagram data retrieved",
+  "node": {
+    "parentId": "Rind",
+    "childrenIds": [
+      "R01",
+      "R02",
+      "R04",
+      "R05",
+      "R06",
+      "R07"
+    ],
+    "category": "Composé",
+    "formula": "R01, R02, R04, R05, R06, R07",
+    "typology": "Indépendant",
+    "eleType": "Source",
+    "nameFr": "Indépendant",
+    "signification": "none",
+    "interpretation": "none",
+    "recommandations": "none",
+    "example": "none",
+    "Reports": "Aucun",
+    "SoldeValue": 0,
+    "newSold": 0,
+    "childrenData": {
+      "R01": {
+        "childSign": "+",
+        "parentId": "R01",
+        "childrenIds": [
+          "EC062 - EC003"
+        ],
+        "category": "Simple",
+        "formula": "EC062 - EC003",
+        "method": "FR= Financement permanent - Actif immobilisé",
+        "typology": "Indépendant",
+        "eleType": "Ratio",
+        "nameFr": "Fond de roulement",
+        "nameAn": "Working Capital",
+        "nameAr": "رأس المال العامل",
+        "signification": "Mesure la différence entre les actifs à court terme et les passifs à court terme. Il indique la capacité de l’entreprise à financer son cycle d’exploitation.",
+        "interpretation": "Un FR positif  mesure la quantité des ressources stables disponibles (qui ne sont pas utilisées par les actifs immobilisés) pour financer les dépenses courantes d’exploitation de l’entreprise.  Un FR négatif signifie que les ressources stables disponibles ne couvre pas les actifs immobilisés",
+        "recommandations": "Maintenir un FR positif pour assurer la solvabilité à long terme.",
+        "example": "Financement Permanant : 150 000 MAD ; Actifs immobilisée : 100 000 MAD ? FR = 50 000 MAD",
+        "Reports": "Aucun",
+        "SoldeValue": 0,
+        "newSold": 0,
+        "hasChildren": true,
+        "childrenNum": 1
+      },
+      "R02": {
+        "childSign": "+",
+        "parentId": "R02",
+        "childrenIds": [
+          "EC002 - EC083"
+        ],
+        "category": "Simple",
+        "formula": "EC002 - EC083",
+        "method": "BFR = actif circulant - passif circulant",
+        "typology": "Indépendant",
+        "eleType": "Ratio",
+        "nameFr": "Besoin en fond de roulement ",
+        "nameAn": "Working Capital Requirement",
+        "nameAr": "احتياجات رأس المال العامل",
+        "signification": "Indique le montant de ressources financières nécessaires pour financer le cycle d’exploitation (clients, stocks, fournisseurs).",
+        "interpretation": "Si le BFR est positif,l'entreprise aura besoin de financements supplémentaires.dans le cas contraire,elle disposera d'un excédent de ressources à court terme",
+        "recommandations": "Le plus petit possible",
+        "example": "Une PME, avec un BFR de 40 000  MAD (stocks : 25 000 €, créances clients : 30 000 MAD à 60 jours, dettes fournisseurs : 15 000 MAD à 30 jours), décide d’optimiser sa trésorerie. En négociant un délai de paiement de 60 jours avec ses fournisseurs, elle augmente ses dettes à 25 000 MAD. Résultat : le nouveau BFR passe à 30 000 MAD (25 000 + 30 000 - 25 000), libérant 10 000 MAD de trésorerie pour d’autres besoins.",
+        "Reports": "Aucun",
+        "SoldeValue": 0,
+        "newSold": 0,
+        "hasChildren": true,
+        "childrenNum": 1
+      },
+      "R04": {
+        "childSign": "+",
+        "parentId": "R04",
+        "childrenIds": [
+          "EC116 - EC117"
+        ],
+        "category": "Simple",
+        "formula": "EC116 - EC117",
+        "method": "FR-BFR ou Trésorerie Active - Trésorerie Passive",
+        "typology": "Indépendant",
+        "eleType": "Ratio",
+        "nameFr": "Trésorerie nette",
+        "nameAn": "Net Treasury",
+        "nameAr": "الخزينة الصافية",
+        "signification": "Résultat de la différence entre le fond de roulement et le besoin en fond de roulement. Il indique la trésorerie excédentaire ou le déficit.",
+        "interpretation": "Solde de liquidité. Si positif, excédent de trésorerie. Sinon un besoin de trésorerie",
+        "recommandations": "Surveillez périodiquement les flux de trésorerie,réduire les dépenses non essentielles,augmentation de liquidités rapides",
+        "example": "FR : 60 000 MAD ; BFR : 40 000 MAD ? Trésorerie nette = 20 000 MAD",
+        "Reports": "Aucun",
+        "SoldeValue": 0,
+        "newSold": 0,
+        "hasChildren": true,
+        "childrenNum": 1
+      },
+      "R05": {
+        "childSign": "+",
+        "parentId": "R05",
+        "childrenIds": [
+          "EC118 + EC110 - EC072 - EC032"
+        ],
+        "category": "Simple",
+        "formula": "EC118 + EC110 - EC072 - EC032",
+        "method": "Valeur Ajouté (+) Subventions d'exploitation (-) Impots et taxes (-) Charges de personnel",
+        "typology": "Indépendant",
+        "eleType": "Ratio",
+        "nameFr": "Exédent brut d'exploitation",
+        "nameAn": "Self-Financing Capacity",
+        "nameAr": "القدرة على التمويل الذاتي",
+        "signification": "Indicateur de la performance économique d’exploitation avant amortissements et provisions. Il reflète la capacité de l’entreprise à générer des ressources avec son activité principale.",
+        "interpretation": "Rentabilité opérationnelle avant amortissements et charges financières",
+        "recommandations": "Réduire les charges sans nuire à l’efficacité opérationnelle.",
+        "example": "Une petite entreprise de services au Maroc génère un chiffre d'affaires de 1 000 000 MAD. Ses charges d'exploitation incluent 400 000 MAD de salaires, 150 000 MAD de loyer et 50 000 MAD de fournitures. EBE (Excédent Brut d'Exploitation) = Chiffre d'affaires - Charges d'exploitation = 1 000 000 - (400 000 + 150 000 + 50 000) = 400 000 MAD. Cet EBE de 400 000 MAD reflète la rentabilité opérationnelle avant amortissements, impôts et charges financières.",
+        "Reports": "ESG",
+        "SoldeValue": 0,
+        "newSold": 0,
+        "hasChildren": true,
+        "childrenNum": 1
+      },
+      "R06": {
+        "childSign": "+",
+        "parentId": "R06",
+        "childrenIds": [
+          "EC035 /EC124"
+        ],
+        "category": "Simple",
+        "formula": "EC035 /EC124",
+        "method": "Chiffre d’affaires / Effectif ",
+        "typology": "Indépendant",
+        "signification": "Rapport entre la production (ou chiffre d'affaires) et les effectifs. Il mesure l'efficacité du personnel à générer de la valeur.",
+        "interpretation": "Valeur créée par employé ou par dirham dépensé en salaires.",
+        "recommandations": "Optimiser les processus internes ? Automatiser les tâches répétitives et améliorer l’organisation du travail pour réduire les pertes de temps. Investir dans la formation et améliorer les conditions de travail",
+        "example": "CA : 500 000 MAD ; Salaires : 250 000 MAD ? Ratio = 2,  pour chaque 1 MAD dépensé en salaires, l’entreprise génère 2 MAD de chiffre d’affaires",
+        "Reports": "Aucun",
+        "SoldeValue": 0,
+        "newSold": 0,
+        "hasChildren": false,
+        "childrenNum": 1
+      },
+      "R07": {
+        "childSign": "+",
+        "parentId": "R07",
+        "childrenIds": [
+          "R05\t+ EC048 + EC049 +EC050 - EC101 -EC102 -\tEC103 -\tEC119 + \tEC091"
+        ],
+        "category": "Composé",
+        "formula": "R05\t+ EC048 + EC049 +EC050 - EC101 -EC102 -\tEC103 -\tEC119 + \tEC091",
+        "method": "EBE ( +) Dotations d'exploitation ( +) Dotations financières ( +) Dotations non courantes ( -) Reprises d'exploitation (-) Reprises financières  ( -) Reprises non courantes ( -) Produits des cessions d'immobilisation (+) Valeurs nettes d'amortiss. des immo. cédées",
+        "typology": "Indépendant",
+        "eleType": "Ratio",
+        "nameFr": "Capacité d'autofinancement",
+        "nameAn": "Gross Operating Surplus",
+        "nameAr": "الفائض التشغيلي الخام",
+        "signification": "Montant des ressources internes générées par l’activité, disponibles pour financer les investissements, rembourser les dettes ou distribuer des dividendes.",
+        "interpretation": "La CAF mesure les excédents de trésorerie générés grâce à son activité, permettant à l'entreprise de couvrir ses charges ou d'investir sans recourir à des financements externes",
+        "recommandations": "Renégociation des contrats avec les fournisseurs,diversification des sources de revenus,améliorer la productivité",
+        "example": "Une entreprise marocaine, avec un chiffre d'affaires de 1 500 000 MAD, affiche un résultat net de 150 000 MAD, 50 000 MAD d’amortissements et 20 000 MAD de provisions, soit une capacité d’autofinancement (CAF) de 220 000 MAD (150 000 + 50 000 + 20 000). En réduisant ses charges variables de 10 %, elle augmente son résultat net à 180 000 MAD, portant la CAF à 250 000 MAD (180 000 + 50 000 + 20 000). Cette amélioration de 30 000 MAD renforce sa capacité à financer ses investissements ou rembourser ses dettes sans recours externe.",
+        "Reports": "ESG",
+        "SoldeValue": 0,
+        "newSold": 0,
+        "hasChildren": true,
+        "childrenNum": 1
+      }
+    },
+    "chidrenNum": 6
+  },
+  "found": true
+}
