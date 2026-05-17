@@ -1526,12 +1526,12 @@ const KPIDiagram = memo(({ initialMode }) => {
     const rootId = root.parentId || Source;
     newNodesRef.current[modelType].push({
       id: rootId,
-      type: 'customNode',
+      type: modelType === 'simulation' ? 'custom' : 'customNode',
       position: { x: 50, y: 200 },
       data: {
         label: root.nameFr || 'Root Node',
         id: rootId,
-        hasChildren: true,
+        hasChildren: Object.entries(root.childrenData || {}).length > 0,
         isRoot: true,
         childrenNum: Object.entries(root.childrenData || {}).length,
         expanded: false,

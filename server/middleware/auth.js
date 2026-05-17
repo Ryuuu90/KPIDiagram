@@ -2,8 +2,8 @@ const jwt = require("jsonwebtoken");
 const jwksClient = require("jwks-rsa");
 const Client = require("../models/Client");
 
-const KEYCLOAK_URL = process.env.KEYCLOAK_URL || "https://16.171.10.56/auth";
-const KEYCLOAK_INTERNAL_URL = process.env.KEYCLOAK_INTERNAL_URL || "http://localhost:8080/auth";
+const KEYCLOAK_URL = process.env.KEYCLOAK_URL || "http://localhost:8080";
+const KEYCLOAK_INTERNAL_URL = process.env.KEYCLOAK_INTERNAL_URL || "http://localhost:8080";
 const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM || "nhancit";
 
 // Use internal URL to fetch keys (avoids self-signed SSL issues)
