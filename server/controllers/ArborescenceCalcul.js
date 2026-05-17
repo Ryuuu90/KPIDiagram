@@ -136,7 +136,7 @@ exports.ArborescenceCalcul = async (req, res) =>{
                     if (found && found.newSold !== null) {
                         return found.newSold;
                     }
-                    else if  (found && found.newSold === null &&( getBaseElments(found.parentId, arb).includes(...Object.keys(basesRef))) && found.category !== 'Elément de base')
+                    else if  (found && found.newSold === null && getBaseElments(found.parentId, arb).some(id => Object.keys(basesRef).includes(id)) && found.category !== 'Elément de base')
                     {
                         return match; 
                     }

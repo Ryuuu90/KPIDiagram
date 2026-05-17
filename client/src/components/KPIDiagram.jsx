@@ -973,7 +973,7 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
             Number(fields[1].value) !== 0 &&
             fields[2].value !== null &&
             fields[2].value !== '-'
-              ? Number((((Number(fields[2].value) / Number(fields[1].value)) - 1) * 100).toFixed(3)).toString() + '%'
+              ? Number((((Number(fields[2].value) - Number(fields[1].value)) / Math.abs(Number(fields[1].value))) * 100).toFixed(3)).toString() + '%'
               : "-"
           }
           isFirst={false}
