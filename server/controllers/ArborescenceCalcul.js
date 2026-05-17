@@ -127,6 +127,8 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 if(arb[i].eleType === 'Source')
                     continue;
                 const formula = arb[i].formula;
+                if (!formula || typeof formula !== 'string')
+                    continue;
                 let evaluatedFormula = formula.replace(/EC\d+|R\d{2}/g, match => {
                     const found = arb.find(elem => elem.parentId.trim() === match.trim());
                     if (found && found.newSold !== null) {
