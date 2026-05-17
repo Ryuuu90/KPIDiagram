@@ -1,5 +1,4 @@
 const Arborescence = require('../models/Arborescence2.model');
-const GlobalElements = require('../models/GlobalElements.model');
 const xlsx = require('xlsx');
 const path = require('path');
 const { Console } = require('console');
@@ -20,7 +19,7 @@ function isValidFormula(str) {
         return results;
     for( let childId of parent.childrenIds.map(id => id.trim()))
     {
-        const child = arb.find(ele => ele.parentId === childId);
+        const child = arb.find(ele => ele.parentId === elementId);
         if(!child)
             continue;
         if(child.category === 'Elément de base')
@@ -43,10 +42,9 @@ exports.ArborescenceCalcul = async (req, res) =>{
         // const elemBase = sheet.map(row => row['NumEC']);
         // console.log(basesRef);
         // console.log(Object.keys(basesRef));
-        let arb = await Arborescence.find({ clientId: req.dbUser._id });
-        arb = arb.map(elem => elem.toObject());
+        let arb = await Arborescence.find();
         let length = arb.length;
-        atb = arb;
+        atb = arb.map(elem => elem = elem.toObject());
         let affected = {'EC048' : null, 'EC157' : null, 'EC158' : null, 'EC156' : null, 'EC159' : null,
              'EC160' : null, 'EC073' : null, 'EC043' : null, 'EC061' : null, 'EC031' : null, 'EC020' : null};
         // console.log(getBaseElments('EC127', arb));
@@ -54,6 +52,7 @@ exports.ArborescenceCalcul = async (req, res) =>{
         let infAndAff = {'EC041' : 'EC157', 'EC074' : 'EC158', 'EC113' : 'EC156', 'EC078': 'EC159', 'EC080' : 'EC160'}
 
         arb = arb.map(elem => {
+            elem = elem.toObject();
             const found =  Object.entries(basesRef).find(([key, value] ) => key === elem.parentId)
             let newSold;
             if(found && elem.category !== "Elément calculé" && found[1] !== null && found[1] !== "")
@@ -105,10 +104,8 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 }
 
             }
-            else if (elem.category === "Elément de base" || elem.category === "Element de base" || elem.eleType === "Source")
-                newSold = elem.SoldeValue;
             else
-                newSold = null;
+                newSold =  null;
             
             return{
                 ...elem,
@@ -130,14 +127,12 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 if(arb[i].eleType === 'Source')
                     continue;
                 const formula = arb[i].formula;
-                if (!formula || typeof formula !== 'string')
-                    continue;
                 let evaluatedFormula = formula.replace(/EC\d+|R\d{2}/g, match => {
                     const found = arb.find(elem => elem.parentId.trim() === match.trim());
                     if (found && found.newSold !== null) {
                         return found.newSold;
                     }
-                    else if  (found && found.newSold === null && getBaseElments(found.parentId, arb).some(id => Object.keys(basesRef).includes(id)) && found.category !== 'Elément de base')
+                    else if  (found && found.newSold === null &&( getBaseElments(found.parentId, arb).includes(...Object.keys(basesRef))) && found.category !== 'Elément de base')
                     {
                         return match; 
                     }
@@ -173,11 +168,12 @@ exports.ArborescenceCalcul = async (req, res) =>{
         }
         const operations = arb
         .filter(doc => 
+            doc.eleType !== 'Source' && 
             doc._id 
         )
         .map(doc => ({
             updateOne: {
-            filter: { _id: doc._id, clientId: req.dbUser._id },
+            filter: { _id: doc._id },
             update: { $set :doc }
             }
         }));

@@ -1,6 +1,5 @@
 const Arborescence = require('../models/Arborescence2.model');
 const GlobalElements = require('../models/GlobalElements.model');
-const BaseElements = require('../models/BaseElements.model');
 const xlsx = require('xlsx');
 
 function isValidFormula(str) {
@@ -36,86 +35,17 @@ exports.uploadArborescence = async (req, res) => {
 
         // Parse the Excel file from buffer
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-
-        // 0. Validate Base Elements structure (Sheet 1)
-        const baseSheetName = workbook.SheetNames[0];
-        if (!baseSheetName) {
-            return res.status(400).json({ success: false, message: 'validation.missing_sheet' });
+        // 1. Fetch the entire arborescence structure from GlobalElements database collection
+        const globalDocs = await GlobalElements.find({});
+        if (globalDocs.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'La structure globale du diagramme n\'a pas encore été initialisée dans la base de données.' 
+            });
         }
-        const baseSheetData = xlsx.utils.sheet_to_json(workbook.Sheets[baseSheetName], { header: 1 });
-        const masterBaseElements = await BaseElements.find({});
-        const masterMap = new Map(masterBaseElements.map(b => [b.Name, b]));
-
-        // Parse the uploaded sheet into a structured map
-        const uploadedMap = new Map();
-        let lastParentId = null;
-
-        for (let i = 0; i < baseSheetData.length; i++) {
-            const row = baseSheetData[i];
-            const numEc = row[0];
-            const qui2 = row[2];
-            const label = row[3];
-
-            if (numEc && typeof numEc === 'string' && numEc.startsWith('EC')) {
-                lastParentId = numEc;
-                uploadedMap.set(numEc, { Label: label, Children: [] });
-            } else if (qui2 && lastParentId) {
-                uploadedMap.get(lastParentId).Children.push({ id: String(qui2), Label: label });
-            }
-        }
-
-        // 0.1 Check for unknown parents or mismatched labels
-        for (const [id, data] of uploadedMap) {
-            const master = masterMap.get(id);
-            if (!master) {
-                return res.status(400).json({ success: false, message: 'validation.unknown_parent', params: { id } });
-            }
-            if (master.Label !== data.Label) {
-                return res.status(400).json({ success: false, message: 'validation.mismatched_label', params: { id, expected: master.Label, found: data.Label } });
-            }
-
-            // 0.2 Check for exact children (no more, no less)
-            const masterIds = master.Children.map(c => String(c.id));
-            const uploadedIds = data.Children.map(c => String(c.id));
-
-            // Find missing children (in master but not in uploaded)
-            const missingChildId = masterIds.find(id => !uploadedIds.includes(id));
-            if (missingChildId) {
-                return res.status(400).json({ success: false, message: 'validation.missing_child_account', params: { parentId: id, childId: missingChildId } });
-            }
-
-            // Find extra children (in uploaded but not in master)
-            const extraChildId = uploadedIds.find(id => !masterIds.includes(id));
-            if (extraChildId) {
-                return res.status(400).json({ success: false, message: 'validation.extra_child_account', params: { parentId: id, childId: extraChildId } });
-            }
-
-            // 0.3 Verify child labels
-            for (const child of data.Children) {
-                const masterChild = master.Children.find(c => String(c.id) === child.id);
-                if (masterChild && masterChild.Label !== child.Label) {
-                    return res.status(400).json({ success: false, message: 'validation.mismatched_child_label', params: { id: child.id, parentId: id, expected: masterChild.Label, found: child.Label } });
-                }
-            }
-        }
-
-        // 0.4 Check if any master elements are missing in the upload
-        for (const [id] of masterMap) {
-            if (!uploadedMap.has(id)) {
-                return res.status(400).json({ success: false, message: 'validation.missing_parent_element', params: { id } });
-            }
-        }
-
-        // 1. Parse the main Arborescence sheet (usually sheet 9)
-        const sheetName = workbook.SheetNames[8]; 
-        if (!sheetName) {
-            return res.status(400).json({ success: false, message: 'Invalid Excel structure: Expected at least 9 sheets' });
-        }
-        const arboSheet = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
         // 2. Parse the balances sheet ('base-EC-values')
         const valuesSheetRaw = workbook.Sheets['Base-EC-Values'];
-
 
         const balanceMap = {};
         if (valuesSheetRaw) {
@@ -128,67 +58,37 @@ exports.uploadArborescence = async (req, res) => {
             });
         }
 
-        const parentMap = {};
+        // Map global elements with client-uploaded balances
+        let records = globalDocs.map(doc => {
+            const g = doc.toObject();
+            const SoldeValue = balanceMap[g.parentId] !== undefined
+                ? balanceMap[g.parentId]
+                : 0;
 
-        for (const row of arboSheet) {
-            const parentId = row["ID"];
-            // ... (rest of parsing)
-            const formula = row["Méthode de calcul Numérique"] || "";
-            const method = row["Méthode de calcul"];
-            const category = row["Catégorie"];
-            const typology = row["Typologie"];
-            const eleType = row["ElementType"];
-            const nameFr = row["NomFr"];
-            const nameAn = row["NomAn"];
-            const nameAr = row["NomAr"];
-            const signification = row["Signification"] || "none";
-            const interpretation = row["Interprétation"] || "none";
-            const recommandations = row["Recommandations"] || "none";
-            const example = row["Exemple"] || "none";
-            const Reports = row["Rapports"] || "none";
-            
-            // Priority: Value from 'base-EC-values' sheet, then column in main sheet, then 0
-            const SoldeValue = balanceMap[parentId] !== undefined 
-                ? balanceMap[parentId] 
-                : (Number(row["SoldeValue"]) || 0);
-            console.log("SoldeValue", SoldeValue);
+            return {
+                parentId: g.parentId,
+                childrenIds: g.childrenIds || [],
+                formula: g.Formula || "",
+                method: g.Method || "",
+                category: g.Category || "",
+                typology: g.Typology || "",
+                eleType: g.EleType || "",
+                nameFr: g.NameFr || "",
+                nameAn: g.NameAn || "",
+                nameAr: g.NameAr || "",
+                signification: g.Signification || "none",
+                interpretation: g.Interpretation || "none",
+                recommandations: g.Recommandations || "none",
+                example: g.Example || "none",
+                Reports: g.Reports || "none",
+                newSold: null,
+                SoldeValue,
+                clientId: req.dbUser._id
+            };
+        });
 
-            let childrenIds = [];
-            if (eleType === 'EC') {
-                childrenIds = formula.split(/[+-]/).map(id => id.trim()).filter(id => id);
-            } else if (eleType === 'Ratio') {
-                childrenIds = [...new Set(formula.match(/EC\d+|R\d{2}/g) || [])];
-            } else if (formula) {
-                childrenIds = formula.split(/[.]/).map(id => id.trim()).filter(id => id);
-            }
-
-            if (!parentMap[parentId]) {
-                parentMap[parentId] = {
-                    parentId,
-                    category,
-                    childrenIds,
-                    formula,
-                    typology,
-                    eleType,
-                    nameFr,
-                    nameAn,
-                    nameAr,
-                    signification,
-                    interpretation,
-                    recommandations,
-                    example,
-                    method,
-                    Reports,
-                    newSold: null,
-                    SoldeValue,
-                    clientId: req.dbUser._id
-                }
-            }
-        }
-
-        let records = Object.values(parentMap);
         const length = records.length;
-        
+
         let affected = {
             'EC048': null, 'EC157': null, 'EC158': null, 'EC156': null, 'EC159': null,
             'EC160': null, 'EC073': null, 'EC043': null, 'EC061': null, 'EC031': null, 'EC020': null
@@ -207,17 +107,17 @@ exports.uploadArborescence = async (req, res) => {
                     const EC139 = records.find(e => e.parentId === 'EC139')?.SoldeValue || 0;
                     const EC090 = records.find(e => e.parentId === 'EC090')?.SoldeValue || 0;
                     const dot = elem.parentId === 'EC113' ? 0 : (newSold - elem.SoldeValue) / divNum;
-                    
+
                     affected['EC048'] = records.find(e => e.parentId === 'EC048');
                     if (affected['EC048']) affected['EC048'].SoldeValue += dot;
-                    
+
                     affected[amortissement] = records.find(e => e.parentId === amortissement);
                     if (affected[amortissement]) affected[amortissement].SoldeValue += dot;
-                    
+
                     if (!affected['EC073']) affected['EC073'] = records.find(e => e.parentId === 'EC073');
                     if (affected['EC073'] && EC139 !== 0) {
-                        affected['EC073'].SoldeValue = (affected['EC073'].SoldeValue / EC139) * (EC139 - (affected['EC048'] ? affected['EC048'].SoldeValue : 0)) < 0 
-                            ? (0.25 / 100) * EC090 
+                        affected['EC073'].SoldeValue = (affected['EC073'].SoldeValue / EC139) * (EC139 - (affected['EC048'] ? affected['EC048'].SoldeValue : 0)) < 0
+                            ? (0.25 / 100) * EC090
                             : (affected['EC073'].SoldeValue / EC139) * (EC139 - (affected['EC048'] ? affected['EC048'].SoldeValue : 0));
                     }
                 }
@@ -286,47 +186,36 @@ exports.uploadArborescence = async (req, res) => {
             }
         }
 
-        const globalOperations = records.map(rec => ({
-            updateOne: {
-                filter: { parentId: rec.parentId },
-                update: { $set: {
-                    parentId: rec.parentId,
-                    childrenIds: rec.childrenIds,
-                    Formula: rec.formula,
-                    Method: rec.method,
-                    Category: rec.category,
-                    Typology: rec.typology,
-                    EleType: rec.eleType,
-                    NameFr: rec.nameFr,
-                    NameAn: rec.nameAn,
-                    NameAr: rec.nameAr,
-                    Signification: rec.signification,
-                    Interpretation: rec.interpretation,
-                    Recommandations: rec.recommandations,
-                    Example: rec.example,
-                    Reports: rec.Reports
-                }},
-                upsert: true
-            }
-        }));
-
         const clientOperations = records.map(rec => ({
             updateOne: {
                 filter: { parentId: rec.parentId, clientId: req.dbUser._id },
-                update: { $set: {
-                    parentId: rec.parentId,
-                    clientId: req.dbUser._id,
-                    SoldeValue: rec.SoldeValue,
-                    newSold: rec.newSold
-                }},
+                update: {
+                    $set: {
+                        parentId: rec.parentId,
+                        clientId: req.dbUser._id,
+                        SoldeValue: rec.SoldeValue,
+                        newSold: rec.newSold,
+                        childrenIds: rec.childrenIds,
+                        formula: rec.formula,
+                        method: rec.method,
+                        category: rec.category,
+                        typology: rec.typology,
+                        eleType: rec.eleType,
+                        nameFr: rec.nameFr,
+                        nameAn: rec.nameAn,
+                        nameAr: rec.nameAr,
+                        signification: rec.signification,
+                        interpretation: rec.interpretation,
+                        recommandations: rec.recommandations,
+                        example: rec.example,
+                        Reports: rec.Reports
+                    }
+                },
                 upsert: true
             }
         }));
 
-        await Promise.all([
-            GlobalElements.bulkWrite(globalOperations),
-            Arborescence.bulkWrite(clientOperations)
-        ]);
+        await Arborescence.bulkWrite(clientOperations);
 
         res.status(200).json({ success: true, message: 'Arborescence uploaded and processed successfully' });
     } catch (error) {
