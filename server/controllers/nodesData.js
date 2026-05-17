@@ -48,7 +48,7 @@ exports.getNodeById = async (req, res) => {
         example: global.Example,
         Reports: global.Reports,
         SoldeValue: client.SoldeValue || 0,
-        newSold: client.newSold || 0,
+        newSold: (client.newSold !== undefined && client.newSold !== null) ? client.newSold : null,
       };
     };
 

@@ -790,7 +790,7 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
   const fields = [
     { id: 'name', label: t('common.element_name'), value: t(`elements.${data.parentId}`, { defaultValue: data.nameFr }) },
     { id: 'balance', label: t('common.balance_value'), value: data.SoldeValue },
-    { id: 'new_balance', label: t('common.new_balance'), value: data.newSold !== null ? data.newSold : '-' },
+    { id: 'new_balance', label: t('common.new_balance'), value: (data.newSold !== null && data.newSold !== undefined) ? data.newSold : '-' },
     { id: 'formula', label: t('common.formula'), value: data.formula },
   ];
 
@@ -965,12 +965,14 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
 
       {/* Variance display */}
       {data.eleType !== "Source" && (
+        console.log("fields[2].value", fields[2].value),
+        console.log("fields[1].value", fields[1].value),
         <CollapsibleField
           label={t('common.variance')}
           value={
-            ((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' &&
-              fields[1].value !== 0 &&
-              fields[2].value !== null
+            (((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' && ((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'Infinity') &&
+            fields[1].value !== 0 &&
+            fields[2].value !== null
               ? Number((((fields[2].value / fields[1].value) - 1) * 100).toFixed(3)).toString() + '%'
               : "-"
           }
@@ -1526,7 +1528,7 @@ const KPIDiagram = memo(({ initialMode }) => {
     const rootId = root.parentId || Source;
     newNodesRef.current[modelType].push({
       id: rootId,
-      type: modelType === 'simulation' ? 'custom' : 'customNode',
+      type: 'customNode',
       position: { x: 50, y: 200 },
       data: {
         label: root.nameFr || 'Root Node',
