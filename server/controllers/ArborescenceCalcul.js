@@ -104,8 +104,10 @@ exports.ArborescenceCalcul = async (req, res) =>{
                 }
 
             }
+            else if (elem.category === "Elément de base" || elem.category === "Element de base" || elem.eleType === "Source")
+                newSold = elem.SoldeValue;
             else
-                newSold =  null;
+                newSold = null;
             
             return{
                 ...elem,

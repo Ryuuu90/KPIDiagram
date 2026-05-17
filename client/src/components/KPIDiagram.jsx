@@ -965,15 +965,15 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
 
       {/* Variance display */}
       {data.eleType !== "Source" && (
-        console.log("fields[2].value", fields[2].value),
-        console.log("fields[1].value", fields[1].value),
         <CollapsibleField
           label={t('common.variance')}
           value={
-            (((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'NaN' && ((fields[2].value / fields[1].value) - 1).toFixed(3) !== 'Infinity') &&
-            fields[1].value !== 0 &&
-            fields[2].value !== null
-              ? Number((((fields[2].value / fields[1].value) - 1) * 100).toFixed(3)).toString() + '%'
+            !isNaN(Number(fields[2].value)) &&
+            !isNaN(Number(fields[1].value)) &&
+            Number(fields[1].value) !== 0 &&
+            fields[2].value !== null &&
+            fields[2].value !== '-'
+              ? Number((((Number(fields[2].value) / Number(fields[1].value)) - 1) * 100).toFixed(3)).toString() + '%'
               : "-"
           }
           isFirst={false}
