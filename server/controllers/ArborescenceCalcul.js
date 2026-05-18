@@ -1,9 +1,4 @@
 const Arborescence = require('../models/Arborescence2.model');
-const GlobalElements = require('../models/GlobalElements.model');
-const xlsx = require('xlsx');
-const path = require('path');
-const { Console } = require('console');
-
 
 function isValidFormula(str) {
     // Allowed chars: digits, spaces, + - * / ( ) .

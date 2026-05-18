@@ -84,9 +84,8 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource, reset, simula
 
   const formatNumber = (num) => {
     if (num === "-" || num === "" || num == null) return "-";
-    return new Intl.NumberFormat("fr-FR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
+    return new Intl.NumberFormat("en-EN", {
+      maximumFractionDigits: 0,
     }).format(Number(num));
   };
 
@@ -165,7 +164,7 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource, reset, simula
             table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="border-b hover:bg-gray-50">
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2 text-sm text-gray-800">
+                  <td key={cell.id} className="px-4 py-2 text-sm text-right text-gray-800">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -201,9 +200,8 @@ const SimulationTable = ({ Source, basesRef, setSource, reset }) => {
 
   const formatNumber = (num) => {
     if (num === "-" || num === "" || num == null) return "-";
-    return new Intl.NumberFormat("fr-FR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
+    return new Intl.NumberFormat("en-EN", {
+      maximumFractionDigits: 0,
     }).format(Number(num));
   };
 
@@ -245,7 +243,7 @@ const SimulationTable = ({ Source, basesRef, setSource, reset }) => {
           const elementId = row.original.parentId;
           const savedValue = basesRef.current[elementId] || "-";
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2 w-full">
               {editingRow === elementId ? (
                 <input
                   type="number"
@@ -312,11 +310,15 @@ const SimulationTable = ({ Source, basesRef, setSource, reset }) => {
           ) : (
             table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="border-b hover:bg-gray-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2 text-sm text-gray-800">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+                {row.getVisibleCells().map((cell) => {
+                  const value = cell.getValue();
+                  const isNumber = typeof value === 'number';
+                  return (
+                    <td key={cell.id} className={`px-4 py-2 text-sm ${isNumber ? 'text-right' : 'text-left'} text-gray-800`}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  )
+                })}
               </tr>
             ))
           )}
@@ -789,8 +791,8 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
 
   const fields = [
     { id: 'name', label: t('common.element_name'), value: t(`elements.${data.parentId}`, { defaultValue: data.nameFr }) },
-    { id: 'balance', label: t('common.balance_value'), value: data.SoldeValue },
-    { id: 'new_balance', label: t('common.new_balance'), value: (data.newSold !== null && data.newSold !== undefined) ? data.newSold : '-' },
+    { id: 'balance', label: t('common.balance_value'), value: data.SoldeValue ? data.SoldeValue.toFixed(0) : '' },
+    { id: 'new_balance', label: t('common.new_balance'), value: (data.newSold !== null && data.newSold !== undefined) ? data.newSold.toFixed(0) : '-' },
     { id: 'formula', label: t('common.formula'), value: data.formula },
   ];
 
@@ -969,10 +971,10 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
           label={t('common.variance')}
           value={
             !isNaN(Number(fields[2].value)) &&
-            !isNaN(Number(fields[1].value)) &&
-            Number(fields[1].value) !== 0 &&
-            fields[2].value !== null &&
-            fields[2].value !== '-'
+              !isNaN(Number(fields[1].value)) &&
+              Number(fields[1].value) !== 0 &&
+              fields[2].value !== null &&
+              fields[2].value !== '-'
               ? Number((((Number(fields[2].value) - Number(fields[1].value)) / Math.abs(Number(fields[1].value))) * 100).toFixed(3)).toString() + '%'
               : "-"
           }
@@ -1026,7 +1028,7 @@ const CustomNode = memo(({ data, basesRef, modelType }) => {
     },
     { id: 'method', label: t('common.calculation_method'), value: data.method },
     { id: 'reports', label: t('common.reports_containing_item'), value: data.Reports },
-    { id: 'balance', label: t('common.balance_value'), value: String(data.SoldeValue).replace(/\B(?=(\d{3})+(?!\d))/g, ",") },
+    { id: 'balance', label: t('common.balance_value'), value: data.SoldeValue && data.formula.includes('/') ? String((data.SoldeValue * 100).toFixed(0)).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "%" : data.SoldeValue && !data.formula.includes('/') ? String(data.SoldeValue.toFixed(0)).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "" },
   ];
 
   return (
