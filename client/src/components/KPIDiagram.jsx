@@ -9,7 +9,7 @@ import ReactFlow, {
   Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Pencil, Play, RotateCcw } from "lucide-react";
+import { Pencil, Play, RotateCcw , Check} from "lucide-react";
 import api from '../utils/api';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -113,7 +113,7 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource, reset, simula
           const elementId = row.original.parentId;
           const savedValue = filtredVals.current ? (filtredVals.current[elementId] || "-") : "-";
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2">
               <span>{savedValue === '-' && getValue() !== null ? formatNumber(getValue()) : formatNumber(savedValue)}</span>
             </div>
           );
@@ -163,11 +163,15 @@ const AffectedElementsTable = ({ Source, expandedNodes, setSource, reset, simula
           ) : (
             table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="border-b hover:bg-gray-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2 text-sm text-right text-gray-800">
+                {row.getVisibleCells().map((cell) => {
+                  const value = cell.getValue();
+                  const isNumeric = typeof value === "number";
+                  return (
+                  <td key={cell.id} className={`px-4 py-2 ${isNumeric ? "text-right" : "text-left"} text-gray-800`}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
-                ))}
+                  )
+                })}
               </tr>
             ))
           )}
@@ -798,13 +802,13 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
 
   const getFiltredItemms = () => {
     if (!query) return [];
-    return Elements.filter(elem => elem.nameFr.toLowerCase().includes(query.toLowerCase()));
+    return Elements.filter(elem => elem.nameFr.toLowerCase().includes(query.toLowerCase()) || elem.id.toLowerCase().includes(query.toLowerCase()));
   };
   const filteredData = getFiltredItemms();
 
   const handleInputFocus = (e) => {
     if (e.code === 'Enter') {
-      const source = Elements.find(elem => elem.nameFr.toLowerCase() === query.toLowerCase());
+      const source = Elements.find(elem =>( elem.nameFr.toLowerCase() === query.toLowerCase() || elem.id.toLowerCase() === query.toLowerCase()));
       if (!source) return;
       data.setSource(source.id);
     }
@@ -839,7 +843,7 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
                   className='px-3 py-2 border-b border-gray-200 last:border-b-0 hover:bg-gray-100 cursor-pointer transition-colors duration-150 text-gray-800'
                   onClick={() => { data.setSource(val.id); data.Selected.current = true; }}
                 >
-                  {t(`elements.${val.id}`, { defaultValue: val.nameFr })}
+                  {val.id} : {t(`elements.${val.id}`, {defaultValue: val.nameFr})}
                 </li>
               ))}
             </ul>
@@ -929,7 +933,7 @@ const SimulationCard = memo(({ data, basesRef, modelType, calculResultsRef, card
                 className='absolute right-4 bottom-[4.5rem] font-medium px-2 text-2xl bg-indigo-100 text-indigo-700 rounded'
                 onClick={handleSave}
               >
-                =
+                <Check />
               </button>
             </div>
           )}
