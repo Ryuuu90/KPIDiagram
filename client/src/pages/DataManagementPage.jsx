@@ -8,6 +8,7 @@ const DataManagementPage = () => {
   const { t } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
   const [file, setFile] = useState(null);
+  const [validationErrors, setValidationErrors] = useState([]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -25,6 +26,7 @@ const DataManagementPage = () => {
     }
 
     setIsUploading(true);
+    setValidationErrors([]);
     const formData = new FormData();
     formData.append('file', file);
 
@@ -38,7 +40,11 @@ const DataManagementPage = () => {
     } catch (err) {
       console.error(err);
       const errorData = err.response?.data;
-      if (errorData && errorData.message && errorData.message.startsWith('validation.')) {
+      // If the backend returned a detailed list of validation errors, show them in the UI
+      if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+        setValidationErrors(errorData.errors);
+        toast.error(`${errorData.errors.length} erreur(s) de validation détectée(s).`, { id: loadToast });
+      } else if (errorData?.message?.startsWith('validation.')) {
         toast.error(t(errorData.message, errorData.params), { id: loadToast });
       } else {
         toast.error(errorData?.message || t('data_management.toast_import_error'), { id: loadToast });
@@ -162,6 +168,32 @@ const DataManagementPage = () => {
 
           {/* </div> */}
         </div>
+
+        {/* Validation Errors Panel */}
+        {validationErrors.length > 0 && (
+          <div className="mt-8 bg-red-50 border border-red-200 rounded-3xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="text-red-500 shrink-0" size={22} />
+              <h3 className="font-bold text-red-700 text-base">
+                {validationErrors.length} erreur(s) de validation détectée(s) — fichier non importé
+              </h3>
+              <button
+                onClick={() => setValidationErrors([])}
+                className="ml-auto text-xs text-red-400 hover:text-red-600 hover:underline"
+              >
+                Fermer
+              </button>
+            </div>
+            <ul className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              {validationErrors.map((err, i) => (
+                <li key={i} className="flex gap-2 text-sm text-red-700 bg-white border border-red-100 rounded-xl px-4 py-2.5">
+                  <span className="font-mono text-red-400 shrink-0">#{i + 1}</span>
+                  <span>{err}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Status Section */}
         <div className="mt-12 p-6 bg-orange-50/50 rounded-3xl border border-orange-100/50 flex items-center gap-4">

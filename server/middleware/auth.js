@@ -81,8 +81,28 @@ function requireActiveUser(req, res, next) {
 // verifyToken remains for backward compatibility, combining both checks
 const verifyToken = [verifyJWT, requireActiveUser];
 
+/**
+ * Checks if the user has founder or admin roles.
+ * Requires requireActiveUser to have run first (so req.dbUser exists).
+ */
+function requireFounder(req, res, next) {
+  if (!req.dbUser) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
+  if (!req.dbUser.roles || (!req.dbUser.roles.includes("founder") && !req.dbUser.roles.includes("admin"))) {
+    return res.status(403).json({ message: "Access denied. Founder role required." });
+  }
+  
+  next();
+}
+
+const verifyFounder = [verifyJWT, requireActiveUser, requireFounder];
+
 module.exports = {
   verifyJWT,
   requireActiveUser,
-  verifyToken
+  verifyToken,
+  requireFounder,
+  verifyFounder
 };

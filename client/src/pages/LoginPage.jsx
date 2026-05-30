@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import logo from '../public/finansia-logo.png';
 
-const LoginPage = ({ onLogin }) => {
+const LoginPage = ({ onLogin, customTitle, customSubtitle }) => {
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -70,8 +70,8 @@ const LoginPage = ({ onLogin }) => {
             <img src={logo} alt="Finansia Logo" className="brand-logo" />
           </div>
 
-          <h1 className="login-title">{t('auth.welcome_back')}</h1>
-          <p className="login-sub">{t('auth.login_subtitle')}</p>
+          <h1 className="login-title">{customTitle || t('auth.welcome_back')}</h1>
+          <p className="login-sub">{customSubtitle || t('auth.login_subtitle')}</p>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="login-form">

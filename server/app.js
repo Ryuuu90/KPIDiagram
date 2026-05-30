@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const router = require('./routes/routes');
 const authRoutes = require('./routes/authRoutes');
+const founderRoutes = require('./routes/founderRoutes');
 
 const morgan = require("morgan");
 
@@ -33,6 +34,7 @@ mongoose.connect(MONGODB_URL).then(()=>{
 app.use(morgan("dev"));
 app.use('/api', router);
 app.use('/api/auth', authRoutes);
+app.use('/api/founder', founderRoutes);
 
 app.listen(PORT, ()=>{
     console.log(`server is running on port ${PORT}`);

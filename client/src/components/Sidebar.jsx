@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import keycloak from '../keycloak';
 
 import {
   LayoutDashboard,
@@ -17,6 +18,7 @@ import {
   UserCircle,
   Database,
   Users,
+  Shield,
 } from 'lucide-react';
 
 const Sidebar = () => {

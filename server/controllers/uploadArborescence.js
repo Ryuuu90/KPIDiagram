@@ -1,5 +1,6 @@
 const Arborescence = require('../models/Arborescence2.model');
 const GlobalElements = require('../models/GlobalElements.model');
+const BaseElements = require('../models/BaseElements.model');
 const xlsx = require('xlsx');
 
 function isValidFormula(str) {
@@ -44,19 +45,109 @@ exports.uploadArborescence = async (req, res) => {
             });
         }
 
-        // 2. Parse the balances sheet ('base-EC-values')
+        // 2. Parse the balances sheet ('Base-EC-Values')
         const valuesSheetRaw = workbook.Sheets['Base-EC-Values'];
-
-        const balanceMap = {};
-        if (valuesSheetRaw) {
-            const valuesData = xlsx.utils.sheet_to_json(valuesSheetRaw);
-            console.log("valuesSheetRaw", valuesData);
-            valuesData.forEach(row => {
-                const id = row["ID"] || row["id"] || row["NumEC"] || row["numec"];
-                const val = row["SoldeValue"] || row["solde"] || row["Value"] || row["Valeur"];
-                if (id) balanceMap[id] = Number(val) || 0;
+        if (!valuesSheetRaw) {
+            return res.status(400).json({
+                success: false,
+                message: 'Feuille "Base-EC-Values" introuvable dans le fichier Excel. Vérifiez que le nom de la feuille est correct.'
             });
         }
+
+        const valuesData = xlsx.utils.sheet_to_json(valuesSheetRaw);
+
+        // ── 3. VALIDATION ENGINE ─────────────────────────────────────────────
+        // Parse the Excel into grouped blocks: each EC parent + its child rows
+        const excelGroups = []; // [{ ecId, label, children: [{id, label}] }]
+        let currentGroup = null;
+        for (const row of valuesData) {
+            const numEC    = row['NumEC'];
+            const childId  = String(row['Qui apparaissent dans la balance'] || row['Qui apparaissent dans le BL et CPC'] || '').trim();
+            const label    = String(row['Intitulé des comptes'] || '').trim();
+
+            if (numEC) {
+                // This is a parent EC row
+                currentGroup = { ecId: String(numEC).trim(), label, children: [] };
+                excelGroups.push(currentGroup);
+            } else if (currentGroup && childId && label) {
+                // This is a child row belonging to the current EC
+                currentGroup.children.push({ id: childId, label });
+            }
+        }
+
+        // Fetch all BaseElements from DB and build a lookup map by Name (e.g. 'EC025')
+        const baseElementsDocs = await BaseElements.find({}).lean();
+        const dbBaseMap = {};
+        for (const doc of baseElementsDocs) {
+            dbBaseMap[doc.Name] = {
+                label: doc.Label || '',
+                children: (doc.Children || []).map(c => ({ id: String(c.id || '').trim(), label: String(c.Label || '').trim() }))
+            };
+        }
+
+        const validationErrors = [];
+
+        for (const group of excelGroups) {
+            const dbEntry = dbBaseMap[group.ecId];
+
+            // Check 1: Does this EC element exist in the DB?
+            if (!dbEntry) {
+                validationErrors.push(
+                    `❌ Élément de base "${group.ecId}" (Intitulé dans Excel: "${group.label}") introuvable dans la base de données.`
+                );
+                continue; // Can't validate children if parent doesn't exist
+            }
+
+            const dbChildMap = {};
+            for (const c of dbEntry.children) {
+                dbChildMap[c.id] = c.label;
+            }
+
+            // Build a set of IDs present in the Excel for this EC
+            const excelChildIds = new Set(group.children.map(c => c.id));
+
+            for (const excelChild of group.children) {
+                if (!(excelChild.id in dbChildMap)) {
+                    // Check 2: Child ID in Excel doesn't exist in DB
+                    validationErrors.push(
+                        `❌ Sous "${group.ecId}": l'enfant ID="${excelChild.id}" (nom dans Excel: "${excelChild.label}") n'existe pas dans la base de données.`
+                    );
+                } else if (dbChildMap[excelChild.id].toLowerCase() !== excelChild.label.toLowerCase()) {
+                    // Check 3: Child ID exists but label doesn't match
+                    validationErrors.push(
+                        `⚠️  Sous "${group.ecId}": l'enfant ID="${excelChild.id}" a un nom incorrect — attendu: "${dbChildMap[excelChild.id]}", reçu dans Excel: "${excelChild.label}".`
+                    );
+                }
+            }
+
+            // Check 4: Children in DB that are completely missing from the Excel
+            for (const dbChild of dbEntry.children) {
+                if (!excelChildIds.has(dbChild.id)) {
+                    validationErrors.push(
+                        `⚠️  Sous "${group.ecId}": l'enfant ID="${dbChild.id}" (nom attendu: "${dbChild.label}") est présent dans la base de données mais absent du fichier Excel.`
+                    );
+                }
+            }
+        }
+
+
+        // If there are validation errors, stop and report them all
+        if (validationErrors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Le fichier contient ${validationErrors.length} erreur(s) de validation. Aucune donnée n'a été importée.`,
+                errors: validationErrors
+            });
+        }
+        // ── END VALIDATION ───────────────────────────────────────────────────
+
+        // Build the balanceMap from validated data
+        const balanceMap = {};
+        valuesData.forEach(row => {
+            const id  = row['NumEC'] || row['ID'] || row['id'] || row['numec'];
+            const val = row['SoldeValue'] || row['solde'] || row['Value'] || row['Valeur'];
+            if (id) balanceMap[String(id).trim()] = Number(val) || 0;
+        });
 
         // Map global elements with client-uploaded balances
         let records = globalDocs.map(doc => {
