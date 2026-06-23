@@ -1,4 +1,4 @@
-const KEYCLOAK_URL = process.env.KEYCLOAK_URL || "http://localhost:8080";
+const KEYCLOAK_URL = process.env.KEYCLOAK_INTERNAL_URL || process.env.KEYCLOAK_URL || "http://localhost:8080";
 const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM || "nhancit";
 
 /**
@@ -160,8 +160,71 @@ async function getUserByKeycloakId(keycloakId) {
   }
 }
 
+/**
+ * Resets a Keycloak user's password.
+ */
+async function resetKeycloakUserPassword(keycloakId, newPassword) {
+  if (!keycloakId || keycloakId.startsWith("temp_")) {
+    throw new Error("Invalid keycloakId for password reset");
+  }
+
+  const token = await getAdminToken();
+  const url = `${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/users/${keycloakId}/reset-password`;
+
+  const payload = {
+    type: "password",
+    value: newPassword,
+    temporary: false,
+  };
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.error(`Failed to reset password for ${keycloakId}:`, err);
+    throw new Error(`Keycloak Reset Password error (${response.status}): ${err}`);
+  }
+}
+
+/**
+ * Sends a Keycloak password-reset email to a user via the execute-actions-email API.
+ * The user receives a link to set a new password directly in Keycloak.
+ */
+async function sendKeycloakResetPasswordEmail(keycloakId) {
+  if (!keycloakId || keycloakId.startsWith("temp_")) {
+    throw new Error("Invalid keycloakId for reset email");
+  }
+
+  const token = await getAdminToken();
+  const url = `${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/users/${keycloakId}/execute-actions-email`;
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(["UPDATE_PASSWORD"]),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.error(`Failed to send reset email for ${keycloakId}:`, err);
+    throw new Error(`Keycloak Reset Email error (${response.status}): ${err}`);
+  }
+}
+
 module.exports = {
   createKeycloakUser,
   deleteKeycloakUser,
   getUserByKeycloakId,
+  resetKeycloakUserPassword,
+  sendKeycloakResetPasswordEmail,
 };

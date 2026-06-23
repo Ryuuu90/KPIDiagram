@@ -1,16 +1,14 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const router = require('./routes/routes');
 const authRoutes = require('./routes/authRoutes');
 const founderRoutes = require('./routes/founderRoutes');
 
 const morgan = require("morgan");
-
-
-
-dotenv.config()
 
 const corsOptions = {
     origin: "*",

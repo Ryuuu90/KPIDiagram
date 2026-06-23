@@ -4,18 +4,18 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import keycloak from '../keycloak';
 import {
-  Users, Database, Plus, Search, Trash2, Edit3, Save, X, ChevronLeft, ChevronRight, Shield, LogOut, Info
+  Users, Database, Plus, Search, Trash2, Edit3, Save, X, ChevronLeft, ChevronRight, Shield, LogOut, Info, Key
 } from 'lucide-react';
 import finansiaLogo from '../public/finansia-logo.jpeg';
 
 // ─── Available collections ────────────────────────────────────────────────────
 const MODELS = [
-  { key: 'baseelements',   label: 'BaseElements',   description: 'Accounting indicators & their children' },
+  { key: 'baseelements', label: 'BaseElements', description: 'Accounting indicators & their children' },
   { key: 'globalelements', label: 'GlobalElements', description: 'KPI formulas, categories, typologies' },
 ];
 
 function avatarColor(name) {
-  const colors = ['#f97316','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#14b8a6'];
+  const colors = ['#f97316', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
   let h = 0;
   for (let c of (name || 'U')) h = c.charCodeAt(0) + ((h << 5) - h);
   return colors[Math.abs(h) % colors.length];
@@ -25,7 +25,7 @@ function avatarColor(name) {
 const ArrayTableEditor = ({ value, onChange }) => {
   const arr = Array.isArray(value) ? value : [];
   const isFlat = arr.length > 0 && typeof arr[0] !== 'object';
-  
+
   // Get all unique keys across all objects in the array
   const allKeys = Array.from(new Set(arr.flatMap(item => typeof item === 'object' && item !== null ? Object.keys(item) : [])));
   const keys = allKeys.length > 0 ? allKeys : ['id', 'name'];
@@ -62,12 +62,12 @@ const ArrayTableEditor = ({ value, onChange }) => {
         <div className="flex flex-col gap-2">
           {arr.map((val, idx) => (
             <div key={idx} className="flex gap-2">
-              <input 
-                value={typeof val === 'string' ? val : ''} 
-                onChange={e => updateFlatField(idx, e.target.value)} 
-                className="flex-1 p-1.5 text-xs border rounded bg-white focus:outline-none focus:border-orange-400" 
+              <input
+                value={typeof val === 'string' ? val : ''}
+                onChange={e => updateFlatField(idx, e.target.value)}
+                className="flex-1 p-1.5 text-xs border rounded bg-white focus:outline-none focus:border-orange-400"
               />
-              <button onClick={() => removeRow(idx)} className="text-red-500 hover:bg-red-50 px-1 rounded"><X size={14}/></button>
+              <button onClick={() => removeRow(idx)} className="text-red-500 hover:bg-red-50 px-1 rounded"><X size={14} /></button>
             </div>
           ))}
           <div className="flex gap-3 mt-1">
@@ -93,15 +93,15 @@ const ArrayTableEditor = ({ value, onChange }) => {
                 <tr key={idx}>
                   {keys.map(k => (
                     <td key={k} className="p-0.5">
-                      <input 
-                        value={row[k] || ''} 
+                      <input
+                        value={row[k] || ''}
                         onChange={e => updateObjField(idx, k, e.target.value)}
                         className="w-full p-1 border rounded bg-white focus:outline-none focus:border-orange-400"
                       />
                     </td>
                   ))}
                   <td className="p-0.5 w-6 text-center">
-                    <button onClick={() => removeRow(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded"><Trash2 size={12}/></button>
+                    <button onClick={() => removeRow(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded"><Trash2 size={12} /></button>
                   </td>
                 </tr>
               ))}
@@ -121,12 +121,15 @@ const FounderDashboard = () => {
   const [activeTab, setActiveTab] = useState('users');
 
   // ── User management state ──
-  const [clients, setClients]       = useState([]);
+  const [clients, setClients] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [search, setSearch]         = useState('');
-  const [panelOpen, setPanelOpen]   = useState(false);
+  const [search, setSearch] = useState('');
+  const [panelOpen, setPanelOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null); // { id, username }
-  const [submitting, setSubmitting]  = useState(false);
+  const [resetPasswordModal, setResetPasswordModal] = useState(null); // { id, username }
+  const [newPassword, setNewPassword] = useState('');
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [newUser, setNewUser] = useState({
     username: '', email: '', password: '', firstName: '', lastName: '',
     roles: 'user', companyName: '', department: '', isActive: true,
@@ -135,11 +138,11 @@ const FounderDashboard = () => {
 
   // ── Model editor state ──
   const [selectedModel, setSelectedModel] = useState(MODELS[0].key);
-  const [modelDocs, setModelDocs]   = useState([]);
-  const [modelMeta, setModelMeta]   = useState({ total: 0, page: 1, limit: 20 });
+  const [modelDocs, setModelDocs] = useState([]);
+  const [modelMeta, setModelMeta] = useState({ total: 0, page: 1, limit: 20 });
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
-  const [savingRow, setSavingRow]   = useState(null);
+  const [savingRow, setSavingRow] = useState(null);
   const [confirmDocDelete, setConfirmDocDelete] = useState(null);
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -171,7 +174,7 @@ const FounderDashboard = () => {
         roles: [newUser.roles],
       });
       toast.success(`User "${newUser.username}" created successfully!`);
-      setNewUser({ username:'', email:'', password:'', firstName:'', lastName:'', roles:'user', companyName:'', department:'', isActive:true });
+      setNewUser({ username: '', email: '', password: '', firstName: '', lastName: '', roles: 'user', companyName: '', department: '', isActive: true });
       setPanelOpen(false);
       fetchClients();
     } catch (err) {
@@ -200,6 +203,22 @@ const FounderDashboard = () => {
       fetchClients();
     } catch {
       toast.error('Failed to delete user');
+    }
+  };
+
+  const doResetPassword = async () => {
+    if (!resetPasswordModal) return;
+    if (newPassword.length < 6) return toast.error('Password must be at least 6 characters');
+    setResettingPassword(true);
+    try {
+      await api.put(`/founder/clients/${resetPasswordModal.id}/password`, { password: newPassword });
+      toast.success(`Password reset for ${resetPasswordModal.username}`);
+      setResetPasswordModal(null);
+      setNewPassword('');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -265,7 +284,7 @@ const FounderDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#fef3e8]/30 flex flex-col font-sans">
-      
+
       {/* Navbar (replaces Sidebar) */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-orange-100 flex items-center justify-between px-6 py-3 sticky top-0 z-40 shadow-sm">
         <div className="flex items-center gap-4">
@@ -275,7 +294,7 @@ const FounderDashboard = () => {
             <Shield className="text-orange-500" size={24} /> Founder Panel
           </h1>
         </div>
-        <button 
+        <button
           onClick={() => keycloak.logout({ redirectUri: window.location.origin })}
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
         >
@@ -291,25 +310,23 @@ const FounderDashboard = () => {
           <div className="flex bg-white/60 p-1.5 rounded-2xl border border-orange-100 shadow-sm">
             <button
               onClick={() => setActiveTab('users')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                activeTab === 'users' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-              }`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${activeTab === 'users' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
             >
               <Users size={18} /> User Management
               <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-xs">{clients.length}</span>
             </button>
             <button
               onClick={() => setActiveTab('models')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                activeTab === 'models' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-              }`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${activeTab === 'models' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
             >
               <Database size={18} /> Data Models
             </button>
           </div>
 
           {activeTab === 'users' && (
-            <button 
+            <button
               onClick={() => setPanelOpen(true)}
               className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md shadow-orange-200 transition-all active:scale-95"
             >
@@ -321,7 +338,7 @@ const FounderDashboard = () => {
         {/* ════════════════ TAB 1: USERS ════════════════ */}
         {activeTab === 'users' && (
           <div className="space-y-6">
-            
+
             {/* Search */}
             <div className="relative max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -352,10 +369,10 @@ const FounderDashboard = () => {
                   const initials = (client.firstName?.[0] || client.username?.[0] || 'U').toUpperCase();
                   return (
                     <div key={client._id} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-5 relative overflow-hidden group">
-                      
+
                       {/* Top row */}
                       <div className="flex items-center gap-4">
-                        <div 
+                        <div
                           className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-inner"
                           style={{ backgroundColor: avatarColor(client.username) }}
                         >
@@ -377,9 +394,8 @@ const FounderDashboard = () => {
                           <p className="text-slate-400 text-xs font-medium mb-1">Status</p>
                           <button
                             onClick={() => toggleStatus(client._id, client.isActive)}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition-colors ${
-                              client.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'
-                            }`}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition-colors ${client.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'
+                              }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${client.isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
                             {client.isActive ? 'Active' : 'Inactive'}
@@ -392,10 +408,9 @@ const FounderDashboard = () => {
                         <p className="text-slate-400 text-xs font-medium mb-2">Roles</p>
                         <div className="flex flex-wrap gap-2">
                           {(client.roles || []).map(r => (
-                            <span key={r} className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
-                              r === 'founder' ? 'bg-orange-100 text-orange-600' : 
-                              r === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'
-                            }`}>
+                            <span key={r} className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${r === 'founder' ? 'bg-orange-100 text-orange-600' :
+                                r === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'
+                              }`}>
                               {r}
                             </span>
                           ))}
@@ -403,8 +418,14 @@ const FounderDashboard = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="mt-auto pt-4 border-t border-slate-50 flex justify-end">
-                        <button 
+                      <div className="mt-auto pt-4 border-t border-slate-50 flex justify-end gap-2">
+                        <button
+                          onClick={() => setResetPasswordModal({ id: client._id, username: client.username })}
+                          className="flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          <Key size={14} /> Reset Password
+                        </button>
+                        <button
                           onClick={() => setConfirmDelete({ id: client._id, username: client.username })}
                           className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
                         >
@@ -422,16 +443,15 @@ const FounderDashboard = () => {
         {/* ════════════════ TAB 2: MODELS ════════════════ */}
         {activeTab === 'models' && (
           <div className="space-y-6">
-            
+
             {/* Model Selector */}
             <div className="bg-white p-2 rounded-2xl shadow-sm border border-orange-100 flex flex-wrap gap-2">
               {MODELS.map(m => (
                 <button
                   key={m.key}
                   onClick={() => { setSelectedModel(m.key); setEditingRow(null); }}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                    selectedModel === m.key ? 'bg-orange-50 text-orange-600' : 'text-slate-500 hover:bg-slate-50'
-                  }`}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${selectedModel === m.key ? 'bg-orange-50 text-orange-600' : 'text-slate-500 hover:bg-slate-50'
+                    }`}
                 >
                   {m.label}
                 </button>
@@ -475,9 +495,9 @@ const FounderDashboard = () => {
                                     <span className="font-mono text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">{String(doc._id).slice(-6)}</span>
                                   ) : isEditing ? (
                                     Array.isArray(editingRow.originalDoc[col]) ? (
-                                      <ArrayTableEditor 
-                                        value={editingRow.data[col]} 
-                                        onChange={newVal => setEditingRow(prev => ({ ...prev, data: { ...prev.data, [col]: newVal } }))} 
+                                      <ArrayTableEditor
+                                        value={editingRow.data[col]}
+                                        onChange={newVal => setEditingRow(prev => ({ ...prev, data: { ...prev.data, [col]: newVal } }))}
                                       />
                                     ) : typeof editingRow.originalDoc[col] === 'object' && editingRow.originalDoc[col] !== null ? (
                                       <textarea
@@ -548,7 +568,7 @@ const FounderDashboard = () => {
                   </tbody>
                 </table>
               </div>
-              
+
               {/* Pagination */}
               {modelMeta.total > modelMeta.limit && (
                 <div className="border-t border-slate-100 bg-slate-50 p-4 flex items-center justify-between">
@@ -573,33 +593,33 @@ const FounderDashboard = () => {
               <h2 className="text-xl font-bold text-slate-800">Create New User</h2>
               <button onClick={() => setPanelOpen(false)} className="p-2 text-slate-400 hover:bg-slate-200 rounded-full transition-colors"><X size={20} /></button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
               <form id="create-user-form" onSubmit={handleCreateUser} className="space-y-5">
                 <div className="grid grid-cols-2 gap-5">
                   <div className="col-span-2">
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Username <span className="text-red-500">*</span></label>
-                    <input required value={newUser.username} onChange={e => setNewUser({...newUser, username: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="johndoe" />
+                    <input required value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="johndoe" />
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Password <span className="text-red-500">*</span></label>
-                    <input required type="password" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="Min. 6 characters" />
+                    <input required type="password" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="Min. 6 characters" />
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Email</label>
-                    <input type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="john@company.com" />
+                    <input type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="john@company.com" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">First Name</label>
-                    <input value={newUser.firstName} onChange={e => setNewUser({...newUser, firstName: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="John" />
+                    <input value={newUser.firstName} onChange={e => setNewUser({ ...newUser, firstName: e.target.value })} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="John" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Last Name</label>
-                    <input value={newUser.lastName} onChange={e => setNewUser({...newUser, lastName: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="Doe" />
+                    <input value={newUser.lastName} onChange={e => setNewUser({ ...newUser, lastName: e.target.value })} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="Doe" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Role</label>
-                    <select value={newUser.roles} onChange={e => setNewUser({...newUser, roles: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm">
+                    <select value={newUser.roles} onChange={e => setNewUser({ ...newUser, roles: e.target.value })} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm">
                       <option value="user">User</option>
                       <option value="founder">Founder</option>
                       <option value="admin">Admin</option>
@@ -607,19 +627,19 @@ const FounderDashboard = () => {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Company</label>
-                    <input value={newUser.companyName} onChange={e => setNewUser({...newUser, companyName: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="Acme Corp" />
+                    <input value={newUser.companyName} onChange={e => setNewUser({ ...newUser, companyName: e.target.value })} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm" placeholder="Acme Corp" />
                   </div>
                 </div>
 
                 <div className="pt-4 flex items-center justify-between border-t border-slate-100">
                   <span className="text-sm font-bold text-slate-700">Account Active</span>
-                  <button type="button" onClick={() => setNewUser({...newUser, isActive: !newUser.isActive})} className={`relative w-12 h-6 rounded-full transition-colors ${newUser.isActive ? 'bg-green-500' : 'bg-slate-300'}`}>
+                  <button type="button" onClick={() => setNewUser({ ...newUser, isActive: !newUser.isActive })} className={`relative w-12 h-6 rounded-full transition-colors ${newUser.isActive ? 'bg-green-500' : 'bg-slate-300'}`}>
                     <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${newUser.isActive ? 'translate-x-6' : ''}`} />
                   </button>
                 </div>
               </form>
             </div>
-            
+
             <div className="p-6 border-t border-slate-100 bg-slate-50/50">
               <button form="create-user-form" type="submit" disabled={submitting} className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 transition-all active:scale-95 disabled:opacity-50">
                 {submitting ? 'Creating...' : 'Create User'}
@@ -658,7 +678,31 @@ const FounderDashboard = () => {
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: `
+      {resetPasswordModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-fade-in">
+            <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4"><Key size={32} /></div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2 text-center">Reset Password</h3>
+            <p className="text-slate-500 text-sm mb-6 text-center">Enter a new password for <strong className="text-slate-700">{resetPasswordModal.username}</strong>.</p>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Min. 6 characters"
+              className="w-full p-3 mb-6 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+            />
+            <div className="flex gap-3">
+              <button onClick={() => { setResetPasswordModal(null); setNewPassword(''); }} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">Cancel</button>
+              <button onClick={doResetPassword} disabled={resettingPassword} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all disabled:opacity-50">
+                {resettingPassword ? 'Resetting...' : 'Reset'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
         .animate-slide-in-right { animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-fade-in { animation: fade-in 0.3s ease-out; }

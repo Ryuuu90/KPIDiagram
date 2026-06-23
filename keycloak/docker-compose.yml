@@ -9,6 +9,11 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_PROXY: edge
+      KC_HOSTNAME_URL: https://16.171.10.56.sslip.io/auth
+      KC_HOSTNAME_ADMIN_URL: https://16.171.10.56.sslip.io/auth
+      KC_HOSTNAME_STRICT_HTTPS: "true"
 
     volumes:
       - ./themes:/opt/keycloak/themes

@@ -2,20 +2,20 @@ const Client = require("../models/Client");
 const keycloakAdmin = require("../utils/keycloakAdmin");
 
 // ─── Model registry ──────────────────────────────────────────────────────────
-const BaseElements  = require("../models/BaseElements.model");
+const BaseElements = require("../models/BaseElements.model");
 const GlobalElements = require("../models/GlobalElements.model");
-const Actif  = require("../models/Actif");
+const Actif = require("../models/Actif");
 const Passif = require("../models/Passif");
-const CPC    = require("../models/CPC");
-const ESG    = require("../models/ESG");
+const CPC = require("../models/CPC");
+const ESG = require("../models/ESG");
 
 const MODEL_MAP = {
-  baseelements:   BaseElements,
+  baseelements: BaseElements,
   globalelements: GlobalElements,
-  actif:          Actif,
-  passif:         Passif,
-  cpc:            CPC,
-  esg:            ESG,
+  actif: Actif,
+  passif: Passif,
+  cpc: CPC,
+  esg: ESG,
 };
 
 function resolveModel(name) {
@@ -131,6 +131,33 @@ const deleteClient = async (req, res) => {
   }
 };
 
+const resetClientPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long." });
+    }
+
+    const client = await Client.findById(id);
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    if (!client.keycloakId) {
+      return res.status(400).json({ message: "Client has no Keycloak ID associated." });
+    }
+
+    await keycloakAdmin.resetKeycloakUserPassword(client.keycloakId, password);
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error("Error resetting client password:", error);
+    res.status(500).json({ message: "Failed to reset client password: " + error.message });
+  }
+};
+
 // ─── Keycloak Delete Webhook ──────────────────────────────────────────────────
 // When a user is deleted directly in the Keycloak Admin Console, Keycloak
 // can POST to this endpoint (via its Event Listener SPI / HTTP listener).
@@ -177,9 +204,9 @@ const getModelDocuments = async (req, res) => {
       return res.status(400).json({ message: `Unknown model: ${model}` });
     }
 
-    const page  = parseInt(req.query.page  || "1", 10);
+    const page = parseInt(req.query.page || "1", 10);
     const limit = parseInt(req.query.limit || "50", 10);
-    const skip  = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
     const [docs, total] = await Promise.all([
       Model.find({}).skip(skip).limit(limit).lean(),
@@ -237,6 +264,27 @@ const deleteModelDocument = async (req, res) => {
   }
 };
 
+// ─── Send Reset Password Email ────────────────────────────────────────────────
+
+const sendResetPasswordEmail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const client = await Client.findById(id);
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+    if (!client.keycloakId || client.keycloakId.startsWith("temp_")) {
+      return res.status(400).json({ message: "Client has no valid Keycloak account" });
+    }
+
+    await keycloakAdmin.sendKeycloakResetPasswordEmail(client.keycloakId);
+    res.status(200).json({ message: "Password reset email sent successfully" });
+  } catch (error) {
+    console.error("Error sending reset email:", error);
+    res.status(500).json({ message: "Failed to send reset email: " + error.message });
+  }
+};
+
 module.exports = {
   getClients,
   createClient,
@@ -246,4 +294,6 @@ module.exports = {
   getModelDocuments,
   updateModelDocument,
   deleteModelDocument,
+  resetClientPassword,
+  sendResetPasswordEmail,
 };

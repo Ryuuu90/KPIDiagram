@@ -127,6 +127,12 @@ function App() {
       .init({ onLoad: "check-sso", checkLoginIframe: false })
       .then(async (auth) => {
         if (!auth) {
+          // Check if Keycloak returned an authorization code (social login callback)
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.has('code')) {
+            // keycloak-js will handle the code automatically, just wait
+            return;
+          }
           setAppState(STATE.UNAUTHENTICATED);
           return;
         }
@@ -149,9 +155,9 @@ function App() {
   if (appState === STATE.UNAUTHENTICATED) {
     const isFounderRoute = window.location.pathname.includes('/founder');
     return (
-      <LoginPage 
-        onLogin={handleManualLogin} 
-        customTitle={isFounderRoute ? "Founder Dashboard Login" : undefined} 
+      <LoginPage
+        onLogin={handleManualLogin}
+        customTitle={isFounderRoute ? "Founder Dashboard Login" : undefined}
         customSubtitle={isFounderRoute ? "Please log in with your Founder credentials" : undefined}
       />
     );

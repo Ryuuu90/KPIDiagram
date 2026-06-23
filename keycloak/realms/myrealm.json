@@ -1,55 +1,116 @@
 {
-    "roles": {
-        "realm": [
-        {
-            "name": "admin"
-        },
-        {
-            "name": "user"
-        }
-        ]
-    },
-    "users": [
-        {
-        "username": "imad",
-        "firstName": "imad",
-        "lastName": "imad",
-        "email":"imad@gmail.com",
-        "enabled": true,
-        "emailVerified": true,
-        "credentials": [
-            {
-            "type": "password",
-            "value": "imad@2025",
-            "temporary": false
-            }
-        ],
-        "realmRoles": ["admin"]
-        }
-    ],
     "realm": "nhancit",
     "displayName": "NHANCIT",
     "enabled": true,
-    
 
+    "loginWithEmailAllowed": true,
+    "resetPasswordAllowed": true,
+    "rememberMe": true,
+
+    "otpPolicyType": "totp",
+    "otpPolicyAlgorithm": "HmacSHA1",
+    "otpPolicyDigits": 6,
+    "otpPolicyPeriod": 30,
+    "otpSupportedApplications": [
+        "totpAppGoogleName",
+        "totpAppMicrosoftAuthenticatorName",
+        "totpAppFreeOTPName"
+    ],
+
+    "roles": {
+        "realm": [
+            { "name": "admin" },
+            { "name": "user" },
+            { "name": "founder" }
+        ]
+    },
+
+    "users": [
+        {
+            "username": "imad",
+            "firstName": "imad",
+            "lastName": "imad",
+            "email": "imad@gmail.com",
+            "enabled": true,
+            "emailVerified": true,
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "imad@2025",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": ["admin"]
+        },
+        {
+            "username": "service-account-finanzia-backend",
+            "enabled": true,
+            "serviceAccountClientId": "finanzia-backend",
+            "clientRoles": {
+                "realm-management": [
+                    "manage-users"
+                ]
+            }
+        }
+    ],
+
+    "identityProviders": [
+        {
+            "alias": "google",
+            "displayName": "Google",
+            "providerId": "google",
+            "enabled": true,
+            "trustEmail": true,
+            "storeToken": false,
+            "firstBrokerLoginFlowAlias": "first broker login",
+            "config": {
+                "clientId": "REPLACE_WITH_YOUR_GOOGLE_CLIENT_ID",
+                "clientSecret": "REPLACE_WITH_YOUR_GOOGLE_CLIENT_SECRET",
+                "defaultScope": "openid email profile",
+                "syncMode": "IMPORT"
+            }
+        },
+        {
+            "alias": "microsoft",
+            "displayName": "Microsoft",
+            "providerId": "microsoft",
+            "enabled": true,
+            "trustEmail": true,
+            "storeToken": false,
+            "firstBrokerLoginFlowAlias": "first broker login",
+            "config": {
+                "clientId": "REPLACE_WITH_YOUR_MICROSOFT_CLIENT_ID",
+                "clientSecret": "REPLACE_WITH_YOUR_MICROSOFT_CLIENT_SECRET",
+                "defaultScope": "openid email profile User.Read",
+                "syncMode": "IMPORT"
+            }
+        }
+    ],
 
     "clients": [
         {
-        "clientId": "finanzia-frontend",
-        "name": "Finanzia Frontend",
-        "enabled": true,
-        "publicClient": true,
-        "directAccessGrantsEnabled": true,
-        "redirectUris": ["http://localhost:3000/*"],
-        "webOrigins": ["*"]
+            "clientId": "finanzia-frontend",
+            "name": "Finanzia Frontend",
+            "enabled": true,
+            "publicClient": true,
+            "standardFlowEnabled": true,
+            "directAccessGrantsEnabled": true,
+            "redirectUris": [
+                "http://localhost:3000/*",
+                "https://16.171.10.56.sslip.io/*"
+            ],
+            "webOrigins": ["*"],
+            "attributes": {
+                "post.logout.redirect.uris": "http://localhost:3000/*##https://16.171.10.56.sslip.io/*"
+            }
         },
         {
-        "clientId": "finanzia-backend",
-        "name": "Finanzia Backend",
-        "enabled": true,
-        "secret": "finanzia-secret",
-        "serviceAccountsEnabled": true,
-        "publicClient": false
+            "clientId": "finanzia-backend",
+            "name": "Finanzia Backend",
+            "enabled": true,
+            "secret": "finanzia-secret",
+            "serviceAccountsEnabled": true,
+            "publicClient": false
         }
     ]
 }
